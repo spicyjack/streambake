@@ -7,12 +7,19 @@ use bytes;
 # start the connection
 my $conn = new Shout;
 
+my $icepass;
+if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
+    $icepass = $ENV{ICECAST_SOURCE_PASS};
+} else {
+    $icepass = q(hackme);
+} # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
+
 # setup all the params
 $conn->host('localhost');
 $conn->port(8000);
 $conn->mount('/example');
 $conn->user('source');
-$conn->password('ungabunga');
+$conn->password($icepass);
 $conn->public(0);
 $conn->format(SHOUT_FORMAT_MP3);
 $conn->protocol(SHOUT_PROTOCOL_HTTP);
