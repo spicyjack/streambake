@@ -24,7 +24,7 @@ if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
 # setup all the params
 $conn->host($server);
 $conn->port($port);
-$conn->mount($getbaked);
+$conn->mount($mountpoint);
 $conn->user($user);
 $conn->password($icepass);
 $conn->public(0);
@@ -42,22 +42,23 @@ if ($conn->open) {
         "song" => "Streaming from standard in; no metadata available");
 
     while ( ! -e q(/tmp/streambake.die) ) {
-        my $playlist_file = q(/home/ftp/other/test.m3u);
-        warn qq(Reading playlist file $playlist_file\n);
-        open (PLAYLIST, qq(< $playlist_file));
+        #my $playlist_file = q(/home/ftp/other/test.m3u);
+        my $playlist_file = q(/home/ftp/other/pl-all-mp3.m3u);
+        warn qq(Reading playlist file '$playlist_file'\n);
+        open (PLAYLIST, $playlist_file);
         @playlist = <PLAYLIST>;
         close(PLAYLIST);
         warn qq(Found ) . scalar(@playlist) . qq( songs in playlist\n);
         #chomp(@playlist);
         foreach my $song (@playlist) {
             chomp($song);
-            $song =~ s/,/\\,/g;
-            $song =~ s/ /\\ /g;
-            if ( ! -e $song ) { warn qq(song $song does not exist\n); }
+            #$song =~ s/,/\\,/g;
+            #$song =~ s/ /\\ /g;
+            if ( ! -e $song ) { warn qq(song '$song' does not exist\n); }
             # if we connect, grab data from stdin and shoot it to the server
             my ($buff, $len);
-            warn qq(Opening file for streaming;\n$song\n);
-            open(MP3FILE, qq(< $song)) || die qq(Can't open $song : $!);
+            warn qq(Opening file for streaming;\n'$song'\n);
+            open(MP3FILE, $song) || die qq(Can't open $song : $!);
             while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
     	        unless ($conn->send($buff)) {
 	                warn "Error while sending: " . $conn->get_error . "\n";
