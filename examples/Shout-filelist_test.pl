@@ -59,7 +59,7 @@ if ($conn->open) {
         # if we connect, grab data from stdin and shoot it to the server
         my ($buff, $len);
         warn qq(Opening file for streaming;\n'$current_song'\n);
-        open(MP3FILE, $current_song) or die qq(Can't open $current_song : $!);
+        open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
         while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
     	    unless ($conn->send($buff)) {
 	            warn "Error while sending: " . $conn->get_error . "\n";
