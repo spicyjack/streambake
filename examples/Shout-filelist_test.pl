@@ -3,6 +3,7 @@
 use strict;
 use Shout;
 use bytes;
+use DateTime;
 
 # start the connection
 my $conn = new Shout;
@@ -46,6 +47,7 @@ if ($conn->open) {
 
     while ( ! -e q(/tmp/streambake.die) ) {
         my $current_song;
+
         my $song_q_length = scalar(@song_q);
         print qq(There are currently $song_q_length songs in the song Q\n);
         my $random_song = int(rand($song_q_length));
@@ -58,7 +60,12 @@ if ($conn->open) {
         } # if ( ! -e $current_song ) 
         # if we connect, grab data from stdin and shoot it to the server
         my ($buff, $len);
-        warn qq(Opening file for streaming;\n'$current_song'\n);
+        my $dt = DateTime->now();
+        $dt->set_time_zone(q(PST8PDT));
+        print q(Opening file for streaming at ) 
+            . $dt->day_0 . $dt->month_abbr . $dt->year 
+            . q( ) . $dt->hms . qq(\n);
+        print qq('$current_song'\n); 
         #open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
         open(MP3FILE, "< $current_song") 
             || die qq(Can't open $current_song : $!);
