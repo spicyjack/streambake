@@ -35,34 +35,28 @@ $main::VERSION = (q$Revision: 1.7 $ =~ /(\d+)/g)[0];
 use strict;
 use warnings;
 
-################
-# SomeFunction #
-################
-sub SomeFunction {
-} # sub SomeFunction
-				
-=pod
+use threads;
 
-=head1 CONTROLS
+    my $thr1 = threads->create(\&sub1, q(odin), 3);
+    my $thr2 = threads->create(\&sub1, q(dva), 5);
+    my $thr3 = threads->create(\&sub1, q(tri), 7);
 
-=over 5
+    $thr1->join();
+    $thr2->join();
+    $thr3->join();
 
-=item B<Description of Controls>
+    sub sub1 {
+        my $thread_name = shift;
+        my $sleep_time = shift;
+        my $total_time = 100;
+        my $run_time = 0;
 
-=over 5
-
-=item B<A Control Here>
-
-This is a description about A Control.
-
-=item B<Another Control>
-
-This is a description of Another Control
-
-=back 
-
-=back
-
+        while ( $run_time < $total_time ) {
+            sleep $sleep_time;
+            print qq(Unga! $thread_name, slept for $sleep_time, $total_time\n);
+            $run_time += $sleep_time;
+        }
+    }
 =head1 FUNCTIONS 
 
 =head2 SomeFunction()
@@ -71,8 +65,8 @@ SomeFunction() is a function that does something.
 
 =head1 VERSION
 
-The CVS version of this file is $Revision: 1.7 $. See the top of this file for the
-author's version number.
+The CVS version of this file is $Revision: 1.7 $. See the top of this file for
+the author's version number.
 
 =head1 AUTHOR
 
