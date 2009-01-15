@@ -19,6 +19,7 @@ for my $num ( 1 .. $num_children ) {
             while ( $data = <$pipe> ) {
                 chomp $data;
                 print STDERR "child $num: [$data]\n";
+                sleep 3; 
             }
             exit;
         } # child
@@ -35,4 +36,5 @@ for ( 1 .. 20 ) {
     my $num = int rand $num_children;
     my $child = $children[$num];
     print $child "Hey there.\n";
+
 }

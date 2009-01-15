@@ -40,10 +40,14 @@ use threads;
     my $thr1 = threads->create(\&sub1, q(odin), 3);
     my $thr2 = threads->create(\&sub1, q(dva), 5);
     my $thr3 = threads->create(\&sub1, q(tri), 7);
+    my $thr4 = threads->create(\&sub1, q(chetyre), 9);
+    my $thr5 = threads->create(\&sub1, q(pyat), 11);
 
     $thr1->join();
     $thr2->join();
     $thr3->join();
+    $thr4->join();
+    $thr5->join();
 
     sub sub1 {
         my $thread_name = shift;
