@@ -66,7 +66,7 @@ if ($conn->open) {
             . sprintf(q(%02u), $dt->day) . $dt->month_abbr . $dt->year 
             . q( ) . $dt->hms . qq(\n);
         print qq('$current_song'\n); 
-        open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
+        #open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
         open(MP3FILE, "< $current_song") 
             || die qq(Can't open $current_song : $!);
         while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
