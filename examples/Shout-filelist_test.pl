@@ -63,15 +63,17 @@ if ($conn->open) {
         my $dt = DateTime->now();
         $dt->set_time_zone(q(PST8PDT));
         print q(Opening file for streaming at ) 
-            . $dt->day_0 . $dt->month_abbr . $dt->year 
+            . sprintf(q(%02u), $dt->day) . $dt->month_abbr . $dt->year 
             . q( ) . $dt->hms . qq(\n);
         print qq('$current_song'\n); 
-        #open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
+        open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
         open(MP3FILE, "< $current_song") 
             || die qq(Can't open $current_song : $!);
         while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
-    	    unless ($conn->send($buff)) {
+    	    unless ( $conn->send($buff) ) {
 	            warn "Error while sending: " . $conn->get_error . "\n";
+                # 
+    	        $conn->sync;
             	last;
             } # unless ($conn->send($buff)) 
             # must be careful not to send the data too fast :)
