@@ -53,7 +53,7 @@ use threads;
 
         while ( $run_time < $total_time ) {
             sleep $sleep_time;
-            print qq(Unga! $thread_name, slept for $sleep_time, $total_time\n);
+            print qq(Unga! $thread_name, slept for $sleep_time, $run_time\n);
             $run_time += $sleep_time;
         }
     }
