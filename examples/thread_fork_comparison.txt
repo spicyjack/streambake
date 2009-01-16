@@ -8,4 +8,16 @@ forking (Mac OS X 10.5):
 
 threading (Mac OS X 10.5):
 
+threading (Linux 2.6.26.5-viac7)
 
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 5122 brian     20   0 47056 3516 1572 S  0.0  0.2   0:00.04 perl               
+
+forking (Linux 2.6.26.5-viac7)
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 6417 brian     20   0  3856 1216  484 S  0.0  0.1   0:00.00 perl               
+ 6418 brian     20   0  3856 1200  468 S  0.0  0.1   0:00.00 perl               
+ 6419 brian     20   0  3856 1200  468 S  0.0  0.1   0:00.00 perl               
+ 6420 brian     20   0  3856 1204  468 S  0.0  0.1   0:00.00 perl               
+ 6421 brian     20   0  3856 1204  468 S  0.0  0.1   0:00.00 perl               
