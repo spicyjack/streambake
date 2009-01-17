@@ -21,3 +21,16 @@ forking (Linux 2.6.26.5-viac7)
  6419 brian     20   0  3856 1200  468 S  0.0  0.1   0:00.00 perl               
  6420 brian     20   0  3856 1204  468 S  0.0  0.1   0:00.00 perl               
  6421 brian     20   0  3856 1204  468 S  0.0  0.1   0:00.00 perl               
+
+threading (Linux 2.6.18-92.1.10.el5PAE)
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+31293 bmanning  20   0 58852 4176 1540 S    0  0.1   0:00.02 perl               
+
+forking (Linux 2.6.18-92.1.10.el5PAE)
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+32451 bmanning  18   0  4344 1244  424 S    0  0.0   0:00.00 perl               
+32452 bmanning  18   0  4344 1224  404 S    0  0.0   0:00.00 perl               
+32453 bmanning  18   0  4344 1224  404 S    0  0.0   0:00.00 perl               
+32454 bmanning  18   0  4344 1224  404 S    0  0.0   0:00.00 perl               
+32455 bmanning  18   0  4344 1224  404 S    0  0.0   0:00.00 perl               
+
