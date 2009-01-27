@@ -49,11 +49,11 @@ if ($conn->open) {
         my $current_song;
 
         my $song_q_length = scalar(@song_q);
-        print qq(There are currently $song_q_length songs in the song Q\n);
+        warn qq(There are currently $song_q_length songs in the song Q\n);
         my $random_song = int(rand($song_q_length));
         $current_song = splice(@song_q, $random_song, 1);
         chomp($current_song);
-        print qq(Current song is $current_song\n);
+        warn qq(Current song is $current_song\n);
         if ( ! -e $current_song ) { 
             warn qq(File '$current_song' doesn't exist\n); 
             next;
@@ -62,15 +62,15 @@ if ($conn->open) {
         my ($buff, $len);
         my $dt = DateTime->now();
         $dt->set_time_zone(q(PST8PDT));
-        print q(Opening file for streaming at ) 
+        warn q(Opening file for streaming at ) 
             . sprintf(q(%02u), $dt->day) . $dt->month_abbr . $dt->year 
             . q( ) . $dt->hms . qq(\n);
-        print qq('$current_song'\n); 
-        #open(MP3FILE, "$current_song") or die qq(Can't open $current_song : $!);
+        warn qq('$current_song'\n); 
         open(MP3FILE, "< $current_song") 
-            || die qq(Can't open $current_song : $!);
+            || die qq(Can't open $current_song : '$!');
+        my $bytes_read;
         while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
-    	    unless ( $conn->send($buff) ) {
+    	    unless ( $conn->send($buff, 4096) ) {
 	            warn "Error while sending: " . $conn->get_error . "\n";
                 # 
     	        $conn->sync;
