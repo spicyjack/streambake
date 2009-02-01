@@ -17,5 +17,10 @@
 <node CREATED="1233305302896" ID="Freemind_Link_724834274" MODIFIED="1233305307899" POSITION="right" TEXT="Streambake::Media">
 <node CREATED="1233305309088" ID="Freemind_Link_120971738" MODIFIED="1233305319628" TEXT="Streambake::Media::CDAudio"/>
 </node>
+<node CREATED="1233478646589" ID="Freemind_Link_522835197" MODIFIED="1233478660283" POSITION="left" TEXT="Streambake::Check">
+<node CREATED="1233478663405" ID="Freemind_Link_985722942" MODIFIED="1233478681786" TEXT="Allows for checks before streaming a file"/>
+<node CREATED="1233478683317" ID="Freemind_Link_1964702150" MODIFIED="1233478693521" TEXT="Streambake::Check::SkipFile"/>
+<node CREATED="1233478694974" ID="Freemind_Link_747898751" MODIFIED="1233478703009" TEXT="Streambake::Check::Rating"/>
+</node>
 </node>
 </map>
