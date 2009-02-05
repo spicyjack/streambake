@@ -3,7 +3,8 @@
 # $Id: perlscript.pl,v 1.7 2008/01/24 07:06:47 brian Exp $
 # Copyright (c)2001 by Brian Manning
 #
-# perl script that does something
+# perl script that demonstrates threading in perl
+# inspired by: http://perldoc.perl.org/perlthrtut.html#Creating-Threads
 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -57,7 +58,7 @@ use threads;
 
         while ( $run_time < $total_time ) {
             sleep $sleep_time;
-            print qq(Unga! $thread_name, slept for $sleep_time, $run_time\n);
+            print qq(Unga! $thread_name/$$, slept for $sleep_time, $run_time\n);
             $run_time += $sleep_time;
         }
     }
