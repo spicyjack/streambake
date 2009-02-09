@@ -11,7 +11,7 @@ my $conn = new Shout;
 my $server = q(localhost);
 my $port = q(7767);
 my $user = q(source);
-my $mountpoint = q(getbaked);
+my $mountpoint = q(stash);
 
 my $icepass;
 if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
@@ -28,7 +28,7 @@ $conn->host($server);
 $conn->port($port);
 $conn->mount($mountpoint);
 $conn->name(q(Spicyjack's Sekret Stash));
-$conn->url(q(http://www.portaboom.com));
+$conn->url(q(http://stream.portaboom.com:7767/stash));
 $conn->description(q(Created with 'Streambake'...));
 $conn->user($user);
 $conn->password($icepass);
