@@ -38,20 +38,20 @@ use warnings;
 
 my @children;
 
-foreach my $fork_name ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
+foreach my $fork_id ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
     my $pid = fork();
     if ($pid) {
         # parent
-        push(@children, $pid . q(:) . $fork_name);
+        push(@children, $pid . q(:) . $fork_id);
     } elsif ($pid == 0) {
         # child
-        my ($fork_name, $sleep_time) = split(/:/, $fork_name);
+        my ($fork_name, $sleep_time) = split(/:/, $fork_id);
         my $total_time = 100;
         my $run_time = 0;
 
         while ( $run_time < $total_time ) {
             sleep $sleep_time;
-            print qq(Unga! $fork_name/$$, slept for $sleep_time, $run_time\n);
+            print qq(Unga! $fork_id/$$, slept for $sleep_time, $run_time\n);
             $run_time += $sleep_time;
         } # while ( $run_time < $total_time )
         exit 0;
