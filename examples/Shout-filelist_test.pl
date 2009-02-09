@@ -4,6 +4,7 @@ use strict;
 use Shout;
 use bytes;
 use DateTime;
+use Audio::TagLib;
 
 # start the connection
 my $conn = new Shout;
@@ -26,6 +27,9 @@ if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
 $conn->host($server);
 $conn->port($port);
 $conn->mount($mountpoint);
+$conn->name(q(Spicyjack's Sekret Stash));
+$conn->url(q(http://www.portaboom.com));
+$conn->description(q(Created with 'Streambake'...));
 $conn->user($user);
 $conn->password($icepass);
 $conn->public(0);
@@ -37,9 +41,6 @@ $conn->set_audio_info(SHOUT_AI_BITRATE => 256, SHOUT_AI_SAMPLERATE => 44100);
 if ($conn->open) {
     warn qq(Connected to server '$server:$port' at )
         . qq(mountpoint $mountpoint as user '$user'\n);
-    $conn->set_metadata(
-        "song" => "Streaming from standard in; no metadata available");
-
     # read in the playlist from STDIN
     my @playlist = <STDIN>;
     # make a copy of the playlist before we start munging it
@@ -66,6 +67,18 @@ if ($conn->open) {
             . sprintf(q(%02u), $dt->day) . $dt->month_abbr . $dt->year 
             . q( ) . $dt->hms . qq(\n);
         warn qq('$current_song'\n); 
+        my $tf = Audio::TagLib::FileRef->new($current_song);
+        my $artist = $tf->tag()->artist();
+        my $album = $tf->tag()->album();
+        my $title = $tf->tag()->title();
+
+        my $metadata = $artist->toCString() . " - " 
+                    . $album->toCString() . " - "
+                    . $title->toCString();
+        warn qq(Updating metadata to '$metadata'\n);
+        $conn->set_metadata(
+            "song" => "$metadata");
+        undef $tf;
         open(MP3FILE, "< $current_song") 
             || die qq(Can't open $current_song : '$!');
         my $bytes_read;
