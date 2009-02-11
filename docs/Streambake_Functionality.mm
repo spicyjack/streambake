@@ -1,7 +1,7 @@
 <map version="0.8.1">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
 <node CREATED="1189627837281" ID="Freemind_Link_785289733" MODIFIED="1233304440673" TEXT="Streambake Functionality">
-<node CREATED="1189634420116" ID="Freemind_Link_1667604547" MODIFIED="1191902489643" POSITION="right" TEXT="Frontend">
+<node CREATED="1189634420116" ID="Freemind_Link_1667604547" MODIFIED="1191902489643" POSITION="left" TEXT="Frontend">
 <icon BUILTIN="licq"/>
 <node CREATED="1189634495767" ID="Freemind_Link_1324026793" MODIFIED="1189634543408" TEXT="GTKPerl local"/>
 <node CREATED="1189634547178" ID="Freemind_Link_867147531" MODIFIED="1191902378173" TEXT="GTKPerl via network (SSL?)"/>
@@ -40,7 +40,7 @@
 <icon BUILTIN="knotify"/>
 <node CREATED="1191901276098" ID="Freemind_Link_1196762469" MODIFIED="1191901278472" TEXT="Ogg"/>
 <node CREATED="1191901279854" ID="Freemind_Link_1172383399" MODIFIED="1191901282277" TEXT="MP3"/>
-<node CREATED="1191901283209" ID="Freemind_Link_514764893" MODIFIED="1191901295346" TEXT="No Filter (must be either Ogg or MP3)"/>
+<node CREATED="1191901283209" ID="Freemind_Link_514764893" MODIFIED="1234341805397" TEXT="Native Format/No Filter (must be either Ogg or MP3)"/>
 </node>
 <node CREATED="1189634469976" ID="Freemind_Link_689777718" LINK="http://wiki.antlinux.com/pmwiki.php?n=StreamCast.Todos#SongQueues" MODIFIED="1191902473971" POSITION="right" TEXT="Metadata">
 <icon BUILTIN="korn"/>
@@ -58,7 +58,7 @@
 <node CREATED="1191901871595" ID="Freemind_Link_974930251" MODIFIED="1191901874349" TEXT="WebDAV"/>
 <node CREATED="1229637898662" ID="Freemind_Link_1042175144" MODIFIED="1229637903394" TEXT="iPod/GNUPod"/>
 </node>
-<node CREATED="1189634479547" ID="Freemind_Link_964059429" MODIFIED="1191902443707" POSITION="left" TEXT="Streaming Servers">
+<node CREATED="1189634479547" ID="Freemind_Link_964059429" MODIFIED="1191902443707" POSITION="right" TEXT="Streaming Servers">
 <icon BUILTIN="password"/>
 <node CREATED="1191902097840" ID="Freemind_Link_1965350850" MODIFIED="1191902101365" TEXT="Icecast 2"/>
 <node CREATED="1191902101956" ID="Freemind_Link_1472025843" MODIFIED="1191902105721" TEXT="Icecast 1"/>
