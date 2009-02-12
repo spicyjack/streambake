@@ -23,11 +23,11 @@
 
 =head1 NAME
 
-SomeScript
+forking_threader.pl - a demo of threaded forks
 
 =head1 DESCRIPTION
 
-B<SomeScript> does I<Something>
+B<forking_threader.pl> demonstrates threading after forking
 
 =cut
 
@@ -35,22 +35,6 @@ package main;
 $main::VERSION = (q$Revision: 1.7 $ =~ /(\d+)/g)[0];
 use strict;
 use warnings;
-
-
-=head1 VERSION
-
-The CVS version of this file is $Revision: 1.7 $. See the top of this file for
-the author's version number.
-
-=head1 AUTHOR
-
-Brian Manning E<lt>elspicyjack at gmail dot comE<gt>
-
-=cut
-
-# vi: set ft=perl sw=4 ts=4 cin:
-# end of line
-1;
 
 my @children;
 
@@ -78,13 +62,15 @@ foreach ( @children ) {
     my $pid = (split(/:/, $_))[0];
     waitpid($pid, 0);
 } # foreach ( @children )
+
 package Thread::Creator;
 use strict;
 use warnings;
 use threads;
 
 sub new {
-    my 
+    my $class = shift;
+
     my $thr1 = threads->create(\&sub1, q(odin), 3);
     my $thr2 = threads->create(\&sub1, q(dva), 5);
     my $thr3 = threads->create(\&sub1, q(tri), 7);
@@ -109,12 +95,6 @@ sub new {
             $run_time += $sleep_time;
         }
     }
-
-=head1 FUNCTIONS 
-
-=head2 SomeFunction()
-
-SomeFunction() is a function that does something.  
 
 =head1 VERSION
 
