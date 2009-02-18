@@ -1,0 +1,52 @@
+Process	PID	CPU	Description	Company Name	Private Bytes	Peak Private Bytes	Working Set	Peak Working Set	USER Objects	GDI Objects
+ sh.exe	3688				940 K	940 K	2,396 K	2,396 K	1	4
+  sh.exe	3084				1,000 K	1,004 K	2,272 K	2,276 K	1	4
+   perl.exe	3208				2,320 K	2,320 K	5,176 K	5,176 K	22	4
+
+Process: perl.exe Pid: 3208
+
+Type	Name
+Desktop	\Default
+Directory	\BaseNamedObjects
+Directory	\Windows
+Directory	\KnownDlls
+Event	\BaseNamedObjects\nView Read Mutex Event
+Event	\BaseNamedObjects\nView Hook Shutdown Event
+Event	\BaseNamedObjects\nView Hook Event
+Event	\BaseNamedObjects\nView DisplayChange Event
+Event	\BaseNamedObjects\nView Window Shutdown Event
+Event	\BaseNamedObjects\nView Window Event
+Event	\BaseNamedObjects\WinMMConsoleAudioEvent
+File	C:\temp\streambake-svn\examples
+File	C:\WINDOWS\WinSxS\x86_Microsoft.Windows.Common-Controls_6595b64144ccf1df_6.0.2600.2982_x-ww_ac3f9c03
+File	\Device\KsecDD
+Key	HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Drivers32\Terminal Server\RDP
+Key	HKCU
+Key	HKLM\SYSTEM\ControlSet001\Control\Nls\Language Groups
+Key	HKLM\SYSTEM\ControlSet001\Control\Nls\Locale\Alternate Sorts
+Key	HKLM\SYSTEM\ControlSet001\Control\Nls\Locale
+Key	HKLM
+KeyedEvent	\KernelObjects\CritSecOutOfMemoryEvent
+Mutant	\BaseNamedObjects\DBWinMutex
+Mutant	\BaseNamedObjects\nView Shared Thread Hook Info Mutex
+Mutant	\BaseNamedObjects\nView Shared Trans Mutex
+Mutant	\BaseNamedObjects\nView Shared Desk Mutex
+Mutant	\BaseNamedObjects\nView Shared Memory Mutex
+Mutant	\BaseNamedObjects\CTF.TimListCache.FMPDefaultS-1-5-21-945540591-4024260831-3861152641-68525MUTEX.DefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Mutant	\BaseNamedObjects\CTF.TMD.MutexDefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Mutant	\BaseNamedObjects\CTF.Layouts.MutexDefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Mutant	\BaseNamedObjects\CTF.Asm.MutexDefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Mutant	\BaseNamedObjects\CTF.Compart.MutexDefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Mutant	\BaseNamedObjects\CTF.LBES.MutexDefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Section	\BaseNamedObjects\nView Shared Memory
+Section	\BaseNamedObjects\nView Shared Static Memory
+Section	\BaseNamedObjects\CTF.TimListCache.FMPDefaultS-1-5-21-945540591-4024260831-3861152641-68525SFM.DefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Section	\BaseNamedObjects\CiceroSharedMemDefaultS-1-5-21-945540591-4024260831-3861152641-68525
+Semaphore	\BaseNamedObjects\shell.{A48F1A32-A340-11D1-BC6B-00A0C90312E1}
+Thread	perl.exe(3208): 2916
+Thread	perl.exe(3208): 596
+Thread	perl.exe(3208): 4056
+Thread	perl.exe(3208): 4028
+Thread	perl.exe(3208): 1580
+WindowStation	\Windows\WindowStations\WinSta0
+WindowStation	\Windows\WindowStations\WinSta0

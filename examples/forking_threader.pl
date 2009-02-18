@@ -71,11 +71,11 @@ use threads;
 sub new {
     my $class = shift;
 
-    my $thr1 = threads->create(\&sub1, q(odin), 3);
-    my $thr2 = threads->create(\&sub1, q(dva), 5);
-    my $thr3 = threads->create(\&sub1, q(tri), 7);
-    my $thr4 = threads->create(\&sub1, q(chetyre), 9);
-    my $thr5 = threads->create(\&sub1, q(pyat), 11);
+    my $thr1 = threads->create(\&do_work, q(odin), 3);
+    my $thr2 = threads->create(\&do_work, q(dva), 5);
+    my $thr3 = threads->create(\&do_work, q(tri), 7);
+    my $thr4 = threads->create(\&do_work, q(chetyre), 9);
+    my $thr5 = threads->create(\&do_work, q(pyat), 11);
 
     $thr1->join();
     $thr2->join();
@@ -83,7 +83,7 @@ sub new {
     $thr4->join();
     $thr5->join();
 
-    sub sub1 {
+    sub do_work {
         my $thread_name = shift;
         my $sleep_time = shift;
         my $total_time = 100;
@@ -94,7 +94,7 @@ sub new {
             print qq(Unga! $thread_name/$$, slept for $sleep_time, $run_time\n);
             $run_time += $sleep_time;
         }
-    }
+    } # sub do_work
 
 =head1 VERSION
 

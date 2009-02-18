@@ -1,0 +1,26 @@
+Process	PID	CPU	Description	Company Name	Private Bytes	Peak Private Bytes	Working Set	Peak Working Set	USER Objects	GDI Objects
+ sh.exe	3688				940 K	940 K	2,396 K	2,396 K	1	4
+  sh.exe	1884				984 K	988 K	2,188 K	2,192 K	1	4
+   perl.exe	4064				2,416 K	2,416 K	4,448 K	4,448 K	6	4
+
+Process: perl.exe Pid: 4064
+
+Type	Name
+Desktop	\Default
+Directory	\Windows
+Directory	\KnownDlls
+File	C:\temp\streambake-svn\examples
+Key	HKCU
+Key	HKLM\SYSTEM\ControlSet001\Control\Nls\Language Groups
+Key	HKLM\SYSTEM\ControlSet001\Control\Nls\Locale\Alternate Sorts
+Key	HKLM\SYSTEM\ControlSet001\Control\Nls\Locale
+Key	HKLM
+KeyedEvent	\KernelObjects\CritSecOutOfMemoryEvent
+Mutant	\BaseNamedObjects\DBWinMutex
+Thread	perl.exe(4064): 356
+Thread	perl.exe(4064): 3812
+Thread	perl.exe(4064): 3468
+Thread	perl.exe(4064): 960
+Thread	perl.exe(4064): 3748
+WindowStation	\Windows\WindowStations\WinSta0
+WindowStation	\Windows\WindowStations\WinSta0
