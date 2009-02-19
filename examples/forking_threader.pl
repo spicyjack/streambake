@@ -38,22 +38,19 @@ use warnings;
 
 my @children;
 
-foreach my $fork_name ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
+#foreach my $fork_name ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
+foreach my $fork_name ( qw( odin dva ) ) {
     my $pid = fork();
     if ($pid) {
         # parent
         push(@children, $pid . q(:) . $fork_name);
     } elsif ($pid == 0) {
         # child
-        my ($fork_name, $sleep_time) = split(/:/, $fork_name);
-        my $total_time = 100;
-        my $run_time = 0;
-
-        while ( $run_time < $total_time ) {
-            sleep $sleep_time;
-            print qq(Unga! $fork_name/$$, slept for $sleep_time, $run_time\n);
-            $run_time += $sleep_time;
-        } # while ( $run_time < $total_time )
+        my $thread_obj = Thread::Creator->new($fork_name);
+        my @threads = $thread_obj->get_thread_list();
+        #foreach my $curr_thread ( @threads ) {
+        #    $curr_thread->join();
+        #}
         exit 0;
     } # if ($pid)
 } # foreach my $fork_name
@@ -68,33 +65,46 @@ use strict;
 use warnings;
 use threads;
 
+my @thread_list;
+
 sub new {
     my $class = shift;
+    my $fork_name = shift;
+    my $self = bless ({}, $class);
 
-    my $thr1 = threads->create(\&do_work, q(odin), 3);
-    my $thr2 = threads->create(\&do_work, q(dva), 5);
-    my $thr3 = threads->create(\&do_work, q(tri), 7);
-    my $thr4 = threads->create(\&do_work, q(chetyre), 9);
-    my $thr5 = threads->create(\&do_work, q(pyat), 11);
+    foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) ) {
+        my ($thr_name, $sleep_time) = split(/:/, $thread_tmpl);
+        print qq(creating thread as $thr_name from $fork_name, with a )
+            . qq(sleep time of $sleep_time\n);
+        my $thread = threads->create(
+            \$self->do_work, $fork_name, $thr_name, $sleep_time
+        );
+        #$thread->detatch();
+        $thread->join();
+        push(@thread_list, $thread);
+    } # foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) )
+    return $self;
+} # sub new
 
-    $thr1->join();
-    $thr2->join();
-    $thr3->join();
-    $thr4->join();
-    $thr5->join();
+sub get_thread_list {
+    return @thread_list;
+} # sub get_thread_list
 
-    sub do_work {
-        my $thread_name = shift;
-        my $sleep_time = shift;
-        my $total_time = 100;
-        my $run_time = 0;
+sub do_work {
+    my $self = shift;
+    my $fork_name = shift;
+    my $thread_name = shift;
+    my $sleep_time = shift;
+    my $total_time = 100;
+    my $run_time = 0;
 
-        while ( $run_time < $total_time ) {
-            sleep $sleep_time;
-            print qq(Unga! $thread_name/$$, slept for $sleep_time, $run_time\n);
-            $run_time += $sleep_time;
-        }
-    } # sub do_work
+    while ( $run_time < $total_time ) {
+        sleep $sleep_time;
+        print qq(Unga! $fork_name -> $thread_name/$$, )
+            . qq(slept for $sleep_time, $run_time\n);
+        $run_time += $sleep_time;
+    } # while ( $run_time < $total_time )
+} # sub do_work
 
 =head1 VERSION
 
@@ -109,5 +119,3 @@ Brian Manning E<lt>elspicyjack at gmail dot comE<gt>
 
 # vi: set ft=perl sw=4 ts=4 cin:
 # end of line
-1;
-
