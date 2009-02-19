@@ -48,9 +48,9 @@ foreach my $fork_name ( qw( odin dva ) ) {
         # child
         my $thread_obj = Thread::Creator->new($fork_name);
         my @threads = $thread_obj->get_thread_list();
-        #foreach my $curr_thread ( @threads ) {
-        #    $curr_thread->join();
-        #}
+        foreach my $curr_thread ( @threads ) {
+            $curr_thread->join();
+        }
         exit 0;
     } # if ($pid)
 } # foreach my $fork_name
@@ -76,11 +76,11 @@ sub new {
         my ($thr_name, $sleep_time) = split(/:/, $thread_tmpl);
         print qq(creating thread as $thr_name from $fork_name, with a )
             . qq(sleep time of $sleep_time\n);
-        my $thread = threads->create(
-            \$self->do_work, $fork_name, $thr_name, $sleep_time
+        my $thread = threads->create( 
+            { $self->do_work($fork_name, $thr_name, $sleep_time) }
         );
         #$thread->detatch();
-        $thread->join();
+        #$thread->join();
         push(@thread_list, $thread);
     } # foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) )
     return $self;
@@ -100,8 +100,8 @@ sub do_work {
 
     while ( $run_time < $total_time ) {
         sleep $sleep_time;
-        print qq(Unga! $fork_name -> $thread_name/$$, )
-            . qq(slept for $sleep_time, $run_time\n);
+        print qq(Unga! $fork_name/$$ -> $thread_name/) . threads->tid() 
+            . qq(, slept for $sleep_time, $run_time\n);
         $run_time += $sleep_time;
     } # while ( $run_time < $total_time )
 } # sub do_work
