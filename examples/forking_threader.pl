@@ -47,11 +47,13 @@ foreach my $fork_name ( qw( odin dva ) ) {
     } elsif ($pid == 0) {
         # child
         my $thread_obj = Thread::Creator->new($fork_name);
-        my @threads = $thread_obj->get_thread_list();
-        foreach my $curr_thread ( @threads ) {
-            $curr_thread->join();
-        }
-        exit 0;
+#        my @threads = $thread_obj->get_thread_list();
+#        foreach my $curr_thread ( @threads ) {
+            #$curr_thread->join();
+#            $curr_thread->detatch();
+#        }
+#        exit 0;
+        next;
     } # if ($pid)
 } # foreach my $fork_name
 
@@ -72,6 +74,8 @@ sub new {
     my $fork_name = shift;
     my $self = bless ({}, $class);
 
+=pod
+
     foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) ) {
         my ($thr_name, $sleep_time) = split(/:/, $thread_tmpl);
         print qq(creating thread as $thr_name from $fork_name, with a )
@@ -79,10 +83,26 @@ sub new {
         my $thread = threads->create( 
             { $self->do_work($fork_name, $thr_name, $sleep_time) }
         );
-        #$thread->detatch();
+        $thread->detatch();
         #$thread->join();
         push(@thread_list, $thread);
     } # foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) )
+
+=cut
+    my $thr1 = threads->create({ Thread::Creator->do_work($fork_name,q(uno), 3) });
+    my $thr2 = threads->create({ Thread::Creator->do_work($fork_name,q(dos), 5) });
+    my $thr3 = threads->create({ Thread::Creator->do_work($fork_name,q(tres), 7) });
+    my $thr4 = threads->create({ Thread::Creator->do_work($fork_name,q(cuatro), 11) });
+
+    #$thr1->join();
+    #$thr2->join();
+    #$thr3->join();
+    #$thr4->join();
+    $thr1->detatch();
+    $thr2->detatch();
+    $thr3->detatch();
+    $thr4->detatch();
+
     return $self;
 } # sub new
 
@@ -95,7 +115,7 @@ sub do_work {
     my $fork_name = shift;
     my $thread_name = shift;
     my $sleep_time = shift;
-    my $total_time = 100;
+    my $total_time = 30;
     my $run_time = 0;
 
     while ( $run_time < $total_time ) {
