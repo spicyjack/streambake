@@ -39,7 +39,7 @@ use warnings;
 my @children;
 
 #foreach my $fork_name ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
-foreach my $fork_name ( qw( odin dva ) ) {
+foreach my $fork_name ( qw( odin dva tri chetyre ) ) {
     my $pid = fork();
     if ($pid) {
         # parent
@@ -53,7 +53,7 @@ foreach my $fork_name ( qw( odin dva ) ) {
 #            $curr_thread->detatch();
 #        }
 #        exit 0;
-        next;
+#        next;
     } # if ($pid)
 } # foreach my $fork_name
 
@@ -74,34 +74,17 @@ sub new {
     my $fork_name = shift;
     my $self = bless ({}, $class);
 
-=pod
-
     foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) ) {
         my ($thr_name, $sleep_time) = split(/:/, $thread_tmpl);
-        print qq(creating thread as $thr_name from $fork_name, with a )
+        print qq(fork: $fork_name; creating thread '$thr_name', with a )
             . qq(sleep time of $sleep_time\n);
-        my $thread = threads->create( 
-            { $self->do_work($fork_name, $thr_name, $sleep_time) }
+        my $thr = threads->create( 
+            sub { $self->do_work($fork_name, $thr_name, $sleep_time) }
         );
-        $thread->detatch();
+        $thr->detach();
         #$thread->join();
-        push(@thread_list, $thread);
+        push(@thread_list, $thr);
     } # foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) )
-
-=cut
-    my $thr1 = threads->create({ Thread::Creator->do_work($fork_name,q(uno), 3) });
-    my $thr2 = threads->create({ Thread::Creator->do_work($fork_name,q(dos), 5) });
-    my $thr3 = threads->create({ Thread::Creator->do_work($fork_name,q(tres), 7) });
-    my $thr4 = threads->create({ Thread::Creator->do_work($fork_name,q(cuatro), 11) });
-
-    #$thr1->join();
-    #$thr2->join();
-    #$thr3->join();
-    #$thr4->join();
-    $thr1->detatch();
-    $thr2->detatch();
-    $thr3->detatch();
-    $thr4->detatch();
 
     return $self;
 } # sub new

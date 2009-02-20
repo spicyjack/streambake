@@ -3,8 +3,8 @@
 # $Id: perlscript.pl,v 1.7 2008/01/24 07:06:47 brian Exp $
 # Copyright (c)2001 by Brian Manning
 #
-# perl script that demonstrates threading in perl
-# inspired by: http://perldoc.perl.org/perlthrtut.html#Creating-Threads
+# perl script that demonstrates forking
+# inspired by: http://hell.jedicoder.net/?p=82
 
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
@@ -35,22 +35,44 @@ package main;
 $main::VERSION = (q$Revision: 1.7 $ =~ /(\d+)/g)[0];
 use strict;
 use warnings;
-
 use threads;
 
-    my $thr1 = threads->create(\&sub1, q(odin), 3);
-    my $thr2 = threads->create(\&sub1, q(dva), 5);
-    my $thr3 = threads->create(\&sub1, q(tri), 7);
-    my $thr4 = threads->create(\&sub1, q(chetyre), 9);
-    my $thr5 = threads->create(\&sub1, q(pyat), 11);
+my @children;
 
-    $thr1->join();
-    $thr2->join();
-    $thr3->join();
-    $thr4->join();
-    $thr5->join();
+foreach my $fork_id ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
+    my $pid = fork();
+    if ($pid) {
+        # parent
+        push(@children, $pid . q(:) . $fork_id);
+    } elsif ($pid == 0) {
+        # child
+        my ($fork_name, $sleep_time) = split(/:/, $fork_id);
+        my $total_time = 100;
+        my $run_time = 0;
 
-    sub sub1 {
+        my $thr1 = threads->create(\&do_work, $fork_name, q(odin), 3);
+        my $thr2 = threads->create(\&do_work, $fork_name, q(dva), 5);
+        my $thr3 = threads->create(\&do_work, $fork_name, q(tri), 7);
+        my $thr4 = threads->create(\&do_work, $fork_name, q(chetyre), 11);
+        my $thr5 = threads->create(\&do_work, $fork_name, q(pyat), 13);
+
+        $thr1->join();
+        $thr2->join();
+        $thr3->join();
+        $thr4->join();
+        $thr5->join();
+
+        exit 0;
+    } # if ($pid)
+} # foreach my $fork_name
+
+foreach ( @children ) {
+    my $pid = (split(/:/, $_))[0];
+    waitpid($pid, 0);
+} # foreach ( @children )
+
+sub do_work {
+        my $fork_name = shift;
         my $thread_name = shift;
         my $sleep_time = shift;
         my $total_time = 100;
@@ -59,11 +81,12 @@ use threads;
         while ( $run_time < $total_time ) {
             sleep $sleep_time;
             my $thread = threads->self();
-            print qq(Unga! $thread_name/$$-) . $thread->tid()
-                . qq(, slept for $sleep_time, $run_time\n);
+            print qq(Unga! pid $fork_name/$$, $thread_name/$$-) 
+                . $thread->tid() . qq(, slept for $sleep_time, $run_time\n);
             $run_time += $sleep_time;
         }
     }
+
 =head1 FUNCTIONS 
 
 =head2 SomeFunction()
@@ -83,5 +106,4 @@ Brian Manning E<lt>elspicyjack at gmail dot comE<gt>
 
 # vi: set ft=perl sw=4 ts=4 cin:
 # end of line
-1;
 
