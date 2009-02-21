@@ -56,10 +56,15 @@ foreach my $fork_id ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
         my $thr4 = threads->create(\&do_work, $fork_name, q(chetyre), 11);
         my $thr5 = threads->create(\&do_work, $fork_name, q(pyat), 13);
 
+        print qq(joining thread 1: ) . $thr1->tid() . qq(\n);
         $thr1->join();
+        print qq(joining thread 2: ) . $thr2->tid() . qq(\n);
         $thr2->join();
+        print qq(joining thread 3: ) . $thr3->tid() . qq(\n);
         $thr3->join();
+        print qq(joining thread 4: ) . $thr4->tid() . qq(\n);
         $thr4->join();
+        print qq(joining thread 5: ) . $thr5->tid() . qq(\n);
         $thr5->join();
 
         exit 0;
