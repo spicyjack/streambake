@@ -46,6 +46,8 @@ if ($conn->open) {
     # make a copy of the playlist before we start munging it
     my @song_q = @playlist;
 
+    warn qq(Use the command 'touch /tmp/streambake.die' )
+        . qq(to cause the server to exit\n);
     while ( ! -e q(/tmp/streambake.die) ) {
         my $current_song;
 
