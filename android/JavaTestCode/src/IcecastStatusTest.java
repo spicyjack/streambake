@@ -12,6 +12,8 @@
  * as @param status 
 */
 
+// FIXME add a call to getopts so you can change the URL if you want
+
 public class IcecastStatusTest {
 	static final String statURL = "http://stream.portaboom.com:7767/simple.xsl";
 	/**

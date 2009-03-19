@@ -39,6 +39,8 @@ public class DownloadStatusTest {
         } catch (IOException e) {
             System.err.println("IOException: " + e);
         } // try
+//        System.out.println("Downloaded status is:");
+//        System.out.println(returnHTML);
         return returnHTML;
 	} // public static void main(String[] args)
 } // public static void main(String[] args)
