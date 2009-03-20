@@ -1,9 +1,23 @@
 package com.portaboom.android.beta.icecastStatus;
 
+/**
+ * $Id: OfficeRunner.java,v 1.1 2009-02-10 07:50:42 brian Exp $
+ * 
+ * @author elspicyjack at gmail dot com
+ * @version $Revision: 1.1 $
+ *
+ * NOTE: Please do not e-mail the author directly regarding this code.  
+ * The proper forum for support is the Streambake Google Groups list at
+ * http://groups.google.com/group/streambake or <streambake@groups.google.com>
+ * 
+ * Parse the contents of the Icecast status2.xsl or simple.xsl files passed in 
+ * as @param status 
+*/
+
 // java
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URL;
+//import java.io.BufferedReader;
+//import java.io.InputStreamReader;
+//import java.net.URL;
 
 // android imports
 import android.app.Activity;
@@ -14,33 +28,30 @@ import android.widget.Toast;
 
 public class IcecastStatusTest extends Activity {
     /** Called when the activity is first created. */
-	static final String TAG = "IcecastStatusTest";
-	String statPage = "http://stream.portaboom.com:7767/simple.xsl";
-	
-	@Override
+        static final String TAG = "IcecastStatusTest";
+        String statURL = "http://stream.portaboom.com:7767/simple.xsl";
+        String fetchedText = "";
+        
+        @Override
     public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-        String httpRequest = statPage, line = "";
-        Log.v(TAG, "starting onCreate; statPage is " + statPage);
-		try {
-	        URL webURL = new URL(statPage);
-	        BufferedReader is = new BufferedReader(
-	            new InputStreamReader(webURL.openStream()));
-
-			while ((line = is.readLine()) != null) {
-	            httpRequest = httpRequest + line;
-	        }
-	        is.close();
+        super.onCreate(savedInstanceState);
+        Log.v(TAG, "starting onCreate; statURL is " + statURL);
+        try {
+        	DownloadStatusTest dst = new DownloadStatusTest();
+        	fetchedText = dst.fetch(statURL);
         } catch (Throwable t) {
         	Toast 
-        		.makeText(this, "Request failed: " + t.toString(), 4000);
-        		//.show();
+            .makeText(this, "Request failed: " + t.toString(), 4000);
+            //.show();
         }
+
+        ParseStatusTest pst = new ParseStatusTest();
         TextView tv = new TextView(this);
-        tv.setText(httpRequest);
+        tv.setText( "Fetched: " + statURL + "\n" + pst.parse( fetchedText ) );
         setContentView(tv);
         //Object o = null;
         //o.toString();
         //setContentView(R.layout.main);
     }
 }
+

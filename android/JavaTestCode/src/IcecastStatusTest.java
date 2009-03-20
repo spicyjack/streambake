@@ -1,3 +1,4 @@
+
 /**
  * $Id: OfficeRunner.java,v 1.1 2009-02-10 07:50:42 brian Exp $
  * 
@@ -20,9 +21,11 @@ public class IcecastStatusTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		DownloadStatusTest dst = new DownloadStatusTest();
+		//DownloadStatusTest dst = new DownloadStatusTest();
+		// FIXME read the file here
 		ParseStatusTest pst = new ParseStatusTest();
-		pst.parse( dst.fetch(statURL) );
+		//pst.parse( dst.fetch(statURL) );
+		pst.parse(  );
 	}
 
 }
