@@ -25,7 +25,7 @@ public class IcecastStatusTest {
 		// FIXME read the file here
 		ParseStatusTest pst = new ParseStatusTest();
 		//pst.parse( dst.fetch(statURL) );
-		pst.parse(  );
+		//pst.parse(  );
 	}
 
 }
