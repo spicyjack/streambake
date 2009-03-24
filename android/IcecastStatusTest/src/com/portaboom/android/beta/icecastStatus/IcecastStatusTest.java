@@ -1,10 +1,10 @@
 package com.portaboom.android.beta.icecastStatus;
 
 /**
- * $Id: OfficeRunner.java,v 1.1 2009-02-10 07:50:42 brian Exp $
+ * $Id$
  * 
  * @author elspicyjack at gmail dot com
- * @version $Revision: 1.1 $
+ * @version $Revision$
  *
  * NOTE: Please do not e-mail the author directly regarding this code.  
  * The proper forum for support is the Streambake Google Groups list at
