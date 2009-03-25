@@ -1,3 +1,15 @@
+/**
+ * $Id$
+ * 
+ * @author elspicyjack at gmail dot com
+ * @version $Revision$
+ *
+ * NOTE: Please do not e-mail the author directly regarding this code.  
+ * The proper forum for support is the Streambake Google Groups list at
+ * http://groups.google.com/group/streambake or <streambake@groups.google.com>
+ * 
+ * Testing of the Pattern/Matcher classes in Java 
+*/
 
 import java.io.BufferedReader;
 import java.io.IOException;
