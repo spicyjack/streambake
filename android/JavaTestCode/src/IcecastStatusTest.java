@@ -21,10 +21,10 @@ public class IcecastStatusTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//DownloadStatusTest dst = new DownloadStatusTest();
+		DownloadStatusTest dst = new DownloadStatusTest();
 		// FIXME read the file here
 		ParseStatusTest pst = new ParseStatusTest();
-		//pst.parse( dst.fetch(statURL) );
+		pst.parse( dst.fetch(statURL) );
 		//pst.parse(  );
 	}
 
