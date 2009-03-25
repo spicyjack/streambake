@@ -39,8 +39,7 @@ public class ParseStatusTest {
 		StringTokenizer statBlock = new StringTokenizer(filteredString, ";");
 		//System.out.println("There are " + statBlock.countTokens() + " lines in this file");
 		while ( statBlock.hasMoreTokens() == true ) {
-			
-			StringTokenizer stats = new StringTokenizer(statBlock.nextToken(), ",");
+			StringTokenizer stats = new StringTokenizer(statBlock.nextToken(), "|");
 			while ( stats.hasMoreTokens() == true ) {
 			//	System.out.print(stats.nextToken() + " | ");
 				returnVal = returnVal +  stats.nextToken();
