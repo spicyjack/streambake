@@ -6,7 +6,7 @@
  *
  * NOTE: Please do not e-mail the author directly regarding this code.  
  * The proper forum for support is the Streambake Google Groups list at
- * http://groups.google.com/group/streambake or <streambake@groups.google.com>
+ * http://groups.google.com/group/streambake or streambake@groups.google.com
  * 
  * Parse the contents of the Icecast status2.xsl or simple.xsl files passed in 
  * as @param status 
@@ -18,28 +18,45 @@ import java.util.regex.Pattern;
 public class ParseStatusTest {
 
 	public void parse(String parseText) {
-		String[] splitStr = parseText.split("<pre>");
-		splitStr = splitStr[1].split("</pre>");
+		String[] htmlSplitText = parseText.split("<pre>");
+		htmlSplitText = htmlSplitText[1].split("</pre>");
 		Pattern ampPatt = Pattern.compile("&amp;");
-		Matcher ampMatch = ampPatt.matcher(splitStr[0]);
+		Matcher ampMatch = ampPatt.matcher(htmlSplitText[0]);
 		String filteredString = ampMatch.replaceAll("&");
-		System.out.println("Split string 0: " + splitStr[0]);
-		// splitStr[0] should be the output stripped of the XML/HTML tags
-		// FIXME do a test here to see what line is being printed
-		// 1) status2.xsl headers
-		// 2) status2.xsl server stats
-		// 3) status2.xsl mount stats
-		// 4) simple.xsl server stats (split on comma, combine date blocks)
-		// 5) simple.xsl headers (split on comma)
-		// 6) simple.xsl mount stats (split on comma, combine date blocks)
-		//StringTokenizer statBlock = new StringTokenizer(filteredString, ";");
+		//System.out.println("Split string 0: " + htmlSplitText[0]);
+		// htmlSplitText[0] should be the output stripped of the XML/HTML tags
+        // split the HTML output on semicolons, this gets us the lines of
+        // output
 		String[] statBlock = filteredString.split(";");
-		System.out.println(
-            "There are " + statBlock.length + " lines in this file");
-		for ( int x = 0; x == statBlock.length; x++) {
-	        System.out.println("- " + statBlock[x]);		
-		}
-//		String parsed = "";
-//		return parsed;
-	}
-}
+        // these only get set once below
+        String[] serverStats = {};
+        String[] statHeaders = {};
+        // for each line of output...
+		for ( String statLine : statBlock ) {
+            // this gets reset through every loop
+            String[] statFields = {};
+		    Pattern serverStartPatt = Pattern.compile("^Server Start");
+		    Pattern mountPointPatt = Pattern.compile("^Mount Point");
+            // server stats
+            if ( serverStartPatt.matcher(statLine).lookingAt() ) {
+                serverStats = statLine.split("\\|");
+                System.out.println("==== Server Statistics ====");
+                for ( String thisField : serverStats ) {
+    	            System.out.println("- " + thisField);		
+                } // for ( String thisField : statFields )
+            // mountpoint headers and stats
+            } else if ( mountPointPatt.matcher(statLine).lookingAt() ) {
+                statHeaders = statLine.split("\\|");
+            } else {
+                statFields = statLine.split("\\|");
+                System.out.println(
+                    "==== Mount Point Statistics for " 
+                    + statFields[0] + " ====");
+                for ( int field = 0; field < statFields.length - 1; field++ ) {
+    	            System.out.println(statHeaders[field] 
+                        + ": " +  statFields[field]);
+                } // for ( int field = 0; field < statFields.length - 1;
+            } // if ( statFields[0].matches(mountPointPatt) )
+		} // for ( String statLine : statBlock )
+	} // public void parse(String parseText)
+} // public class ParseStatusTest
