@@ -14,9 +14,11 @@
 */
 
 // FIXME add a call to getopts so you can change the URL if you want
+import java.io.File;
 
 public class IcecastStatusTest {
 	static final String statURL = "http://stream.portaboom.com:7767/simple.xsl";
+    static final String fileName = "test.html";
 	/**
 	 * @param args
 	 */
@@ -24,8 +26,13 @@ public class IcecastStatusTest {
 		DownloadStatusTest dst = new DownloadStatusTest();
 		// FIXME read the file here
 		ParseStatusTest pst = new ParseStatusTest();
-		pst.parse( dst.fetch(statURL) );
-		//pst.parse(  );
-	}
-
-}
+        File parseFile = new File(fileName);
+        // use the local file first if the file exists
+        if ( parseFile.exists() ) {
+            System.out.println("File " + fileName + " found...");
+    		pst.parse( dst.readFile(fileName) );
+        } else {
+    		pst.parse( dst.fetchURL(statURL) );
+        } // if ( parseFile.exists() )
+	} // public static void main(String[] args)
+} // public class IcecastStatusTest

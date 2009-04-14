@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
 
 public class DownloadStatusTest {
 
@@ -25,7 +27,7 @@ public class DownloadStatusTest {
 	 * @param statURL The URL to fetch and parse the output of 
 	 */
 
-	public String fetch(String statURL) {
+	public String fetchURL(String statURL) {
 		String line = "", returnHTML = "";
         try {
             //System.err.println("*** Loading " + statURL + "... ***");
@@ -45,4 +47,24 @@ public class DownloadStatusTest {
 //        System.out.println(returnHTML);
         return returnHTML;
 	} // public static void main(String[] args)
+
+    public String readFile(String fileName) {
+		String line = "", returnText = "";
+        try {
+            //System.err.println("*** Loading " + statURL + "... ***");
+            BufferedReader is = new BufferedReader(new FileReader(fileName));
+            while ((line = is.readLine()) != null) {
+                returnText = returnText + line;
+            }
+            is.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("Read file failed: " + e);
+        } catch (IOException e) {
+            System.err.println("IOException: " + e);
+        } // try
+//        System.out.println("Downloaded status is:");
+//        System.out.println(returnHTML);
+        return returnText;
+       
+    } // public String readFile(String fileName)
 } // public static void main(String[] args)

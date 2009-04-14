@@ -12,8 +12,6 @@
  * as @param status 
 */
 
-
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,14 +32,12 @@ public class ParseStatusTest {
 		// 4) simple.xsl server stats (split on comma, combine date blocks)
 		// 5) simple.xsl headers (split on comma)
 		// 6) simple.xsl mount stats (split on comma, combine date blocks)
-		StringTokenizer statBlock = new StringTokenizer(filteredString, ";");
-		System.out.println("There are " + statBlock.countTokens() + " lines in this file");
-		while ( statBlock.hasMoreTokens() == true ) {
-			StringTokenizer stats = new StringTokenizer(statBlock.nextToken(), "|");
-			while ( stats.hasMoreTokens() == true ) {
-				System.out.print(stats.nextToken() + ";");	
-			}
-			System.out.println();
+		//StringTokenizer statBlock = new StringTokenizer(filteredString, ";");
+		String[] statBlock = filteredString.split(";");
+		System.out.println(
+            "There are " + statBlock.length + " lines in this file");
+		for ( int x = 0; x == statBlock.length; x++) {
+	        System.out.println("- " + statBlock[x]);		
 		}
 //		String parsed = "";
 //		return parsed;
