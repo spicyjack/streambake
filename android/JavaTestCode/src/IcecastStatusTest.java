@@ -32,6 +32,8 @@ public class IcecastStatusTest {
             System.out.println("File " + fileName + " found...");
     		pst.parse( dst.readFile(fileName) );
         } else {
+            System.out.println("File " + fileName + " not found.");
+            System.out.println("Parsing URL '" + statURL + "'.");
     		pst.parse( dst.fetchURL(statURL) );
         } // if ( parseFile.exists() )
 	} // public static void main(String[] args)
