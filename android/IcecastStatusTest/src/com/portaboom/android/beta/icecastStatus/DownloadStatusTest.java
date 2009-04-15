@@ -18,14 +18,18 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class DownloadStatusTest {
+import android.util.Log;
 
+public class DownloadStatusTest {
+	static final String TAG = "IcecastStatusTest";
 	/**
 	 * @param statURL The URL to fetch and parse the output of 
 	 */
 
 	public String fetch(String statURL) {
+		
 		String line = "", returnHTML = "";
+		int linesRead = 0;
         try {
             //System.err.println("*** Loading " + statURL + "... ***");
             URL webURL = new URL(statURL);
@@ -33,6 +37,7 @@ public class DownloadStatusTest {
                 new InputStreamReader(webURL.openStream()));
             while ((line = is.readLine()) != null) {
                 returnHTML = returnHTML + line;
+                linesRead++;
             }
             is.close();
         } catch (MalformedURLException e) {
@@ -42,6 +47,7 @@ public class DownloadStatusTest {
         } // try
 //        System.out.println("Downloaded status is:");
 //        System.out.println(returnHTML);
+        Log.v(TAG, "Read " + linesRead + " from " + statURL);
         return returnHTML;
 	} // public static void main(String[] args)
 } // public static void main(String[] args)

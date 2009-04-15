@@ -14,15 +14,11 @@ package com.portaboom.android.beta.icecastStatus;
  * as @param status 
 */
 
-// java
-//import java.io.BufferedReader;
-//import java.io.InputStreamReader;
-//import java.net.URL;
-
 // android imports
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,10 +41,13 @@ public class IcecastStatusTest extends Activity {
             //.show();
         }
 
+        // create the output text box
         ParseStatusTest pst = new ParseStatusTest();
         TextView tv = new TextView(this);
-        tv.setText( "Fetched: " + statURL + "\n" + pst.parse( fetchedText ) );
-        setContentView(tv);
+        tv.setText( "Status URL: " + statURL + "\n" + pst.parse( fetchedText ) );
+        ScrollView sv = new ScrollView(this);
+        sv.addView(tv);
+        setContentView(sv);
         //Object o = null;
         //o.toString();
         //setContentView(R.layout.main);
