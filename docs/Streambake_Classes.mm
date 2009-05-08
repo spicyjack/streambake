@@ -1,6 +1,9 @@
 <map version="0.8.1">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
-<node CREATED="1233304395904" ID="Freemind_Link_1654792231" MODIFIED="1233304403345" TEXT="Streambake Classes">
+<node CREATED="1233304395904" ID="Freemind_Link_1654792231" MODIFIED="1241810947332" TEXT="Streambake Classes">
+<hook NAME="accessories/plugins/NodeNote.properties">
+<text>- Rip test CD&apos;s, tag with metadata and images &#xa;  - You could also use the pre-ripped WAV files with the discid&#xa;- Write test classes&#xa;- Write Streambake::Media classes that work with the tests&#xa;- Write a &apos;setup.pl&apos; script that verifies Perl modules and external binaries &#xa;  (tests for versions on external binaries)</text>
+</hook>
 <node CREATED="1233304631794" ID="_" MODIFIED="1233305050060" POSITION="right" TEXT="Streambake::Gaffer (Master)">
 <node CREATED="1233305190788" ID="Freemind_Link_1474575991" MODIFIED="1233305206423" TEXT="Gets files to play from all of the different sources"/>
 <node CREATED="1233305250942" ID="Freemind_Link_1570967488" MODIFIED="1233305261689" TEXT="Forks into the backround if requested"/>
@@ -9,9 +12,9 @@
 </node>
 </node>
 <node CREATED="1233304989950" ID="Freemind_Link_405302902" MODIFIED="1233305034779" POSITION="left" TEXT="Streambake::Streamer">
-<node CREATED="1233305210093" ID="Freemind_Link_1728015199" MODIFIED="1233305217177" TEXT="Reads files from the filesystem"/>
+<node CREATED="1233305210093" ID="Freemind_Link_1728015199" MODIFIED="1241810806084" TEXT="Reads files from the filesystem"/>
 <node CREATED="1233305219677" ID="Freemind_Link_824648443" MODIFIED="1233305225305" TEXT="Reencodes files as needed"/>
-<node CREATED="1233305227453" ID="Freemind_Link_995449501" MODIFIED="1233305237344" TEXT="Sends the MP3/OGG data to the server"/>
+<node CREATED="1233305227453" ID="Freemind_Link_995449501" MODIFIED="1241810731711" TEXT="Sends the MP3/OGG data to the server"/>
 <node CREATED="1233305240549" ID="Freemind_Link_48684663" MODIFIED="1233305247218" TEXT="Definitely threaded"/>
 </node>
 <node CREATED="1233305302896" ID="Freemind_Link_724834274" MODIFIED="1233305307899" POSITION="right" TEXT="Streambake::Media">
@@ -24,12 +27,18 @@
 <node CREATED="1233904769103" ID="Freemind_Link_908664569" MODIFIED="1234341652590" TEXT="Audio::TagLib"/>
 </node>
 </node>
-<node CREATED="1233478646589" ID="Freemind_Link_522835197" MODIFIED="1233478660283" POSITION="left" TEXT="Streambake::Check">
-<node CREATED="1233478663405" ID="Freemind_Link_985722942" MODIFIED="1233478681786" TEXT="Allows for checks before streaming a file"/>
+<node CREATED="1233478646589" ID="Freemind_Link_522835197" MODIFIED="1241810779554" POSITION="left" TEXT="Streambake::Check">
+<node CREATED="1233478663405" ID="Freemind_Link_985722942" MODIFIED="1241810841005" TEXT="Allows for checks before streaming a file"/>
 <node CREATED="1233478683317" ID="Freemind_Link_1964702150" MODIFIED="1233478693521" TEXT="Streambake::Check::SkipFile"/>
 <node CREATED="1233478694974" ID="Freemind_Link_747898751" MODIFIED="1233478703009" TEXT="Streambake::Check::Rating"/>
 <node CREATED="1234341208331" ID="Freemind_Link_1042903480" MODIFIED="1234341217908" TEXT="Streambake::Check::FileExists"/>
 <node CREATED="1234341218670" ID="Freemind_Link_1072411722" MODIFIED="1234341239882" TEXT="Streambake::Check::ShareAvailable"/>
+</node>
+<node CREATED="1241810645822" ID="Freemind_Link_762404898" MODIFIED="1241810651822" POSITION="right" TEXT="Streambake::Source">
+<node CREATED="1241810652431" ID="Freemind_Link_1289622967" MODIFIED="1241810656493" TEXT="File"/>
+<node CREATED="1241810657853" ID="Freemind_Link_1282600560" MODIFIED="1241810662915" TEXT="iPod"/>
+<node CREATED="1241810665649" ID="Freemind_Link_786876555" MODIFIED="1241810667696" TEXT="HTTP"/>
+<node CREATED="1241810668978" ID="Freemind_Link_1099182109" MODIFIED="1241810671196" TEXT="FTP"/>
 </node>
 </node>
 </map>
