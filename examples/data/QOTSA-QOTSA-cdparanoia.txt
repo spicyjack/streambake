@@ -1,0 +1,37 @@
+cdparanoia III release 9.8 (March 23, 2001)
+(C) 2001 Monty <monty@xiph.org> and Xiphophorus
+
+Report bugs to paranoia@xiph.org
+http://www.xiph.org/paranoia/
+
+track_num = 160 start sector 4350 msf: 1,0,0
+track_num = 161 start sector 49350 msf: 11,0,0
+track_num = 162 start sector 209492 msf: 46,35,17
+track_num = 1 start sector 0 msf: 0,2,0
+track_num = 2 start sector 20642 msf: 4,37,17
+track_num = 3 start sector 35837 msf: 7,59,62
+track_num = 4 start sector 50880 msf: 11,20,30
+track_num = 5 start sector 73630 msf: 16,23,55
+track_num = 6 start sector 92845 msf: 20,39,70
+track_num = 7 start sector 108662 msf: 24,10,62
+track_num = 8 start sector 130742 msf: 29,5,17
+track_num = 9 start sector 143110 msf: 31,50,10
+track_num = 10 start sector 172655 msf: 38,24,5
+track_num = 11 start sector 186887 msf: 41,33,62
+
+Table of contents (audio tracks only):
+track        length               begin        copy pre ch
+===========================================================
+  1.    20642 [04:35.17]        0 [00:00.00]    no   no  2
+  2.    15195 [03:22.45]    20642 [04:35.17]    no   no  2
+  3.    15043 [03:20.43]    35837 [07:57.62]    no   no  2
+  4.    22750 [05:03.25]    50880 [11:18.30]    no   no  2
+  5.    19215 [04:16.15]    73630 [16:21.55]    no   no  2
+  6.    15817 [03:30.67]    92845 [20:37.70]    no   no  2
+  7.    22080 [04:54.30]   108662 [24:08.62]    no   no  2
+  8.    12368 [02:44.68]   130742 [29:03.17]    no   no  2
+  9.    29545 [06:33.70]   143110 [31:48.10]    no   no  2
+ 10.    14232 [03:09.57]   172655 [38:22.05]    no   no  2
+ 11.    22605 [05:01.30]   186887 [41:31.62]    no   no  2
+TOTAL  209492 [46:33.17]    (audio only)
+
