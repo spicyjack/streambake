@@ -8,8 +8,6 @@
 
 # License terms at the bottom of this file
 
-# quick demo of Audio::CD
-
 use strict;
 use warnings;
 use CDDB;
