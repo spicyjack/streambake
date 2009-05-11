@@ -1,0 +1,26 @@
+cdparanoia III release 10pre0 (August 29, 2006)
+(C) 2006 Monty <monty@xiph.org> and Xiph.Org
+
+FreeBSD porting (c) 2003
+	Simon 'corecode' Schubert <corecode@corecode.ath.cx>
+
+Report bugs to paranoia@xiph.org
+http://www.xiph.org/paranoia/
+
+
+
+Table of contents (audio tracks only):
+track        length               begin        copy pre ch
+===========================================================
+  1.     6419 [01:25.44]        0 [00:00.00]    no   no  2
+  2.    17710 [03:56.10]     6419 [01:25.44]    no   no  2
+  3.    17217 [03:49.42]    24129 [05:21.54]    no   no  2
+  4.    19440 [04:19.15]    41346 [09:11.21]    no   no  2
+  5.    21383 [04:45.08]    60786 [13:30.36]    no   no  2
+  6.    22167 [04:55.42]    82169 [18:15.44]    no   no  2
+  7.    15726 [03:29.51]   104336 [23:11.11]    no   no  2
+  8.    34014 [07:33.39]   120062 [26:40.62]    no   no  2
+  9.    20836 [04:37.61]   154076 [34:14.26]    no   no  2
+ 10.    22455 [04:59.30]   174912 [38:52.12]    no   no  2
+TOTAL  197367 [43:51.42]    (audio only)
+
