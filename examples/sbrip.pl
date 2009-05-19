@@ -38,7 +38,7 @@ my $cddbp = new CDDB(
 ) or die $!;
 
 my @genres = $cddbp->get_genres();
-print qq(Genres: ) . join(q(, ), @genres) . qq(\n);
+#print qq(Genres: ) . join(q(, ), @genres) . qq(\n);
 
 my @toc = (
     # QOTSA - QOTSA
@@ -52,7 +52,7 @@ my @toc = (
     q(  8   29 03 17), 
     q(  9   31 48 10), 
     q( 10   38 22 05), 
-    q( 10   41 31 62), 
+    q( 11   41 31 62), 
     q(999   46 33 17)
 ); # my @toc
 
@@ -64,7 +64,7 @@ my (
     $total_seconds  # total play time, in seconds (for cddbp queries)
 ) = $cddbp->calculate_id(@toc);
 
-print qq(Found disc id $cddbp_id for TOC\n);
+print qq(Computed disc id $cddbp_id for TOC\n);
 
 exit 0;
 
