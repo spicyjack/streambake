@@ -1,0 +1,242 @@
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	1
+Trackstart=	0
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	20642, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	2
+Trackstart=	20642
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	15195, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	3
+Trackstart=	35837
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	15043, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	4
+Trackstart=	50880
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	22750, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	5
+Trackstart=	73630
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	19215, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	6
+Trackstart=	92845
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	15817, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	7
+Trackstart=	108662
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	22080, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	8
+Trackstart=	130742
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	12368, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	9
+Trackstart=	143110
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	29545, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	10
+Trackstart=	172655
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	14232, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
+#created by icedax 1.1.2 05/21/09 09:26:11
+#
+CDINDEX_DISCID=	'2Fdj1W1tP2HAXdrOQFF7SM6u3DQ-'
+CDDB_DISCID=	0x980ae90b
+MCN=		
+ISRC=		               
+#
+Albumperformer=	''
+Performer=	''
+Albumtitle=	''
+Tracktitle=	''
+Tracknumber=	11
+Trackstart=	186887
+# track length in sectors (1/75 seconds each), rest samples
+Tracklength=	22605, 0
+Pre-emphasis=	no
+Channels=	2
+Copy_permitted=	once (copyright protected)
+Endianess=	little
+# index list
+Index=		0 
+Index0=		-1 
