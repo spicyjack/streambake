@@ -1,0 +1,58 @@
+Cdrdao version 1.2.2 - (C) Andreas Mueller <andreas@daneb.de>
+  SCSI interface library - (C) Joerg Schilling
+  Paranoia DAE library - (C) Monty
+
+Check http://cdrdao.sourceforge.net/drives.html#dt for current driver tables.
+
+Using libscg version 'schily-0.8'
+
+/dev/cdrom: MATSHITA CD-RW  CW-8124	Rev: DZ13
+Using driver: Generic SCSI-3/MMC - Version 2.0 (options 0x0000)
+
+
+Track   Mode    Flags  Start                Length
+------------------------------------------------------------
+ 1      AUDIO   0      00:00:00(     0)     04:35:17( 20642)
+ 2      AUDIO   0      04:35:17( 20642)     03:22:45( 15195)
+ 3      AUDIO   0      07:57:62( 35837)     03:20:43( 15043)
+ 4      AUDIO   0      11:18:30( 50880)     05:03:25( 22750)
+ 5      AUDIO   0      16:21:55( 73630)     04:16:15( 19215)
+ 6      AUDIO   0      20:37:70( 92845)     03:30:67( 15817)
+ 7      AUDIO   0      24:08:62(108662)     04:54:30( 22080)
+ 8      AUDIO   0      29:03:17(130742)     02:44:68( 12368)
+ 9      AUDIO   0      31:48:10(143110)     06:33:70( 29545)
+10      AUDIO   0      38:22:05(172655)     03:09:57( 14232)
+11      AUDIO   0      41:31:62(186887)     05:01:30( 22605)
+Leadout AUDIO   0      46:33:17(209492)
+
+PQ sub-channel reading (audio track) is supported, data format is BCD.
+Raw P-W sub-channel reading (audio track) is supported.
+Analyzing track 01 (AUDIO): start 00:00:00, length 04:35:17...
+Analyzing track 02 (AUDIO): start 04:35:17, length 03:22:45...
+Analyzing track 03 (AUDIO): start 07:57:62, length 03:20:43...
+Analyzing track 04 (AUDIO): start 11:18:30, length 05:03:25...
+Analyzing track 05 (AUDIO): start 16:21:55, length 04:16:15...
+Analyzing track 06 (AUDIO): start 20:37:70, length 03:30:67...
+Analyzing track 07 (AUDIO): start 24:08:62, length 04:54:30...
+Analyzing track 08 (AUDIO): start 29:03:17, length 02:44:68...
+Analyzing track 09 (AUDIO): start 31:48:10, length 06:33:70...
+Analyzing track 10 (AUDIO): start 38:22:05, length 03:09:57...
+Analyzing track 11 (AUDIO): start 41:31:62, length 05:01:30...
+        	
+CDDB: Connecting to cddbp://freedb.freedb.org:888 ...
+CDDB: Ok.
+Reading CDDB record for: 980ae90b-rock-Queens Of The Stone Age / Queens Of The Stone Age
+Artist: Queens Of The Stone Age
+Title: Queens Of The Stone Age
+Ext: 1998
+Track 01: Regular John
+Track 02: Avon
+Track 03: If Only
+Track 04: Walkin' On The Sidewalks
+Track 05: You Would Know
+Track 06: How To Handle A Rope
+Track 07: Mexicola
+Track 08: Hispanic Impressions
+Track 09: You Can't Quit Me Baby
+Track 10: Give The Mule What He Wants
+Track 11: I Was A Teenage Hand Model
