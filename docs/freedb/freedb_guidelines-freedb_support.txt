@@ -1,0 +1,150 @@
+Introduction
+Since we noticed, that freedb support in many programs is not as good as it
+could be, we thought it might be a good idea to create something like a
+checklist you can use, when adding freedb support to your program. Please read
+this document carefully when adding freedb support to a program, as it tries to
+help you to do things as good as possible.
+
+If you add freedb support to a program or change parts of your program
+concerning freedb support, we would be glad, if you would provide us with a
+testing-version of your program, so we can test it ourselves and notify you, if
+something doesn't work as it should (applies only to programs running on
+Windows and Linux/Unix as we cannot test programs running on other systems
+ourselves).  If you inform us about a new release adding freedb support to your
+application or including major improvements in freedb support, we're also
+willing to put a note about that on our web site. Additionally the program can
+be added to our list of freedb aware applications.  Unfortunately we cannot
+promise, that we will test your application, because our volunteer staff is
+pretty small and keeping the server alive, releasing database archives etc. has
+obviously priority over other tasks.
+
+General:
+
+    * Please support submit to freedb, to give users chance to support freedb
+by submitting information for unknown discs. This is very important for the
+freedb concept to work, since freedb is completely dependent on users
+submitting information about new CD's.
+    * Please consider supporting the offline database in Windows- and
+Unix-format (you can find more information on the Windows- and Unix-format in
+freedb-howto). Many users download the database archives to avoid having to go
+online for each freedb query.
+    * Make absolutely sure that the disc ID is generated correctly. For CD
+Extra CD's you have to include the data-track for the disc ID and track
+offsets! This can be somewhat tricky, since you cannot use the MCI-interface to
+get the TOC - it will not report the data-track! For Windows you will have to
+use ASPI (or native NT calls in NT/2000) as a workaround. To check if your
+program is generating the disc ID correctly, please compare the results of your
+program with the disc ID xmcd generates for as large a number of CDs as
+possible if you have access to a Linux system. For Windows you can also use the
+Disc ID calculator, which you can find in our download/misc section.
+    * Provide support for http-proxies - users behind restrictive firewalls
+might need to use a proxy.
+    * Please consider supporting batch queries/submits, so that the user
+doesn't have to be online for each CD he wants to query or submit.
+    * When naming freedb, name it freedb or freedb.org - not freecddb, FreeDB
+or anything else.
+    * If connecting to the freedb-server fails or no matching entry was found,
+present the user an appropriate error-message (this applies of course to query
+and submit).
+    * Please consider also supporting the EXT-fields of the database entries to
+give users a chance to see and add additional info on the CD or specific tracks
+to the database entry (see the database format specification for more info on
+the EXT-fields).
+
+Config:
+
+    * Give the user the possibility to specify a server manually (so he can use
+a local server).
+    * Provide the user with an option to get the sites-list from the actually
+selected server (if that doesn't work, try getting it from freedb.freedb.org)
+    * When presenting the sites-list to the user, also show the
+location-information received when using the sites-command
+    * Make the cgi-path for http-access user-configurable. Although we do not
+intend to change the default path, users running the freedb server software on
+a local server may be using use a different path.
+    * Make the submit-e-mail-address for e-mail-submission user-configurable.
+The possibility to change the e-mail-submission-address can be used to make
+test submissions to the test-submit-address (which might be useful to analyze
+possible problems) or to allow submit to a private local server
+    * If you support cddbp, let the user specify the port for cddbp-access.
+Port 8880 should be default, since it causes less problems with firewalls than
+the "old" port 888 (which is still supported by our servers).
+    * When using the e-mail-submit-method, allow specifying a mail server to be used for sending the e-mail to.
+    * Let the user specify an e-mail-address, which you use for requests and
+submits. You may use a predefined (fake-)e-mail-address for requests, if you
+are concerned about privacy (although we assure, that we do not use the
+e-mail-addresses provided for freedb access for anything), while you may never
+submit to freedb, if the user hasn't specified an e-mail-address himself, as we
+must be able to send a possible rejection-notice to the user.
+
+Access:
+
+    * Every application should use the http-method to access freedb, since
+cddbp access often causes problems with firewalls preventing the communication
+via port 888 or 8880. You may additionally offer the possibility to use cddbp
+instead, however.
+    * Always use the highest supported protocol level (currently level 6, which
+brings Unicode (UTF-8) support).
+    * Make sure, that inexact matches (return-code 211) and multiple exact
+matches (return-code 210) are supported and present the list of possible
+matches to the user, to select the correct entry.
+    * Always do a query before reading from the database.
+    * Do only fetch the sites list if the user asks for it! Fetching it more
+often (e.g. before every query) puts unnecessary strain on our servers and
+should be avoided!
+    * Always specify the programs own name and full version, when accessing the
+server.
+    * When using http-access, please make sure, that you don't use something
+like
+      POST http://selected_server/~cddb/cddb.cgi HTTP/1.0
+      Instead use
+      POST /~cddb/cddb.cgi HTTP/1.0
+      (same applies to GET)
+      Although both methods work with the official servers, only the later
+complies to the RFC's, since the former may only be used when the request is
+being made to a proxy (see RFC1945). The former command-syntax can cause
+problems on private freedb servers.
+    * Make sure that you support information split to two or more lines (for
+more info on this take a look at the database format specification).
+
+Submit:
+
+    * Make sure submissions are submitted in the 7bit US-ASCII, in the
+ISO-8859-1 or in the UTF-8 character set. Other character sets are not
+supported. If all submissions should be sent in UTF-8.
+    * When submitting by e-mail and using the ISO-8859-1 or UTF-8 character
+set, you should use the MIME "quoted-printable" or "base64" scheme to encode
+the message to avoid the risk, that the 8th bit is stripped off during e-mail
+submit.
+    * Please consider using the X-Cddbd-Note:-header in the submit-e-mail or
+for http-submit. For more information on the X-Cddbd-Note:-header, please check
+the freedb-howto.
+    * Check, that none of the fields are empty and no field contains the
+default-string (this also applies to the genre: please set no default for the
+genre for an unknown disc, but let the user choose the genre).
+    * Always specify the name and the full version of your program in the
+submitted entry - if it's an alpha or beta, also state that (check database
+format specification for more info how the format for this is).
+    * When submitting a new entry to the freedb, the revision specified in the
+submitted entry should be 0.
+    * When submitting an entry received from freedb and modified by a user,
+increment the revision number by one (since entries having the same or a lower
+revision than an existing entry will be discarded).
+    * When submitting an entry received from freedb and modified by a user, the
+genre category of the entry should be pre-selected and not editable for submit,
+since resubmitting an entry to a different category will not overwrite the old
+entry, but additionally create a new entry in the new category. This is only
+necessary for the general genre category, not for the specific genre specified
+in the DGENRE field of an entry, which may of course be updated.
+    * Do NOT hardlink genres (specified on the DGENRE line in the database
+entry) to categories! In case of a disc ID collision, a user might need to
+submit to a different (wrong) category to get the CD into freedb. If genre and
+category were hardlinked, this would mean that the user would also have to
+specify an incorrect genre!
+    * Make sure, that lines in the submission are no longer than 256 chars. If
+the line is longer, you have to split the information to two or more lines (you
+can find more information on this in the database format specification).
+    * When submitting information from a local entry or resubmitting an entry
+received from freedb after the user has made changes to it, make sure that you
+correct the track-offset and disc ID information for the inserted CD.
+
