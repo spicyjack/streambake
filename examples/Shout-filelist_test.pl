@@ -11,7 +11,7 @@ my $conn = new Shout;
 my $server = q(localhost);
 my $port = q(7767);
 my $user = q(source);
-my $mountpoint = q(stash);
+my $mountpoint = q(vault);
 
 my $icepass;
 if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
@@ -27,8 +27,8 @@ if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
 $conn->host($server);
 $conn->port($port);
 $conn->mount($mountpoint);
-$conn->name(q(Spicyjack's Sekret Stash));
-$conn->url(q(http://stream.portaboom.com:7767/stash));
+$conn->name(q(Spicyjack's Vault));
+$conn->url(q(http://stream.portaboom.com:7767/vault));
 $conn->description(q(Created with 'Streambake'...));
 $conn->user($user);
 $conn->password($icepass);
@@ -40,7 +40,7 @@ $conn->set_audio_info(SHOUT_AI_BITRATE => 256, SHOUT_AI_SAMPLERATE => 44100);
 # try to connect
 if ($conn->open) {
     warn qq(Connected to server '$server:$port' at )
-        . qq(mountpoint $mountpoint as user '$user'\n);
+        . qq(mountpoint '$mountpoint' as user '$user'\n);
     # read in the playlist from STDIN
     my @playlist = <STDIN>;
     # make a copy of the playlist before we start munging it
