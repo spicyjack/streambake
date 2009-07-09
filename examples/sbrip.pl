@@ -8,10 +8,12 @@
 
 # License terms at the bottom of this file
 
+# pragmas
 use strict;
 use warnings;
-use CDDB;
+# modules
 use Getopt::Long;
+use LWP::UserAgent;
 use Log::Log4perl qw(get_logger);
 use Log::Log4perl::Level;
 use Pod::Usage;
@@ -30,46 +32,37 @@ $go->getoptions(
     q(colorlog!)                    => \$colorlog,
 ); # $goparse->getoptions
 
-my $cddbp = new CDDB(
-    Host  => 'freedb.freedb.org', # default
-    Port  => 8880,                # default
-    #Login => $login_id,           # defaults to %ENV's
-    Login => q(win32usr),          # defaults to %ENV's
-) or die $!;
+# create the object
 
-my @genres = $cddbp->get_genres();
-#print qq(Genres: ) . join(q(, ), @genres) . qq(\n);
+# give it a pretty name
+my $version = q(Streambake 0.01);
 
-my @toc = (
-    # QOTSA - QOTSA
-    q(  1    0  2  0),
-    q(  2    4 35 17),
-    q(  3    7 57 62),
-    q(  4   11 18 30), 
-    q(  5   16 21 55), 
-    q(  6   20 37 70), 
-    q(  7   24 08 62), 
-    q(  8   29 03 17), 
-    q(  9   31 48 10), 
-    q( 10   38 22 05), 
-    q( 11   41 31 62), 
-    q(999   46 35 17)
-); # my @toc
+my $cddb_url = q(http://freedb.freedb.org/~cddb/cddb.cgi);
+my $get_url = qq($cddb_url?cmd=cddb+query+03015501+1+296+344);
 
-my (
-    $cddbp_id,      # used for further cddbp queries
-    $track_numbers, # padded with 0's (for convenience)
-    $track_lengths, # length of each track, in MM:SS format
-    $track_offsets, # absolute offsets (used for further cddbp queries)
-    $total_seconds  # total play time, in seconds (for cddbp queries)
-) = $cddbp->calculate_id(@toc);
+fetch_url($get_url, $version);
 
-print qq(Computed disc id $cddbp_id for TOC\n);
+$get_url = qq($cddb_url?cmd=cddb+query+11+20642+35837+50880+73630)
+    . q(92845+108662+130742+143110+172655+186887+209492);
+fetch_url($get_url, $version);
 
-exit 0;
+sub fetch_url {
+    my $url = shift;
+    my $cgi_version = shift;
 
-my $disc = $cddbp->get_disc_details($discid, q(newage));
-print qq(Disc title is ) . $disc->{title} . qq(\n);
+    $cgi_version =~ s/ /+/;
+    $url .= qq(&hello=user+example.com+$cgi_version&proto=4);
+    my $ua = LWP::UserAgent->new();
+    $ua->agent( $version . q(;) . $ua->agent() );
+    print qq(URL is:\n$url\n);
+    my $req = HTTP::Request->new( GET => $url );
+    my $resp = $ua->request($req);
+    if ( $resp->is_success() ) {
+        print $resp->decoded_content();
+    } else {
+        print q(ERROR: ) . $resp->status_line. qq(\n);
+    }
+} # sub fetch_url
 
 ### BEGIN LICENSE TERMS ###
 #   This program is free software; you can redistribute it and/or modify

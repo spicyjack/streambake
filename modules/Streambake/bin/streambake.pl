@@ -1,4 +1,4 @@
-package Streambake;
+#!/usr/bin/env perl
 
 use warnings;
 use strict;
@@ -18,35 +18,14 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
-    use Streambake;
-
-    my $foo = Streambake->new();
-    ...
-
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
-
-=head2 function1
+The C<streambake.pl> script parses the command line and configuration files,
+and sets up all of the required objects needed to run a Streambake session.
 
 =cut
 
-sub function1 {
-}
+# load modules here?
 
-=head2 function2
-
-=cut
-
-sub function2 {
-}
+=pod
 
 =head1 AUTHOR
 
