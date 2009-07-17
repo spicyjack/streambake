@@ -39,12 +39,12 @@ $go->getoptions(
 # create the object
 
 # give it a pretty name
-my $version = q(Streambake 0.01);
+our $VERSION = q(0.01);
 
 my $cddb_url = q(http://freedb.freedb.org/~cddb/cddb.cgi);
 my $get_url = qq($cddb_url?cmd=cddb+query+03015501+1+296+344);
 
-fetch_url($get_url, $version);
+fetch_url($get_url, $VERSION);
 
 # track offsets of all of the tracks from 2-*, followed by the disc length in
 # frames
@@ -67,7 +67,7 @@ my $disc_seconds = int($disc_length / 75);
 $get_url = $get_url . (scalar(@offset_tracks) + 1) . qq(+$disc_offset+) 
     . join(q(+), @offset_tracks) . qq(+$disc_seconds);
 
-fetch_url($get_url, $version);
+fetch_url($get_url, $VERSION);
 
 exit 0;
 
@@ -75,10 +75,9 @@ sub fetch_url {
     my $url = shift;
     my $cgi_version = shift;
 
-    $cgi_version =~ s/ /+/;
-    $url .= qq(&hello=user+example.com+$cgi_version&proto=4);
+    $url .= qq(&hello=user+example.com+Streambake+$cgi_version&proto=4);
     my $ua = LWP::UserAgent->new();
-    $ua->agent( $version . q(;) . $ua->agent() );
+    $ua->agent( q(Streambake ) . $cgi_version . q(;) . $ua->agent() );
     print qq(URL is:\n$url\n);
     my $req = HTTP::Request->new( GET => $url );
     my $resp = $ua->request($req);
