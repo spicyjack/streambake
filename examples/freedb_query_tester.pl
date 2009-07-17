@@ -40,11 +40,26 @@ my $version = q(Streambake 0.01);
 my $cddb_url = q(http://freedb.freedb.org/~cddb/cddb.cgi);
 my $get_url = qq($cddb_url?cmd=cddb+query+03015501+1+296+344);
 
-fetch_url($get_url, $version);
+#fetch_url($get_url, $version);
 
-$get_url = qq($cddb_url?cmd=cddb+query+11+20642+35837+50880+73630)
-    . q(92845+108662+130742+143110+172655+186887+209492);
-fetch_url($get_url, $version);
+# track offsets of all of the tracks from 2-*, followed by the disc length in
+# frames
+my $disc_offset = 150;
+my @bare_tracks = ( 
+    20642, 35837, 50880, 73630, 92845, 108662, 
+    130742, 143110, 172655, 186887, 209492
+);
+my @offset_tracks
+foreach
+$get_url = qq($cddb_url?cmd=cddb+query+980ae90b+);
+
+#$get_url = qq($cddb_url?cmd=cddb+query+be0c750c+12+150+19880+41647+62220)
+#    . q(+79077+102055+119665+141680+162450+185487+199952+217137+3191);
+print qq(URL is:\n);
+print $get_url . qq(\n);
+#fetch_url($get_url, $version);
+
+exit 0;
 
 sub fetch_url {
     my $url = shift;
