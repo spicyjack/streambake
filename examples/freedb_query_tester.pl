@@ -41,45 +41,47 @@ $go->getoptions(
 # give it a pretty name
 our $VERSION = q(0.01);
 
-my $cddb_url = q(http://freedb.freedb.org/~cddb/cddb.cgi);
-my $get_url = qq($cddb_url?cmd=cddb+query+03015501+1+296+344);
+
+my $get_url = qq(cmd=cddb+query+03015501+1+296+344);
+my $disc_id = q(03015501);
+# leadout is the location of the last bit of data
+my $leadout = 344;
+# list of starting points for tracks
+my @bare_tracks = (146);
 
 fetch_url($get_url, $VERSION);
 
-# track offsets of all of the tracks from 2-*, followed by the disc length in
-# frames
-my $disc_offset = 150;
-my $disc_id = q(980ae90b);
-my @bare_tracks = ( 
+# QOTSA - QOTSA
+# CDDB disc ID computed with an external program
+$disc_id = q(980ae90b);
+$leadout = 209492;
+@bare_tracks = ( 
     20642, 35837, 50880, 73630, 92845, 108662, 
-    130742, 143110, 172655, 186887, 209492
+    130742, 143110, 172655, 186887
 );
-my @offset_tracks;
-my $freedb_tracks;
-foreach my $track ( @bare_tracks ) {
-    push(@offset_tracks, $track + $disc_offset);
-} # foreach my $track ( @bare_tracks )
+fetch_url(create_freedb_query($disc_id, $leadout, @bare_tracks), $VERSION);
 
-$get_url = qq($cddb_url?cmd=cddb+query+$disc_id+);
-my $disc_length = pop(@offset_tracks);
-my $disc_seconds = int($disc_length / 75);
-
-$get_url = $get_url . (scalar(@offset_tracks) + 1) . qq(+$disc_offset+) 
-    . join(q(+), @offset_tracks) . qq(+$disc_seconds);
-
-fetch_url($get_url, $VERSION);
+# Ben Harper and The Relentless 7 - White Lies For Dark Times
+$disc_id = q(9c0b1b0b);
+$leadout = 213285;
+@bare_tracks = (
+    13940, 36582, 50549, 69671, 90909, 111471, 
+    130442, 152699, 170300, 193124
+);
+fetch_url(create_freedb_query($disc_id, $leadout, @bare_tracks), $VERSION);
 
 exit 0;
 
 sub fetch_url {
-    my $url = shift;
+    my $query = shift;
     my $cgi_version = shift;
 
-    $url .= qq(&hello=user+example.com+Streambake+$cgi_version&proto=4);
+    my $cddb_url = q(http://freedb.freedb.org/~cddb/cddb.cgi);
+    $query .= qq(&hello=user+example.com+Streambake+$cgi_version&proto=4);
     my $ua = LWP::UserAgent->new();
     $ua->agent( q(Streambake ) . $cgi_version . q(;) . $ua->agent() );
-    print qq(URL is:\n$url\n);
-    my $req = HTTP::Request->new( GET => $url );
+    print qq(URL is:\n$cddb_url?$query\n);
+    my $req = HTTP::Request->new( GET => qq($cddb_url?$query) );
     my $resp = $ua->request($req);
     if ( $resp->code() == HTTP_OK ) {
         print q(HTTP 200 -> CDDBP ) . $resp->decoded_content();
@@ -90,6 +92,26 @@ sub fetch_url {
     } # if ( $resp->code() = HTTP_OK )
 
 } # sub fetch_url
+
+sub create_freedb_query {
+    my $disc_id = shift;
+    my $leadout = shift;
+    my @bare_tracks = @_;
+
+    my @offset_tracks;
+    my $disc_offset = 150;
+    my $freedb_tracks;
+    foreach my $track ( @bare_tracks ) {
+        push(@offset_tracks, $track + $disc_offset);
+    } # foreach my $track ( @bare_tracks )
+
+    my $query_url = qq(cmd=cddb+query+$disc_id+);
+    my $disc_seconds = int( ($leadout + $disc_offset) / 75);
+
+    $query_url .= (scalar(@offset_tracks) + 1) . qq(+$disc_offset+) 
+        . join(q(+), @offset_tracks) . qq(+$disc_seconds);
+    return $query_url;
+}
 
 ### BEGIN LICENSE TERMS ###
 #   This program is free software; you can redistribute it and/or modify
