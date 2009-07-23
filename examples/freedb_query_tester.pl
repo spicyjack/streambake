@@ -55,18 +55,31 @@ fetch_url($get_url, $VERSION);
 # CDDB disc ID computed with an external program
 $disc_id = q(980ae90b);
 $leadout = 209492;
-@bare_tracks = ( 
-    20642, 35837, 50880, 73630, 92845, 108662, 
-    130742, 143110, 172655, 186887
+@bare_tracks = qw( 
+    20642 35837 50880 73630 92845 108662 130742 143110 172655 186887
 );
 fetch_url(create_freedb_query($disc_id, $leadout, @bare_tracks), $VERSION);
 
 # Ben Harper and The Relentless 7 - White Lies For Dark Times
 $disc_id = q(9c0b1b0b);
 $leadout = 213285;
-@bare_tracks = (
-    13940, 36582, 50549, 69671, 90909, 111471, 
-    130442, 152699, 170300, 193124
+@bare_tracks = qw(
+    13940 36582 50549 69671 90909 111471 130442 152699 170300 193124
+);
+
+# St. Vincent - Actor
+# missing!
+$disc_id = q(90092d0b);
+$leadout = 176215;
+@bare_tracks = qw(
+    18363 34522 50332 60460 79314 92944 108252 124997 143375 167683   
+);
+
+# Dirty Projectors - Bitte Orca
+$disc_id = q(6609a709);
+$leadout = 185329;
+@bare_tracks = qw(
+    17619 40510 53196 76770 93396 122509 141794 159443
 );
 fetch_url(create_freedb_query($disc_id, $leadout, @bare_tracks), $VERSION);
 
