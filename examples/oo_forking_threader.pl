@@ -23,11 +23,15 @@
 
 =head1 NAME
 
-forking_threader.pl - a demo of threaded forks
+oo_forking_threader.pl - a demo of threaded forks
 
 =head1 DESCRIPTION
 
-B<forking_threader.pl> demonstrates threading after forking
+B<oo_forking_threader.pl> demonstrates threading after forking.  The threading
+is done using a Perl object wrapper around the Perl implementation of
+C<threads>.  Inspired by
+L<http://perldoc.perl.org/perlthrtut.html#Creating-Threads> and
+L<http://hell.jedicoder.net/?p=82>.
 
 =cut
 
@@ -50,8 +54,8 @@ foreach my $fork_name ( qw( odin dva tri chetyre ) ) {
         my @threads = $thread_obj->get_thread_list();
         foreach my $curr_thread ( @threads ) {
             #print qq($$: joining thread ) . $curr_thread->tid() . qq(\n);
-$curr_thread->join();
-#$curr_thread->detach();
+            $curr_thread->join();
+            #$curr_thread->detach();
         }
         exit 0;
 #        next;
@@ -68,7 +72,7 @@ use strict;
 use warnings;
 use threads;
 
-my @thread_list;
+my @_thread_list;
 
 sub new {
     my $class = shift;
@@ -85,14 +89,14 @@ sub new {
         );
         #$thr->detach();
         #$thr->join();
-        push(@thread_list, $thr);
+        push(@_thread_list, $thr);
     } # foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) )
 
     return $self;
 } # sub new
 
 sub get_thread_list {
-    return @thread_list;
+    return @_thread_list;
 } # sub get_thread_list
 
 sub do_work {
