@@ -2,21 +2,20 @@
 
 # $Id: perlscript.pl,v 1.7 2008/01/24 07:06:47 brian Exp $
 # Copyright (c)2001 by Brian Manning
-#
-# perl script that demonstrates forking and threading in perl
-# inspired by: http://perldoc.perl.org/perlthrtut.html#Creating-Threads
-
-# see the bottom of this file for the license
 
 =pod
 
 =head1 NAME
 
-multisocket.pl - a demo of threaded forks that listen on multiple sockets
+multisocket.pl - a demo of threads that reads/writes from/to sockets
 
 =head1 DESCRIPTION
 
-B<forking_threader.pl> demonstrates threading after forking
+B<multisocket.pl> demonstrates threading after forking.  The threading
+is done using a Perl object wrapper around the Perl implementation of
+C<threads>.  Inspired by
+L<http://perldoc.perl.org/perlthrtut.html#Creating-Threads> and
+L<http://hell.jedicoder.net/?p=82>.
 
 =cut
 
@@ -27,7 +26,6 @@ use warnings;
 
 my @children;
 
-#foreach my $fork_name ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
 foreach my $fork_name ( qw( odin dva tri chetyre ) ) {
     my $pid = fork();
     if ($pid) {
@@ -36,13 +34,11 @@ foreach my $fork_name ( qw( odin dva tri chetyre ) ) {
     } elsif ($pid == 0) {
         # child
         my $thread_obj = Thread::Creator->new($fork_name);
-#        my @threads = $thread_obj->get_thread_list();
-#        foreach my $curr_thread ( @threads ) {
-            #$curr_thread->join();
-#            $curr_thread->detatch();
-#        }
-#        exit 0;
-#        next;
+        my @threads = $thread_obj->get_thread_list();
+        foreach my $curr_thread ( @threads ) {
+            $curr_thread->join();
+        }
+        exit 0;
     } # if ($pid)
 } # foreach my $fork_name
 
@@ -56,7 +52,7 @@ use strict;
 use warnings;
 use threads;
 
-my @thread_list;
+my @_thread_list;
 
 sub new {
     my $class = shift;
@@ -68,18 +64,19 @@ sub new {
         print qq(fork: $fork_name; creating thread '$thr_name', with a )
             . qq(sleep time of $sleep_time\n);
         my $thr = threads->create( 
-            sub { $self->do_work($fork_name, $thr_name, $sleep_time) }
+            #sub { $self->do_work($fork_name, $thr_name, $sleep_time) }
+            sub { Thread::Creator->do_work($fork_name, $thr_name, $sleep_time) }
         );
-        $thr->detach();
-        #$thread->join();
-        push(@thread_list, $thr);
+        #$thr->detach();
+        #$thr->join();
+        push(@_thread_list, $thr);
     } # foreach my $thread_tmpl ( qw( uno:3 dos:5 tres:7 cuatro:11 ) )
 
     return $self;
 } # sub new
 
 sub get_thread_list {
-    return @thread_list;
+    return @_thread_list;
 } # sub get_thread_list
 
 sub do_work {
@@ -87,7 +84,8 @@ sub do_work {
     my $fork_name = shift;
     my $thread_name = shift;
     my $sleep_time = shift;
-    my $total_time = 30;
+    #my $total_time = 30;
+    my $total_time = 100;
     my $run_time = 0;
 
     while ( $run_time < $total_time ) {
@@ -96,6 +94,7 @@ sub do_work {
             . qq(, slept for $sleep_time, $run_time\n);
         $run_time += $sleep_time;
     } # while ( $run_time < $total_time )
+    #exit 0;
 } # sub do_work
 
 =head1 VERSION
@@ -109,6 +108,7 @@ Brian Manning E<lt>elspicyjack at gmail dot comE<gt>
 
 =cut
 
+### begin license blurb
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation; version 2 dated June, 1991.
