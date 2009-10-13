@@ -38,12 +38,14 @@ use warnings;
 
 my @threads = qw( boss:1 worker1:3 worker2:5 worker3:7 );
 my @thread_stack;
+my $sleep_time = 5;
 
     foreach my $this_thread ( @threads ) {
         my ($thread_name, $thread_sleep) = split(/:/, $this_thread);
         my $thread_obj = Thread::Creator->new(
-            name =>     $thread_name, 
-            sleep =>    $sleep_time
+            thread_name		=> $thread_name, 
+            thread_sleep	=> $thread_sleep,
+			base_sleep		=> $sleep_time,
         );
         push(@thread_stack, $thread_obj);
     } # foreach my $this_thread ( @threads )
@@ -55,52 +57,6 @@ my @thread_stack;
     } # foreach my $curr_thread ( @thread_stack )
     exit 0;
 
-    $thr1->join();
-    $thr2->join();
-    $thr3->join();
-    $thr4->join();
-    $thr5->join();
-
-    sub sub1 {
-        my $thread_name = shift;
-        my $sleep_time = shift;
-        my $total_time = 100;
-        my $run_time = 0;
-
-        while ( $run_time < $total_time ) {
-            sleep $sleep_time;
-            my $thread = threads->self();
-            print qq(Unga! $thread_name/$$-) . $thread->tid()
-                . qq(, slept for $sleep_time, $run_time\n);
-            $run_time += $sleep_time;
-        }
-    }
-
-#foreach my $fork_name ( qw( odin:3 dva:5 tri:7 chetyre:9 pyat:11 ) ) {
-foreach my $fork_name ( qw( odin dva tri chetyre ) ) {
-    my $pid = fork();
-    if ($pid) {
-        # parent
-        push(@children, $pid . q(:) . $fork_name);
-    } elsif ($pid == 0) {
-        # child
-        my $thread_obj = Thread::Creator->new($fork_name);
-        my @threads = $thread_obj->get_thread_list();
-        foreach my $curr_thread ( @threads ) {
-            #print qq($$: joining thread ) . $curr_thread->tid() . qq(\n);
-            $curr_thread->join();
-            #$curr_thread->detach();
-        }
-        exit 0;
-#        next;
-    } # if ($pid)
-} # foreach my $fork_name
-
-foreach ( @children ) {
-    my $pid = (split(/:/, $_))[0];
-    waitpid($pid, 0);
-} # foreach ( @children )
-
 package Thread::Creator;
 use strict;
 use warnings;
@@ -108,31 +64,52 @@ use threads;
 
 sub new {
     my $class = shift;
-    my $thread_name = shift;
+    my %args = @_;
+
+	#use Data::Dumper;
+	#print Dumper %args;
+
+	if ( ! exists $args{thread_name} ) { 
+		die qq(ERROR: Thread::Creator called without 'thread_name' argument);
+	}
+	if ( ! exists $args{thread_sleep} ) { 
+		die qq(ERROR: Thread::Creator called without 'sleep_time' argument);
+	}
+
     my $self = bless ({
-        _thread => undef,
+        _thread_obj 	=> undef,
+		_thread_name 	=> $args{thread_name},
+		_thread_sleep	=> $args{thread_sleep},
+		_base_sleep 	=> $args{base_sleep},
     }, $class);
 
-    $self->{_thread} = threads->create( 
-        sub { Thread::Creator->do_work($thread_name) }
-    );
+    $self->{_thread_obj} = threads->create( sub { $self->_do_work() });
     return $self;
 } # sub new
 
-sub do_work {
-    my $self = shift;
-    my $thread_name = shift;
+sub _do_work {
+	my $self = shift;
 
-    my $times_worked = 0;
-    while ( $times_worked < 5 ) {
-        print qq(Unga! $thread_name/) . threads->tid() 
-            . qq(, slept for $sleep_time, $run_time\n);
-        $times_worked++;
-        sleep 5;
+	my $total_time = 50;
+	my $run_time = 0;
+
+    while ( $run_time < $total_time ) {
+        print q(Unga! ) . $self->{_thread_name} . q(/) . threads->tid() 
+            . qq(, current time: ) . $run_time 
+			. q(; sleeping for ) . $self->{_thread_sleep} . qq(\n);
+        $run_time += $self->{_thread_sleep};
+        sleep $self->{_thread_sleep};
     } # while ( $run_time < $total_time )
     #exit 0;
-} # sub do_work
+} # sub _do_work
 
+sub join {
+	my $self = shift;
+
+	my $thread_obj = $self->{_thread_obj};
+	$thread_obj->join();
+
+} # sub join
 =head1 VERSION
 
 The CVS version of this file is $Revision: 1.7 $. See the top of this file for
