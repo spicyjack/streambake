@@ -14,6 +14,8 @@
 # http://perlmonks.org/?node_id=539419 - threaded tcp server problem
 # http://perlmonks.org/?node_id=766171 - multithreaded server with shared
 # sockets
+# http://perldoc.perl.org/threads.html
+# http://perldoc.perl.org/perlipc.html
 # http://perldoc.perl.org/IO/Select.html
 # http://perldoc.perl.org/perlthrtut.html
 
@@ -35,8 +37,9 @@ package main;
 $main::VERSION = (q$Revision: 1.7 $ =~ /(\d+)/g)[0];
 use strict;
 use warnings;
+use IO::Socket::INET;
 
-my @threads = qw( boss:1 worker1:3 worker2:5 worker3:7 );
+my @threads = qw( worker1:1 worker2:3 worker3:5 worker4:7 );
 my @thread_stack;
 my $sleep_time = 5;
 
@@ -61,6 +64,7 @@ package Thread::Creator;
 use strict;
 use warnings;
 use threads;
+use IO::Socket::INET;
 
 sub new {
     my $class = shift;
@@ -87,6 +91,14 @@ sub new {
     return $self;
 } # sub new
 
+sub join {
+	my $self = shift;
+
+	my $thread_obj = $self->{_thread_obj};
+	$thread_obj->join();
+
+} # sub join
+
 sub _do_work {
 	my $self = shift;
 
@@ -95,21 +107,15 @@ sub _do_work {
 
     while ( $run_time < $total_time ) {
         print q(Unga! ) . $self->{_thread_name} . q(/) . threads->tid() 
-            . qq(, current time: ) . $run_time 
-			. q(; sleeping for ) . $self->{_thread_sleep} . qq(\n);
+            . qq(, current time: ) . sprintf( q(%02d), $run_time )
+			. q(; sleeps for ) . $self->{_thread_sleep} . qq(\n);
         $run_time += $self->{_thread_sleep};
         sleep $self->{_thread_sleep};
     } # while ( $run_time < $total_time )
     #exit 0;
 } # sub _do_work
 
-sub join {
-	my $self = shift;
 
-	my $thread_obj = $self->{_thread_obj};
-	$thread_obj->join();
-
-} # sub join
 =head1 VERSION
 
 The CVS version of this file is $Revision: 1.7 $. See the top of this file for
