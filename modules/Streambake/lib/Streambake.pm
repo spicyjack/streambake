@@ -1,7 +1,7 @@
 package Streambake;
 
-use warnings;
 use strict;
+use warnings;
 
 =head1 NAME
 

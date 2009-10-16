@@ -1,11 +1,15 @@
-#!/usr/bin/env perl
+package Streambake::Setup;
 
-use warnings;
 use strict;
+use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
 
 =head1 NAME
 
-sb-setup.pl - A setup script for Streambake.
+Streambake::Setup - Run a battery of tests to determine if the
+software/hardware requirements are in place to run an instance of Streambake.
 
 =head1 VERSION
 
@@ -18,37 +22,37 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
-The C<sb-setup.pl> script can perform the following actions:
+Quick summary of what the module does.
 
-=over 4
+Perhaps a little code snippet.
 
-=item --check) Check module dependencies  
+    use Streambake;
 
-Checks for module dependencies and verifies versions.
+    my $foo = Streambake->new();
+    ...
 
-=item Create a configuration file (--config)
+=head1 FUNCTIONS
 
-Parses all of the Streambake modules in order to create a configuration file
-that can be used with Streambake.
+=head2 prove( qw( Streambake::Tests::Test1 Streambake::Tests::Test2 ) )
 
-=item Upgrade check (--upgrade-check)
-
-Checks the current installation of Streambake (if any) and prints out what
-actions will be performed during an upgrade of Streambake.
-
-=item Debugging info (--debug-info)
-
-Prints verbose debug info, including versions of Perl and major core modules,
-as well as the same modules as the C<--check> option above.  This would be
-used when reporting bugs/problems with L<Streambake>.
-
-=back
+Run the C<prove()> methods for the modules passed in.
 
 =cut
 
-# load modules here?
+sub prove {
+    my $self = shift;
+    my @modules = @_;
+}
 
-=pod
+=head2 prove_all()
+
+Run the C<prove()> methods in all of the test modules that are found.
+
+=cut
+
+sub prove_all {
+    my $self = shift;
+}
 
 =head1 AUTHOR
 

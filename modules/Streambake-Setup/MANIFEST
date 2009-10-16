@@ -1,0 +1,9 @@
+Changes
+MANIFEST
+Makefile.PL
+README
+bin/sb-setup.pl
+lib/Streambake/Setup.pm
+t/00-load.t
+t/pod-coverage.t
+t/pod.t
