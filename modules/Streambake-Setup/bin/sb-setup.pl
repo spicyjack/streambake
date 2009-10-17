@@ -3,6 +3,12 @@
 use strict;
 use warnings;
 
+# core modules
+use Getopt::Long;
+
+# project modules
+use Streambake::Setup;
+
 =head1 NAME
 
 sb-setup.pl - A setup script for Streambake.
@@ -43,11 +49,11 @@ the default option if no other options are specified.
 Checks the current installation of Streambake (if any) and prints out what
 actions will be performed during an upgrade of Streambake.
 
-=item --debug-info - Debugging info
+=item --verbose - More verbose informaton from the above two options
 
-Prints verbose debug info, including versions of Perl and major core modules,
-as well as the same modules as the C<--check> option above.  This would be
-used when reporting bugs/problems with L<Streambake>.
+Prints more verbose information, including versions of Perl and major core
+modules, as well as the same modules as the C<--check> option above.  This
+would be used when reporting bugs/problems with L<Streambake>.
 
 =back
 
@@ -57,14 +63,17 @@ used when reporting bugs/problems with L<Streambake>.
 
     # run getopts to see what options were passed in
     my $gop = new Getopt::Long::Parser;
-    $parser->configure();
-    $parser->getoptions(
+    my ( $install_check, $upgrade_check, $verbose_info );
+    $gop->configure();
+    $gop->getoptions(
         q(h|help) => \&ShowHelp,
-        q(c|check) => \$perlrandom,
-        q(u|upgrade-check) => \$req_passphrases,
-        q(d|debug) => \$DEBUG,
+        q(c|check) => \$install_check,
+        q(u|upgrade-check) => \$upgrade_check,
+        q(v|verbose) => \$verbose_info,
     );
 
+    my $setup = Streambake::Setup->new();
+    $setup->prove_all();
     
 ### end script
 

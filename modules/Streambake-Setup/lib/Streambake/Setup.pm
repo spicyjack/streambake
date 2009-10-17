@@ -3,8 +3,9 @@ package Streambake::Setup;
 use strict;
 use warnings;
 
-use Getopt::Long;
-use Pod::Usage;
+#use Getopt::Long;
+#use Pod::Usage;
+use File::Find::Rule;
 
 =head1 NAME
 
@@ -26,12 +27,28 @@ Quick summary of what the module does.
 
 Perhaps a little code snippet.
 
-    use Streambake;
+    use Streambake::Setup
 
     my $foo = Streambake->new();
+    $foo->prove_all();
+    # optional, run a specific test only
+    # $foo->prove(test_file.t);
     ...
 
 =head1 FUNCTIONS
+
+=head2 new()
+
+Creates an instance of the L<Streambake::Setup> module and returns it to the
+caller.
+
+=cut
+
+sub new {
+    my $class = shift;
+    my $self = bless ({}, $class);
+    return $self;
+}
 
 =head2 prove( qw( Streambake::Tests::Test1 Streambake::Tests::Test2 ) )
 
@@ -41,8 +58,29 @@ Run the C<prove()> methods for the modules passed in.
 
 sub prove {
     my $self = shift;
-    my @modules = @_;
-}
+    my @test_list = @_;
+
+    # the test directory should be below where this physical file is located
+    my $test_dir = __FILE__;
+    $test_dir =~ s/Setup.pm$/Tests/;
+
+    # create the file find rule
+    my $rule = File::Find::Rule->new();
+    # get a list of files to test with
+    my @files = $rule->in($test_dir);
+    foreach my $requested_test ( @test_list ) {
+        # see if the user's requested test is in the list of files found
+        my @testfiles = grep(/$requested_test/, @files );
+        if ( scalar(@testfiles) > 0 ) {
+            # we can only check for one test file at a time, so the below is
+            # safe
+            open (TEST, "< " . $testfiles[0]);
+            my $test_text = <TEST>;
+            # evaluate the code in the test file, return whatever it spits out
+            my $return_text = eval $test_text;
+        } # if ( scalar(@testfiles) > 0 )
+    } # foreach my $requested_test ( @test_list )
+} # sub prove
 
 =head2 prove_all()
 
@@ -52,7 +90,29 @@ Run the C<prove()> methods in all of the test modules that are found.
 
 sub prove_all {
     my $self = shift;
-}
+
+    warn q(Entering prove_all);
+    my $rule = File::Find::Rule->file()->name('*.t');
+    # the test directory should be below where this physical file is located
+    my $test_dir = __FILE__;
+    $test_dir =~ s/Setup.pm$/Tests/;
+    # set the find rule to look for only files
+    $rule->file();
+    # go over each test file found and eval it
+    foreach my $file ( $rule->in($test_dir) ) {
+        open (TEST, "< " . $file);
+        my $test_text = <TEST>;
+        # evaluate the code in the test file, return whatever it spits out
+        # the test text will return some output we want to show to the user
+        my $test_reply = eval $test_text;
+        if ( length($@) > 0 ) {
+           print qq(Test $file returned an error:\n);
+           print qq($@\n); 
+        } else {
+           print $test_reply . qq(\n);
+        } # if ( length($@) > 0 )
+    } # foreach my $file ( File::Find::Rule->file()->name('*.t')) )
+} # sub prove_all
 
 =head1 AUTHOR
 
