@@ -91,7 +91,6 @@ Run the C<prove()> methods in all of the test modules that are found.
 sub prove_all {
     my $self = shift;
 
-    warn q(Entering prove_all);
     my $rule = File::Find::Rule->file()->name('*.t');
     # the test directory should be below where this physical file is located
     my $test_dir = __FILE__;
@@ -100,16 +99,23 @@ sub prove_all {
     $rule->file();
     # go over each test file found and eval it
     foreach my $file ( $rule->in($test_dir) ) {
+        #print qq(Running test $file\n);
         open (TEST, "< " . $file);
-        my $test_text = <TEST>;
+        # join the lines back together and put them in one scalar
+        my @test_text = <TEST>;
+        #print qq(test text is:\n) . join(q(), @test_text) . qq(\n);
         # evaluate the code in the test file, return whatever it spits out
         # the test text will return some output we want to show to the user
-        my $test_reply = eval $test_text;
+        my %test_reply = eval join(q(), @test_text);
         if ( length($@) > 0 ) {
            print qq(Test $file returned an error:\n);
            print qq($@\n); 
         } else {
-           print $test_reply . qq(\n);
+           my $filename = (split(q(/), $file))[-1];
+           print qq(Test file '$filename'\n);
+           print qq( - description: ) . $test_reply{description} . qq(\n);
+           print qq( - required? ) . $test_reply{required} . qq(\n);
+           print qq( - output text: ) . $test_reply{output_text} . qq(\n);
         } # if ( length($@) > 0 )
     } # foreach my $file ( File::Find::Rule->file()->name('*.t')) )
 } # sub prove_all
