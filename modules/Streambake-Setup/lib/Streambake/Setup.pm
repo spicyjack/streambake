@@ -5,7 +5,12 @@ use warnings;
 
 #use Getopt::Long;
 #use Pod::Usage;
-use File::Find::Rule;
+BEGIN {
+    eval q(use File::Find::Rule; );
+    if ( $@ ) {
+        die qq(ERROR: Module 'File::Find::Rule' is not available);
+    }
+} # BEGIN
 
 =head1 NAME
 
@@ -46,7 +51,14 @@ caller.
 
 sub new {
     my $class = shift;
-    my $self = bless ({}, $class);
+    my %args = @_;
+
+    my $verbose;
+    if ( exists $args{verbose} ) {
+        $verbose = $args{verbose};
+    } # if ( exists $args{verbose} )
+
+    my $self = bless ({ _verbose => $verbose }, $class);
     return $self;
 }
 
@@ -108,8 +120,12 @@ sub prove_all {
         # the test text will return some output we want to show to the user
         my %test_reply = eval join(q(), @test_text);
         if ( length($@) > 0 ) {
-           print qq(Test $file returned an error:\n);
-           print qq($@\n); 
+            if ( $self->is_verbose() ) {
+                print qq(Test $file returned an error:\n);
+                print qq($@\n); 
+            } else {
+                print qq(Test $file returned an error\n);
+            } # if ( $self->is_verbose() )
         } else {
            my $filename = (split(q(/), $file))[-1];
            print qq(Test file '$filename'\n);
@@ -119,6 +135,22 @@ sub prove_all {
         } # if ( length($@) > 0 )
     } # foreach my $file ( File::Find::Rule->file()->name('*.t')) )
 } # sub prove_all
+
+=head2 prove_all()
+
+Returns the verbose flag set which may or may not have been set when the
+object was created.
+
+=cut
+
+sub is_verbose {
+    my $self = shift;
+
+    if ( defined $self->{_verbose} ) {
+        return 1;
+    } else {
+        return 0;
+} # sub is_verbose
 
 =head1 AUTHOR
 

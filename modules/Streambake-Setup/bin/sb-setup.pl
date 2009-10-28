@@ -73,7 +73,7 @@ would be used when reporting bugs/problems with L<Streambake>.
     );
 
     my $setup = Streambake::Setup->new();
-    $setup->prove_all();
+    $setup->prove_all( verbose => $verbose_info );
     
 ### end script
 
