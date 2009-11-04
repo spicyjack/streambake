@@ -31,7 +31,7 @@ Where options consist of only one of the following:
     [-h|--help]             Prints this help output
     [-c|--check]            Checks for hardware/software dependencies
     [-u|--upgrade-check]    Verify existing installation for upgrading
-    [-d|--debug-info]       Print out system info for debugging
+    [-v|--verbose]          Be more verbose when printing errors in tests
 
 =head1 OPTIONS
 
@@ -72,8 +72,8 @@ would be used when reporting bugs/problems with L<Streambake>.
         q(v|verbose) => \$verbose_info,
     );
 
-    my $setup = Streambake::Setup->new();
-    $setup->prove_all( verbose => $verbose_info );
+    my $setup = Streambake::Setup->new( verbose => $verbose_info );
+    $setup->prove_all();
     
 ### end script
 

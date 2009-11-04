@@ -3,8 +3,7 @@ package Streambake::Setup;
 use strict;
 use warnings;
 
-#use Getopt::Long;
-#use Pod::Usage;
+# we need File::Find::Rule; no point in continuing if it's not available
 BEGIN {
     eval q(use File::Find::Rule; );
     if ( $@ ) {
@@ -103,40 +102,46 @@ Run the C<prove()> methods in all of the test modules that are found.
 sub prove_all {
     my $self = shift;
 
+    # set the find rule to look for only files
     my $rule = File::Find::Rule->file()->name('*.t');
     # the test directory should be below where this physical file is located
     my $test_dir = __FILE__;
     $test_dir =~ s/Setup.pm$/Tests/;
-    # set the find rule to look for only files
-    $rule->file();
     # go over each test file found and eval it
     foreach my $file ( $rule->in($test_dir) ) {
         #print qq(Running test $file\n);
+        my $filename = (split(q(/), $file))[-1];
         open (TEST, "< " . $file);
         # join the lines back together and put them in one scalar
-        my @test_text = <TEST>;
+        my $test_text = join(q(), <TEST>);
+        close(TEST);
         #print qq(test text is:\n) . join(q(), @test_text) . qq(\n);
         # evaluate the code in the test file, return whatever it spits out
         # the test text will return some output we want to show to the user
-        my %test_reply = eval join(q(), @test_text);
+        my %test_reply = eval $test_text;
         if ( length($@) > 0 ) {
             if ( $self->is_verbose() ) {
-                print qq(Test $file returned an error:\n);
-                print qq($@\n); 
+                print qq(Test file '$filename'\n);
+                print qq( !! Test returned an error; module not available!\n);
+                print qq( ======= Begin Module Load Output =======\n);
+                print $@; 
+                print qq( ======= End Module Load Output =======\n);
             } else {
-                print qq(Test $file returned an error\n);
+                print qq(Test file '$filename'\n);
+                print qq( !! Test returned an error; module not available!\n);
+                print qq| (Hint: use --verbose to print test errors)\n|;
             } # if ( $self->is_verbose() )
-        } else {
-           my $filename = (split(q(/), $file))[-1];
+        }
+        if ( scalar(keys(%test_reply)) > 0 ) {
            print qq(Test file '$filename'\n);
-           print qq( - description: ) . $test_reply{description} . qq(\n);
-           print qq( - required? ) . $test_reply{required} . qq(\n);
-           print qq( - output text: ) . $test_reply{output_text} . qq(\n);
+           print qq( description - ) . $test_reply{description} . qq(\n);
+           print qq( required? - ) . $test_reply{required} . qq(\n);
+           print qq( test text output: ) . $test_reply{output_text} . qq(\n);
         } # if ( length($@) > 0 )
-    } # foreach my $file ( File::Find::Rule->file()->name('*.t')) )
+    } # foreach my $file ( $rule->in($test_dir) )
 } # sub prove_all
 
-=head2 prove_all()
+=head2 is_verbose()
 
 Returns the verbose flag set which may or may not have been set when the
 object was created.
@@ -150,6 +155,7 @@ sub is_verbose {
         return 1;
     } else {
         return 0;
+    } # f ( defined $self->{_verbose} )
 } # sub is_verbose
 
 =head1 AUTHOR
