@@ -1,0 +1,4 @@
+syntax: regexp
+android/IcecastStatusTest/bin
+android/IcecastStatusTest/gen
+android/JavaTestCode/bin
