@@ -25,6 +25,11 @@ import android.widget.Toast;
 public class IcecastStatusTest extends Activity {
     /** Called when the activity is first created. */
         static final String TAG = "IcecastStatusTest";
+        // FIXME abstract this; the user should be able to enter
+        // the server name and port in a dialog somewhere
+        // and different URL's can be tried in the order of most
+        // preferred to least preferred until a URL is found that
+        // doesn't 404
         String statURL = "http://stream.portaboom.com:7767/simple.xsl";
         String fetchedText = "";
         
