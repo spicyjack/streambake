@@ -3,7 +3,7 @@
       package="com.portaboom.android.beta.icecastStatus"
       android:versionName="2010.3" android:versionCode="6">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
-        <activity android:name=".IcecastStatusTest"
+        <activity android:name=".IcecastStatus"
                 android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
