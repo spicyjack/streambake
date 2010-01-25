@@ -16,7 +16,7 @@ package com.portaboom.android.beta.icecastStatus;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ParseStatusTest {
+public class ParseStatus {
 	
 	public String parse(String parseText) {
 		String returnText = "";
@@ -59,4 +59,4 @@ public class ParseStatusTest {
         } // for ( String statLine : statBlock )  
         return returnText;
 	} // public String parse(String parseText) 
-} // public class ParseStatusTest
+} // public class ParseStatus

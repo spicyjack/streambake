@@ -20,7 +20,7 @@ import java.net.URL;
 
 import android.util.Log;
 
-public class DownloadStatusTest {
+public class HTTPStatusDownload {
 	static final String TAG = "IcecastStatusTest";
 	/**
 	 * @param statURL The URL to fetch and parse the output of 
@@ -50,4 +50,4 @@ public class DownloadStatusTest {
         Log.v(TAG, "Read " + linesRead + " from " + statURL);
         return returnHTML;
 	} // public static void main(String[] args)
-} // public static void main(String[] args)
+} // public class HTTPStatusDownload

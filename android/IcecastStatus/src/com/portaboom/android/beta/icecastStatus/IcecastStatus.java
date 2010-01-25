@@ -22,9 +22,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class IcecastStatusTest extends Activity {
+public class IcecastStatus extends Activity {
     /** Called when the activity is first created. */
-        static final String TAG = "IcecastStatusTest";
+        static final String TAG = "IcecastStatus";
         // FIXME abstract this; the user should be able to enter
         // the server name and port in a dialog somewhere
         // and different URL's can be tried in the order of most
@@ -38,8 +38,8 @@ public class IcecastStatusTest extends Activity {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "starting onCreate; statURL is " + statURL);
         try {
-        	DownloadStatusTest dst = new DownloadStatusTest();
-        	fetchedText = dst.fetch(statURL);
+        	HTTPStatusDownload hsd = new HTTPStatusDownload();
+        	fetchedText = hsd.fetch(statURL);
         } catch (Throwable t) {
         	Toast 
             .makeText(this, "Request failed: " + t.toString(), 4000);
@@ -47,7 +47,7 @@ public class IcecastStatusTest extends Activity {
         }
 
         // create the output text box
-        ParseStatusTest pst = new ParseStatusTest();
+        ParseStatus pst = new ParseStatus();
         TextView tv = new TextView(this);
         tv.setText( "Status URL: " + statURL + "\n" + pst.parse( fetchedText ) );
         ScrollView sv = new ScrollView(this);
