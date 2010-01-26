@@ -18,14 +18,25 @@ our $VERSION = '0.01';
 =head1 DESCRIPTION
 
 B<simplebake.pl> is meant to be used as a quick testing script to verify that
-all of the correct C libraries and Perl modules are installed, and that all of
-the Icecast login information is valid.  The script can also be used for
-streaming a list of files on a local filesystem.  The script aims to use as few non-core Perl modules as possible, so that it will run with any modern (5.8-ish and newer) Perl installation.
+all of the correct C libraries and Perl modules needed to stream audio via an
+Icecast server are installed, and that all of the Icecast login information is
+valid.  The script can also be used for streaming a list of files on a local
+filesystem.  The script aims to use as few non-core Perl modules as possible,
+so that it will run with any modern (5.8-ish and newer) Perl installation.
 
 =cut
 
+package Simplebake::Logger;
+use strict;
+use warnings;
+
+sub new {
+
+} # sub new
+
 package main;
 use strict;
+use warnings;
 use DateTime;
 use Getopt::Long;
 use Shout;
@@ -40,18 +51,20 @@ my $mountpoint = q(vault);
     
     my $parser = Getopt::Long::Parser->new();
 
-    $goparse->getoptions(
+    $parser->getoptions(
         q(verbose|v)            => \$VERBOSE,
         q(help|h)               => \&ShowHelp,
         q(port|p=s)             => \@indir,
         q(server|s=s)           => \$outdir,
         q(filelist|f=s)         => \$filelist,
-    ); # $goparse->getoptions
+    ); # $parser->getoptions
 
 =head1 SYNOPSIS
 
  -v|--verbose   Verbose script execution
  -h|--help      Shows this help text
+ -c|--config    Configuration file to use for script options
+ -l|--logfile   Logfile to use for script output; default is STDOUT
  -s|--server    Server hostname/IP address to connect to
  -p|--port      Server port number to connect to
  -f|--filelist  List of MP3/OGG files to stream
@@ -59,11 +72,17 @@ my $mountpoint = q(vault);
 Example usage:
 
  simplebake.pl --port 7767 --server stream.example.com \
-    --filelist mp3-ogg.txt
+    --filelist /path/to/mp3-ogg.txt
 
 You can generate filelists with something like this on *NIX:
 
  find /path/to/your/files -name "*.mp3" > output_filelist.txt
+
+Configuration file syntax:
+
+ port: 7767
+ server: stream.example.com
+ filelist: /path/to/mp3-ogg.txt
 
 =cut
 
