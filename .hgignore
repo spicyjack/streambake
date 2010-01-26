@@ -1,4 +1,5 @@
 syntax: regexp
-android/IcecastStatusTest/bin
-android/IcecastStatusTest/gen
+\.swp$
+android/IcecastStatus/bin
+android/IcecastStatus/gen
 android/JavaTestCode/bin

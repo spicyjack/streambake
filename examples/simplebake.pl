@@ -24,6 +24,7 @@ streaming a list of files on a local filesystem.  The script aims to use as few 
 
 =cut
 
+package main;
 use strict;
 use DateTime;
 use Getopt::Long;
@@ -51,14 +52,18 @@ my $mountpoint = q(vault);
 
  -v|--verbose   Verbose script execution
  -h|--help      Shows this help text
- -p|--port      In directory; contains the Cisco config files to read
- -s|--server    Out directory; directory to write output files to
+ -s|--server    Server hostname/IP address to connect to
+ -p|--port      Server port number to connect to
  -f|--filelist  List of MP3/OGG files to stream
 
 Example usage:
 
  simplebake.pl --port 7767 --server stream.example.com \
     --filelist mp3-ogg.txt
+
+You can generate filelists with something like this on *NIX:
+
+ find /path/to/your/files -name "*.mp3" > output_filelist.txt
 
 =cut
 

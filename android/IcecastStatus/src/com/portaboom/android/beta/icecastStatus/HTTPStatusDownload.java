@@ -21,7 +21,7 @@ import java.net.URL;
 import android.util.Log;
 
 public class HTTPStatusDownload {
-	static final String TAG = "IcecastStatusTest";
+	static final String TAG = "IcecastStatus";
 	/**
 	 * @param statURL The URL to fetch and parse the output of 
 	 */
