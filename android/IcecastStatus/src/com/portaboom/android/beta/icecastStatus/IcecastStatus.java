@@ -33,7 +33,7 @@ public class IcecastStatus extends Activity {
         String statURL = "http://stream.portaboom.com:7767/simple.xsl";
         String fetchedText = "";
         
-        @Override
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "starting onCreate; statURL is " + statURL);
