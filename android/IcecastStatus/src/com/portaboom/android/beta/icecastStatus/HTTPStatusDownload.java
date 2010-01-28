@@ -9,7 +9,16 @@ package com.portaboom.android.beta.icecastStatus;
  * The proper forum for support is the Streambake Google Groups list at
  * http://groups.google.com/group/streambake or <streambake@groups.google.com>
  * 
- * Fetch the URL passed in as as @param statURL 
+*/
+
+/* FIXME
+- Add callbacks that other objects can use to prompt this object to do
+  something
+  - server URL and port to connect to?
+- Abstract the URL; the URL could be put together in this object using only
+  the base
+  - try for simple.xsl first (streambake/PSAS status file)
+  - try for status2.xsl (Icecast default file)
 */
 
 import java.io.BufferedReader;
@@ -23,6 +32,7 @@ import android.util.Log;
 public class HTTPStatusDownload {
 	static final String TAG = "IcecastStatus";
 	/**
+     * Fetch the URL passed in as as @param statURL 
 	 * @param statURL The URL to fetch and parse the output of 
 	 */
 

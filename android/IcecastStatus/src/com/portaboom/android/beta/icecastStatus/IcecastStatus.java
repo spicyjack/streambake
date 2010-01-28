@@ -10,8 +10,11 @@ package com.portaboom.android.beta.icecastStatus;
  * The proper forum for support is the Streambake Google Groups list at
  * http://groups.google.com/group/streambake or <streambake@groups.google.com>
  * 
- * Parse the contents of the Icecast status2.xsl or simple.xsl files passed in 
- * as @param status 
+*/
+
+/* FIXME
+- Pass this object in to the downloader and parser so that they can make
+  callbacks when needed
 */
 
 // android imports

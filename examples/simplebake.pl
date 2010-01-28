@@ -1,5 +1,22 @@
 #!/usr/bin/perl -w
 
+# Copyright (c) 2010 by Brian Manning <elspicyjack at gmail dot com>
+# PLEASE DO NOT E-MAIL THE AUTHOR WITH ISSUES; the proper venue for issues
+# with this script is the Streambake mailing list:
+# streambake@googlecode.com / http://groups.google.com/group/streambake
+
+# TODO
+# - log format could look something like:
+# filename
+# time - opening file
+# time - updating metadata
+# time - closing file
+# - simple config file format
+# name: value
+# name = value
+# - maybe use Getopt::Long to parse config info from the config file that's
+# read into a $scalar
+
 =pod
 
 =head1 NAME
@@ -43,6 +60,7 @@ use Shout;
 use bytes;
 
 my $conn = new Shout;
+# XXX can go into the server object
 # default connection parameters
 my $server = q(localhost);
 my $port = q(7767);
@@ -100,6 +118,7 @@ if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
 $conn->host($server);
 $conn->port($port);
 $conn->mount($mountpoint);
+# XXX can go into the server object
 $conn->name(q(Spicyjack's Vault));
 $conn->url(q(http://stream.portaboom.com:7767/vault));
 $conn->description(q(Created with 'Streambake'...));

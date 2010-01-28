@@ -13,6 +13,12 @@ package com.portaboom.android.beta.icecastStatus;
  * as @param status 
 */
 
+/* FIXME
+  - parse simple.xsl (streambake/PSAS status file)
+  - parse status2.xsl (Icecast default file)
+*/
+
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
