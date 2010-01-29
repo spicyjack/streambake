@@ -43,18 +43,72 @@ so that it will run with any modern (5.8-ish and newer) Perl installation.
 
 =cut
 
-package Simplebake::Logger;
+######################
+# Simplebake::Server #
+######################
+package Simplebake::Server;
 use strict;
 use warnings;
 
 sub new {
+    my $class = shift;
+    my %args = @_;
+
+    my $self = bless ({
+        _server         => q(localhost),
+        _server_port    => q(8000)
+        _server_user    => q(anonymous),
+        _server_pass    => q(password),
+        _mountpoint     => q(default),
+    }, $class);
 
 } # sub new
 
+######################
+# Simplebake::Logger #
+######################
+package Simplebake::Logger;
+use strict;
+use warnings;
+use POSIX qw(strftime)
+
+sub new {
+    my $class = shift;
+    my $logfile = shift;
+
+    my $self = bless ({}, $class);
+    
+    if ( defined $logfile ) {
+        open (LOG, qq( > $logfile)) || die qq(Can't open logfile $logfile : $!);
+        $self->{_OUT} = *LOG;
+    } else {
+        $self->{_OUT} = *STDOUT;
+    } # if ( defined $logfile )
+
+} # sub new
+
+sub log {
+    my $self = shift;
+    my $msg = shift;
+
+    print $self->{_OUT} $msg . qq(\n);
+} # sub log
+
+sub timelog {
+    my $self = shift
+    my $msg = shift;
+    my $timestamp = POSIX::strftime( q(%c), localtime() );
+
+    print $self->{_OUT} $timestamp . q(: ) . $msg . qq(\n);
+} # sub timelog
+
+################
+# package main #
+################
 package main;
 use strict;
 use warnings;
-use DateTime;
+
 use Getopt::Long;
 use Shout;
 use bytes;
@@ -62,17 +116,14 @@ use bytes;
 my $conn = new Shout;
 # XXX can go into the server object
 # default connection parameters
-my $server = q(localhost);
-my $port = q(7767);
-my $user = q(source);
-my $mountpoint = q(vault);
+
     
     my $parser = Getopt::Long::Parser->new();
 
     $parser->getoptions(
         q(verbose|v)            => \$VERBOSE,
         q(help|h)               => \&ShowHelp,
-        q(port|p=s)             => \@indir,
+        q(server_port|p=s)             => \@indir,
         q(server|s=s)           => \$outdir,
         q(filelist|f=s)         => \$filelist,
     ); # $parser->getoptions
@@ -84,12 +135,12 @@ my $mountpoint = q(vault);
  -c|--config    Configuration file to use for script options
  -l|--logfile   Logfile to use for script output; default is STDOUT
  -s|--server    Server hostname/IP address to connect to
- -p|--port      Server port number to connect to
+ -p|--port      Server server_port number to connect to
  -f|--filelist  List of MP3/OGG files to stream
 
 Example usage:
 
- simplebake.pl --port 7767 --server stream.example.com \
+ simplebake.pl --server_port 7767 --server stream.example.com \
     --filelist /path/to/mp3-ogg.txt
 
 You can generate filelists with something like this on *NIX:
@@ -98,7 +149,7 @@ You can generate filelists with something like this on *NIX:
 
 Configuration file syntax:
 
- port: 7767
+ server_port: 7767
  server: stream.example.com
  filelist: /path/to/mp3-ogg.txt
 
@@ -116,7 +167,7 @@ if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
 
 # setup all the params
 $conn->host($server);
-$conn->port($port);
+$conn->port($server_port);
 $conn->mount($mountpoint);
 # XXX can go into the server object
 $conn->name(q(Spicyjack's Vault));
@@ -131,7 +182,7 @@ $conn->set_audio_info(SHOUT_AI_BITRATE => 256, SHOUT_AI_SAMPLERATE => 44100);
 
 # try to connect
 if ($conn->open) {
-    warn qq(Connected to server '$server:$port' at )
+    warn qq(Connected to server '$server:$server_port' at )
         . qq(mountpoint '$mountpoint' as user '$user'\n);
     # read in the playlist from STDIN
     my @playlist = <STDIN>;
@@ -165,8 +216,7 @@ if ($conn->open) {
         my $artist_name = $song_metadata[-3];
         # if we connect, grab data from stdin and shoot it to the server
         my ($buff, $len);
-        my $dt = DateTime->now();
-        $dt->set_time_zone(q(PST8PDT));
+
         warn q(Opening file for streaming at ) 
             . sprintf(q(%02u), $dt->day) . $dt->month_abbr . $dt->year 
             . q( ) . $dt->hms . qq(\n);
