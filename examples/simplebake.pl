@@ -21,8 +21,8 @@
 
 =head1 NAME
 
-B<simplebake.pl> - A quick script to get a streaming audio station up and going
-using a list of files 
+B<simplebake.pl> - Using a list of MP3/OGG files, stream those files to an
+Icecast server.
 
 =head1 VERSION
 
@@ -36,10 +36,12 @@ our $VERSION = '0.01';
 
 B<simplebake.pl> is meant to be used as a quick testing script to verify that
 all of the correct C libraries and Perl modules needed to stream audio via an
-Icecast server are installed, and that all of the Icecast login information is
-valid.  The script can also be used for streaming a list of files on a local
-filesystem.  The script aims to use as few non-core Perl modules as possible,
-so that it will run with any modern (5.8-ish and newer) Perl installation.
+Icecast server are installed, and that all of the Icecast login information
+provided to the script is valid.  The script can also be used for as a simple
+script for streaming a list of files on a local filesystem.  The script aims
+to use as few non-core Perl modules as possible, so that it will run with any
+modern (5.8-ish and newer) Perl installation with no extra libraries beyond
+L<Shout> installed.
 
 =cut
 
@@ -56,7 +58,7 @@ sub new {
 
     my $self = bless ({
         _server         => q(localhost),
-        _server_port    => q(8000)
+        _server_port    => q(8000),
         _server_user    => q(anonymous),
         _server_pass    => q(password),
         _mountpoint     => q(default),
@@ -123,20 +125,20 @@ my $conn = new Shout;
     $parser->getoptions(
         q(verbose|v)            => \$VERBOSE,
         q(help|h)               => \&ShowHelp,
-        q(server_port|p=s)             => \@indir,
+        q(server-port|p=s)      => \@indir,
         q(server|s=s)           => \$outdir,
         q(filelist|f=s)         => \$filelist,
     ); # $parser->getoptions
 
 =head1 SYNOPSIS
 
- -v|--verbose   Verbose script execution
- -h|--help      Shows this help text
- -c|--config    Configuration file to use for script options
- -l|--logfile   Logfile to use for script output; default is STDOUT
- -s|--server    Server hostname/IP address to connect to
- -p|--port      Server server_port number to connect to
- -f|--filelist  List of MP3/OGG files to stream
+ -v|--verbose       Verbose script execution
+ -h|--help          Shows this help text
+ -c|--config        Configuration file to use for script options
+ -l|--logfile       Logfile to use for script output; default is STDOUT
+ -s|--server-port   Server hostname/IP address to connect to
+ -p|--port          Server server_port number to connect to
+ -f|--filelist      List of MP3/OGG files to stream
 
 Example usage:
 
