@@ -26,7 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class IcecastStatus extends Activity {
-    /** Called when the activity is first created. */
         static final String TAG = "IcecastStatus";
         // FIXME abstract this; the user should be able to enter
         // the server name and port in a dialog somewhere
@@ -35,7 +34,8 @@ public class IcecastStatus extends Activity {
         // doesn't 404
         String statURL = "http://stream.portaboom.com:7767/simple.xsl";
         String fetchedText = "";
-        
+
+    /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
