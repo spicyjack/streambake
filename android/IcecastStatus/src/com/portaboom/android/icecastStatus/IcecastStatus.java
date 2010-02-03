@@ -1,4 +1,4 @@
-package com.portaboom.android.beta.icecastStatus;
+package com.portaboom.android.icecastStatus;
 
 /**
  * $Id$
