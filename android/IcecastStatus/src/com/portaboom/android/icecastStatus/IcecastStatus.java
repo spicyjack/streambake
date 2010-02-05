@@ -15,6 +15,12 @@ package com.portaboom.android.icecastStatus;
 /* FIXME
 - Pass this object in to the downloader and parser so that they can make
   callbacks when needed
+- abstract the status URL; the user should be able to enter the server name
+  and port in a dialog somewhere and different URL's can be tried 
+  in the order of most preferred to least preferred until a URL 
+  is found that doesn't 404
+- Call the Prefs screen if the application is started and there's
+  no URL set in the properties for this application
 */
 
 // android imports
@@ -27,11 +33,6 @@ import android.widget.Toast;
 
 public class IcecastStatus extends Activity {
         static final String TAG = "IcecastStatus";
-        // FIXME abstract this; the user should be able to enter
-        // the server name and port in a dialog somewhere
-        // and different URL's can be tried in the order of most
-        // preferred to least preferred until a URL is found that
-        // doesn't 404
         String statURL = "http://stream.portaboom.com:7767";
         String fetchedText = "";
 
