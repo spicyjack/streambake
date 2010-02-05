@@ -2,4 +2,5 @@
 <resources>
     
     <string name="app_name">Icecast Status</string>
+<string name="fetching_url">Fetching URL:</string>
 </resources>
