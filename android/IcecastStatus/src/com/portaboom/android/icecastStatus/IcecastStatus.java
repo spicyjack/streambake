@@ -32,7 +32,7 @@ public class IcecastStatus extends Activity {
         // and different URL's can be tried in the order of most
         // preferred to least preferred until a URL is found that
         // doesn't 404
-        String statURL = "http://stream.portaboom.com:7767/simple.xsl";
+        String statURL = "http://stream.portaboom.com:7767";
         String fetchedText = "";
 
     /** Called when the activity is first created. */

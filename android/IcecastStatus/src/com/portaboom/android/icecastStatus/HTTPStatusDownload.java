@@ -30,19 +30,21 @@ import java.net.URL;
 import android.util.Log;
 
 public class HTTPStatusDownload {
-	static final String TAG = "IcecastStatus";
+	static final String TAG = "HTTPStatusDownload";
+	static final String SIMPLESTATUS = "simple.xml";
+	static final String DEFAULTSTATUS = "status2.xml";
+	
 	/**
      * Fetch the URL passed in as as @param statURL 
 	 * @param statURL The URL to fetch and parse the output of 
 	 */
 
 	public String fetch(String statURL) {
-		
+		Log.v(TAG, "entering fetch; statURL is " + statURL);
 		String line = "", returnHTML = "";
 		int linesRead = 0;
         try {
-            //System.err.println("*** Loading " + statURL + "... ***");
-            URL webURL = new URL(statURL);
+            URL webURL = new URL(statURL + "/simple.xml");
             BufferedReader is = new BufferedReader(
                 new InputStreamReader(webURL.openStream()));
             while ((line = is.readLine()) != null) {
