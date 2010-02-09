@@ -25,6 +25,7 @@ package com.portaboom.android.icecastStatus;
 
 // android imports
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ScrollView;
@@ -34,23 +35,23 @@ import android.widget.Toast;
 import com.portaboom.android.icecastStatus.DialogURLFetch;
 
 public class IcecastStatus extends Activity {
-        static final String LOGTAG = "IcecastStatus";
-        private String statURL = "http://stream.portaboom.com:7767";
-        private String fetchedText = "";
+    static final String LOGTAG = "IcecastStatus";
+    private String statURL = "http://stream.portaboom.com:7767";
+    private String fetchedText = "";
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
+    	// FIXME check the statURL here; pop up the preferences screen 
+    	// if it's not set
     	Log.d(LOGTAG, "entering onCreate; statURL is " + statURL);
     	super.onCreate(savedInstanceState);
-        Log.d(LOGTAG, "starting DialogURLFetch intent");
         // pop up the dialog that shows what base URL 
         // we will be downloading from
-        DialogURLFetch durlf = new DialogURLFetch();
-        
-        //if ( durlf != null ) {
-        //	durlf.startIntent(statURL);
-    	//}
+        Log.d(LOGTAG, "starting DialogURLFetch intent");
+        Intent i = new Intent(this, DialogURLFetch.class);
+    	startActivity(i);
+    	
         // create the fetching object
         HTTPStatusDownload hsd = new HTTPStatusDownload();
         // try and fetch the status URL
@@ -66,6 +67,7 @@ public class IcecastStatus extends Activity {
         // create the output text box
         Log.d(LOGTAG, "Parsing output of statURL");
         ParseStatus pst = new ParseStatus();
+        
         TextView tv = new TextView(this);
         tv.setText( "Status URL: " + statURL + "\n" + pst.parse( fetchedText ) );
         ScrollView sv = new ScrollView(this);
@@ -74,6 +76,14 @@ public class IcecastStatus extends Activity {
         //Object o = null;
         //o.toString();
         //setContentView(R.layout.main);
-    }
-}
+    } // public void onCreate(Bundle savedInstanceState)
+    
+    /** 
+     * getCurrentURL - The current URL to use for downloading status pages
+     * @return String statURL 
+     */
+    public String getCurrentURL() {
+    	return statURL;
+    } // public String getCurrentURL()
+} // public class IcecastStatus extends Activity
 

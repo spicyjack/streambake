@@ -11,7 +11,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".DialogURLFetch"
-            android:label="@string/fetching_url">
+            android:label="@string/please_wait"
+            android:theme="@android:style/Theme.Dialog">
         </activity>
     </application>
 <uses-permission android:name="android.permission.INTERNET"></uses-permission>
