@@ -115,18 +115,21 @@ use Getopt::Long;
 use Shout;
 use bytes;
 
-my $conn = new Shout;
-# XXX can go into the server object
-# default connection parameters
-
-    
+    my $conn = new Shout;
+    # XXX can go into the server object
+    # default connection parameters
+    my ($server_name, $server_port); 
     my $parser = Getopt::Long::Parser->new();
 
     $parser->getoptions(
         q(verbose|v)            => \$VERBOSE,
         q(help|h)               => \&ShowHelp,
-        q(server-port|p=s)      => \@indir,
-        q(server|s=s)           => \$outdir,
+        q(logfile|l=s)          => \$mountpoint,
+        q(mountpoint|m=s)       => \$mountpoint,
+        q(server-name|s=s)      => \$server_name,
+        q(server-pass|a=s)      => \$server_pass,
+        q(server-port|p=s)      => \$server_port,
+        q(server-user|u=s)      => \$server_user,
         q(filelist|f=s)         => \$filelist,
     ); # $parser->getoptions
 
@@ -138,12 +141,15 @@ my $conn = new Shout;
  -l|--logfile       Logfile to use for script output; default is STDOUT
  -s|--server-name   Server hostname or IP address to connect to
  -p|--server-port   Server port to connect to
+ -a|--server-pass   Server password
+ -u|--server-user   Server username (defaults to 'source')
+ -m|--mountpoint    Server mountpoint, where clients connect to
  -f|--filelist      File containing a list of MP3/OGG files to stream
 
 Example usage:
 
  simplebake.pl --server-port 7767 --server-name stream.example.com \
-    --filelist /path/to/mp3-ogg.txt
+    --mountpoint somemount --filelist /path/to/mp3-ogg.txt
 
 You can generate filelists with something like this on *NIX:
 
@@ -151,8 +157,10 @@ You can generate filelists with something like this on *NIX:
 
 Configuration file syntax:
 
- server_port: 7767
- server: stream.example.com
+ server-port: 7767
+ server-name: stream.example.com
+ server-pass: $om3P$$w0rd
+ mountpoint: somemount
  filelist: /path/to/mp3-ogg.txt
 
 =cut
@@ -168,7 +176,7 @@ if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
 } # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
 
 # setup all the params
-$conn->host($server);
+$conn->host($server_name);
 $conn->port($server_port);
 $conn->mount($mountpoint);
 # XXX can go into the server object
