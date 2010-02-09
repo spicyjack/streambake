@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Icecast Status</string>
-    <string name="fetching_url">Please wait while fetching URL</string>
+    <string name="fetching_status_page">Fetching Status Page...</string>
     <string name="please_wait">Please wait...</string>
+    <string name="fetching_from_url">Fetching from URL:\n</string>
+	<string name="prefs">Preferences</string>
+	<string name="prefs_shortcut">p</string>
+	<string name="reload">Reload Status</string>
+	<string name="reload_shortcut">r</string>
 </resources>

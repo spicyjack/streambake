@@ -45,7 +45,7 @@ public class HTTPStatusDownload {
 		// initialize local variables
 		String line = "", returnHTML = "";
 		String simpleURL = statURL + "/" + SIMPLESTATUS;
-		String defaultURL = statURL + "/" + DEFAULTSTATUS;
+		//String defaultURL = statURL + "/" + DEFAULTSTATUS;
 		int linesRead = 0;
 		URL openURL = null;
 		BufferedReader urlReader = null;
