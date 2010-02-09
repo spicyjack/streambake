@@ -25,12 +25,14 @@ package com.portaboom.android.icecastStatus;
 
 // android imports
 import android.app.Activity;
-import android.content.Intent;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 // local imports
 import com.portaboom.android.icecastStatus.DialogURLFetch;
 
@@ -38,7 +40,8 @@ public class IcecastStatus extends Activity {
     static final String LOGTAG = "IcecastStatus";
     private String statURL = "http://stream.portaboom.com:7767";
     private String fetchedText = "";
-
+    private static final int URL_DIALOG_KEY = 0;
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,10 +51,9 @@ public class IcecastStatus extends Activity {
     	super.onCreate(savedInstanceState);
         // pop up the dialog that shows what base URL 
         // we will be downloading from
-        Log.d(LOGTAG, "starting DialogURLFetch intent");
-        Intent i = new Intent(this, DialogURLFetch.class);
-    	startActivity(i);
-    	
+        Log.d(LOGTAG, "displaying URL fetch dialog");
+        this.showDialog(URL_DIALOG_KEY);
+    
         // create the fetching object
         HTTPStatusDownload hsd = new HTTPStatusDownload();
         // try and fetch the status URL
@@ -73,9 +75,7 @@ public class IcecastStatus extends Activity {
         ScrollView sv = new ScrollView(this);
         sv.addView(tv);
         setContentView(sv);
-        //Object o = null;
-        //o.toString();
-        //setContentView(R.layout.main);
+        this.dismissDialog(URL_DIALOG_KEY);
     } // public void onCreate(Bundle savedInstanceState)
     
     /** 
@@ -85,5 +85,19 @@ public class IcecastStatus extends Activity {
     public String getCurrentURL() {
     	return statURL;
     } // public String getCurrentURL()
+    
+    @Override
+    /** 
+     * onCreateDialog - set up the dialog for URL fetching
+     */
+    protected Dialog onCreateDialog(int dialogID) {
+    	Log.d(LOGTAG, "Creating dialog object");
+    	ProgressDialog dialog = new ProgressDialog(this);
+    	dialog.setTitle("Fetching Status Page...");
+    	dialog.setMessage("Fetching from URL:\n" + statURL);
+    	dialog.setIndeterminate(true);
+    	dialog.setCancelable(true);
+    	return dialog;
+    }
 } // public class IcecastStatus extends Activity
 
