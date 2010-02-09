@@ -22,6 +22,7 @@ package com.portaboom.android.icecastStatus;
 */
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -30,9 +31,9 @@ import java.net.URL;
 import android.util.Log;
 
 public class HTTPStatusDownload {
-	static final String TAG = "HTTPStatusDownload";
-	static final String SIMPLESTATUS = "simple.xml";
-	static final String DEFAULTSTATUS = "status2.xml";
+	static final String LOGTAG = "HTTPStatusDownload";
+	static final String SIMPLESTATUS = "simple.xsl";
+	static final String DEFAULTSTATUS = "status2.xsl";
 	
 	/**
      * Fetch the URL passed in as as @param statURL 
@@ -40,26 +41,58 @@ public class HTTPStatusDownload {
 	 */
 
 	public String fetch(String statURL) {
-		Log.v(TAG, "entering fetch; statURL is " + statURL);
+		Log.d(LOGTAG, "entering fetch; statURL is " + statURL);
+		// initialize local variables
 		String line = "", returnHTML = "";
+		String simpleURL = statURL + "/" + SIMPLESTATUS;
+		String defaultURL = statURL + "/" + DEFAULTSTATUS;
 		int linesRead = 0;
+		URL openURL = null;
+		BufferedReader urlReader = null;
+		
+		// start processing the URL
+		Log.d(LOGTAG, "creating URL object as: " + simpleURL);
+    	try {
+            openURL = new URL(statURL + "/" + SIMPLESTATUS);
+    	} catch (MalformedURLException e) {
+    		// FIXME pop up some notice to the user
+    		// make a call back to the IcecastStatus object with the error text
+    		Log.e(LOGTAG, "malformed URL: " + simpleURL );
+    	} // try openURL
+    	
+    	// open the stream using the URL object
+    	Log.d(LOGTAG, "opening URL: " + simpleURL );
         try {
-            URL webURL = new URL(statURL + "/simple.xml");
-            BufferedReader is = new BufferedReader(
-                new InputStreamReader(webURL.openStream()));
-            while ((line = is.readLine()) != null) {
+            urlReader = new BufferedReader(
+            		new InputStreamReader(openURL.openStream()));
+        } catch (FileNotFoundException e) {
+    		// FIXME pop up some notice to the user
+    		// make a call back to the IcecastStatus object with the error text
+        	Log.e(LOGTAG, "HTTP 404 File not found: " + simpleURL);
+        	return "";
+        } catch (IOException e) {
+    		// FIXME pop up some notice to the user
+    		// make a call back to the IcecastStatus object with the error text
+        	Log.e(LOGTAG, "IOException: " + e);
+        } // try BufferedReader
+        
+        // now read in from the open socket
+		try {
+            while ((line = urlReader.readLine()) != null) {
                 returnHTML = returnHTML + line;
                 linesRead++;
             }
-            is.close();
-        } catch (MalformedURLException e) {
-            System.err.println("Load failed: " + e);
+            urlReader.close();
+		//} catch (Some Exception e) { 
+        //    Log.e(LOGTAG, "Load failed: " + e);
         } catch (IOException e) {
-            System.err.println("IOException: " + e);
+    		// FIXME pop up some notice to the user
+    		// make a call back to the IcecastStatus object with the error text
+            Log.e(LOGTAG, "IOException: " + e);
         } // try
 //        System.out.println("Downloaded status is:");
 //        System.out.println(returnHTML);
-        Log.v(TAG, "Read " + linesRead + " from " + statURL);
+        Log.d(LOGTAG, "Read " + linesRead + " from " + statURL);
         return returnHTML;
 	} // public static void main(String[] args)
 } // public class HTTPStatusDownload

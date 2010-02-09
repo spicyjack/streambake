@@ -10,6 +10,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".DialogURLFetch"
+            android:label="@string/fetching_url">
+        </activity>
     </application>
 <uses-permission android:name="android.permission.INTERNET"></uses-permission>
 <uses-sdk android:targetSdkVersion="4" android:minSdkVersion="4"></uses-sdk>

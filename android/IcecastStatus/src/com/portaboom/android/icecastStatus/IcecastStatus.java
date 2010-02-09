@@ -30,19 +30,32 @@ import android.util.Log;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+// local imports
+import com.portaboom.android.icecastStatus.DialogURLFetch;
 
 public class IcecastStatus extends Activity {
-        static final String TAG = "IcecastStatus";
-        String statURL = "http://stream.portaboom.com:7767";
-        String fetchedText = "";
+        static final String LOGTAG = "IcecastStatus";
+        private String statURL = "http://stream.portaboom.com:7767";
+        private String fetchedText = "";
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.v(TAG, "starting onCreate; statURL is " + statURL);
+    	Log.d(LOGTAG, "entering onCreate; statURL is " + statURL);
+    	super.onCreate(savedInstanceState);
+        Log.d(LOGTAG, "starting DialogURLFetch intent");
+        // pop up the dialog that shows what base URL 
+        // we will be downloading from
+        DialogURLFetch durlf = new DialogURLFetch();
+        
+        //if ( durlf != null ) {
+        //	durlf.startIntent(statURL);
+    	//}
+        // create the fetching object
+        HTTPStatusDownload hsd = new HTTPStatusDownload();
+        // try and fetch the status URL
+        Log.d(LOGTAG, "Fetching statURL: " + statURL);
         try {
-        	HTTPStatusDownload hsd = new HTTPStatusDownload();
         	fetchedText = hsd.fetch(statURL);
         } catch (Throwable t) {
         	Toast 
@@ -51,6 +64,7 @@ public class IcecastStatus extends Activity {
         }
 
         // create the output text box
+        Log.d(LOGTAG, "Parsing output of statURL");
         ParseStatus pst = new ParseStatus();
         TextView tv = new TextView(this);
         tv.setText( "Status URL: " + statURL + "\n" + pst.parse( fetchedText ) );
