@@ -14,6 +14,7 @@ package com.portaboom.android.icecastStatus;
 */
 
 /* FIXME
+  - Javadocs!!!
   - parse simple.xsl (streambake/PSAS status file)
   - parse status2.xsl (Icecast default file)
 */
@@ -31,6 +32,7 @@ public class ParseStatus {
 		String returnText = "";
 		Log.d(LOGTAG, "Splitting text between <pre> tags");
 		if ( parseText.length() > 0 ) {
+			// FIXME what does this little bit here do?
 	        String[] htmlSplitText = parseText.split("<pre>");
 	        htmlSplitText = htmlSplitText[1].split("</pre>");
 	        Pattern ampPatt = Pattern.compile("&amp;");

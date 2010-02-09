@@ -13,6 +13,8 @@ package com.portaboom.android.icecastStatus;
 */
 
 /* FIXME
+- Javadocs!!!
+- Tests!!!
 - Pass this object in to the downloader and parser so that they can make
   callbacks when needed
 - abstract the status URL; the user should be able to enter the server name
@@ -131,6 +133,7 @@ public class IcecastStatus extends Activity {
         Log.d(LOGTAG, "Parsing output of statURL");
         ParseStatus pst = new ParseStatus();
         
+        // FIXME move this to a view object?
         tv = new TextView(this);
         tv.setText( "Status URL: " + statURL + "\n" + pst.parse( fetchedText ) );
         sv = new ScrollView(this);

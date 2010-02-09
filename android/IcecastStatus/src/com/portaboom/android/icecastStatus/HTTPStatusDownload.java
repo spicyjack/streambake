@@ -12,6 +12,8 @@ package com.portaboom.android.icecastStatus;
 */
 
 /* FIXME
+- Handle the exceptions better below; show a better error message
+  to the user if there's no network connectivity for example
 - Add callbacks that other objects can use to prompt this object to do
   something
   - server URL and port to connect to?
@@ -19,6 +21,10 @@ package com.portaboom.android.icecastStatus;
   the base
   - try for simple.xsl first (streambake/PSAS status file)
   - try for status2.xsl (Icecast default file)
+- Status object calls that could be made from this object
+  - returnFetchedData - returns the fetched data back to the controller
+  - raiseError - shows an error message to the user and/or program logs
+  about a problem encountered when fetching data
 */
 
 import java.io.BufferedReader;

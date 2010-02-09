@@ -13,7 +13,7 @@
 # time - closing file
 # - simple config file format
 # name: value
-# name = value
+# name = value <-- easier to reuse when you go to Config::IniFiles
 # - maybe use Getopt::Long to parse config info from the config file that's
 # read into a $scalar
 
@@ -136,13 +136,13 @@ my $conn = new Shout;
  -h|--help          Shows this help text
  -c|--config        Configuration file to use for script options
  -l|--logfile       Logfile to use for script output; default is STDOUT
- -s|--server-port   Server hostname/IP address to connect to
- -p|--port          Server server_port number to connect to
- -f|--filelist      List of MP3/OGG files to stream
+ -s|--server-name   Server hostname or IP address to connect to
+ -p|--server-port   Server port to connect to
+ -f|--filelist      File containing a list of MP3/OGG files to stream
 
 Example usage:
 
- simplebake.pl --server_port 7767 --server stream.example.com \
+ simplebake.pl --server-port 7767 --server-name stream.example.com \
     --filelist /path/to/mp3-ogg.txt
 
 You can generate filelists with something like this on *NIX:
