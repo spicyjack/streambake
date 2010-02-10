@@ -6,6 +6,7 @@
 # streambake@googlecode.com / http://groups.google.com/group/streambake
 
 # TODO
+# - consume the config options into an object (Simplebake::Config)
 # - log format could look something like:
 # filename
 # time - opening file
@@ -16,8 +17,6 @@
 # name = value <-- easier to reuse when you go to Config::IniFiles
 # - maybe use Getopt::Long to parse config info from the config file that's
 # read into a $scalar
-
-=pod
 
 =head1 NAME
 
@@ -33,9 +32,125 @@ Version 0.01
 our $VERSION = '0.01';
 
 ######################
+# Simplebake::Config #
+######################
+package Simplebake::Config;
+use strict;
+use warnings;
+
+sub new {
+    my $class = shift;
+
+    my $self = bless ({}, $class);
+
+    # script arguments 
+    my %args; 
+
+    # FIXME move this into it's own object, and move it closer to the top of
+    # this file, place this new object in the correct order of the POD
+    # documentation
+    my $parser = Getopt::Long::Parser->new();
+
+    # pass in a reference to the args hash as the first argument
+    $parser->getoptions(
+        \%args,
+        q(verbose|v),
+        q(quiet|q),
+        q(help|h),
+        q(config|c=s),
+        q(logfile|l=s),
+        q(host|h=s),
+        q(port|p=s),
+        q(mount|m=s),
+        q(nonblocking|b),
+        q(password|a=s),
+        q(user|u=s),
+        q(name|n=s),
+        q(url|r=s),
+        q(genre|g=s),
+        q(description|d=s),
+        q(public|x),
+        q(filelist|f=s),
+    ); # $parser->getoptions
+
+    $self->{_args} = \%args;
+    return $self;
+} # sub new
+
+# -v|--verbose       Verbose script execution
+
+=head1 SYNOPSIS
+
+ -q|--quiet         Quiet script execution; only prints errors
+ -h|--help          Shows this help text
+ -c|--config        Configuration file to use for script options
+ -l|--logfile       Logfile to use for script output; default is STDOUT
+ -h|--host          Server hostname or IP address to connect to
+ -p|--port          Server port to connect to
+ -m|--mount         Mountpoint, where clients connect to on the server
+ -b|--nonblocking   Set server connection to be non-blocking
+ -a|--password      Server password
+ -u|--user          Server username (defaults to 'source')
+ -n|--name          Name of the stream (shown along with title metadata)
+ -r|--url           URL to the homepage of the stream
+ -g|--genre         Genre (used in directory listings on YP servers)
+ -d|--description   Description of the stream
+ -x|--public        Public flag, lists stream on YP servers when set
+ -f|--filelist      File containing a list of MP3/OGG files to stream
+
+Example usage:
+
+ simplebake.pl --name stream.example.com --port 7767 \
+    --mount somemount --filelist /path/to/mp3-ogg.txt
+
+You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
+password to the Icecast server, and the script will use that instead of the
+source password set elsewhere.
+
+=head1 DESCRIPTION
+
+B<simplebake.pl> is meant to be used as a quick testing script to verify that
+all of the correct C libraries and Perl modules needed to stream audio via an
+Icecast server are installed, and that all of the Icecast login information
+provided to the script is valid.  The script can also be used for as a simple
+script for streaming a list of files on a local filesystem.  The script aims
+to use as few non-core Perl modules as possible, so that it will run with any
+modern (5.8-ish and newer) Perl installation with no extra libraries beyond
+L<Shout> installed.
+
+=head1 OBJECTS
+
+=head2 Simplebake::Config
+
+=over
+
+=item new()
+
+Creates the L<Simplebake::Config> object, and parses out options using
+L<Getopt::Long>.
+
+=item get_args()
+
+Returns the parsed script arguments as a hash.
+
+=back
+
+=cut
+
+sub get_args {
+    my $self = shift;
+    # hash-ify the return arguments
+    return %{$self->{_args}};
+} # get_args
+
+=head2 Simplebake::Server
+
+=cut
+
+package Simplebake::Server;
+######################
 # Simplebake::Server #
 ######################
-package Simplebake::Server;
 use strict;
 use warnings;
 
@@ -43,40 +158,54 @@ use warnings;
 my @valid_args 
     = qw(host port mount password user name url genre description public);
 
+=over 
+
+=item new(args => \%args, logger => $logger)
+
+Creates the L<Simplebake::Server> object, and populates it with default values
+if no C<%args> hash is passed into it.  Returns the copy to the object that is
+created.
+
+=cut
+
 sub new {
     my $class = shift;
-    my %sub_args = @_;
+    my %args = @_;
 
-    my %args = %{$sub_args{args}};
-    my $logger = $sub_args{logger};
+    # pull the arguments hash and the logger object from the arguments to this
+    # method
+    my $config = $args{config};
+    my $logger = $args{logger};
 
+    # bless this class into an object
     my $self = bless ({}, $class);
 
     # check to see if a source password was set in the environment
     if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
-        if ( exists $args{password} ) {
-            if ( exists $args{verbose} ) {
+        if ( defined $config->get(q(password)) ) {
+            if ( defined $config->get(q(verbose)) ) {
                 $logger->log(qq(WARN: password set on command line )
                     . qq(and in environment\n));
                 $logger->log(qq(WARN: using password from environment\n));
             } # if ( exists $args{verbose} )
-            $args{password} = $ENV{ICECAST_SOURCE_PASS};
+            $config->set(password => $ENV{ICECAST_SOURCE_PASS});
         } # if ( exists $args{password} )
     } # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
 
     # set defaults here for any missing arugments
     # password first, since it gets a big fat error message
-    if ( ! exists $args{password} ) {
+    if ( ! defined $config->get(q(password)) ) {
         $logger->log(qq(WARN: using default source password of 'hackme';\n));
         $logger->log(qq(WARN: this is probably not what you want;\n));
         $logger->log(qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,\n));
         $logger->log(qq(WARN: use --password on the command line,\n));
         $logger->log(qq(WARN: or set the password in a configuration file\n));
-        $args{password} = q(hackme);
+        $config->set( password => q(hackme) );
     } # if ( ! exists $args{password} )
 
     # now the rest of the arguments
-    if ( ! exists $args{host} ) { $args{host} = q(localhost); }
+    if ( ! defined $config->get(q(host)) ) { 
+        $config->set(host => q(localhost)); }
     if ( ! exists $args{port} ) { $args{port} = q(8000); }
     if ( ! exists $args{user} ) { $args{user} = q(source); }
     if ( ! exists $args{mount} ) { $args{mount} = q(default); }
@@ -102,6 +231,12 @@ sub new {
     return $self;
 } # sub new
 
+=back
+
+=head2 Simplebake::Server
+
+=cut
+
 ######################
 # Simplebake::Logger #
 ######################
@@ -109,6 +244,17 @@ package Simplebake::Logger;
 use strict;
 use warnings;
 use POSIX qw(strftime);
+
+=over 
+
+=item new($config)
+
+Creates the L<Simplebake::Logger> object, and sets up various filehandles
+needed to log to files or C<STDOUT>.  Requires a L<Simplebake::Config> object
+as the argument, so that options having to deal with logging can be
+parsed/acted upon.
+
+=cut
 
 sub new {
     my $class = shift;
@@ -161,81 +307,30 @@ use Getopt::Long;
 use Shout;
 use bytes;
 
-    # script arguments 
-    my %args; 
-
-    my $parser = Getopt::Long::Parser->new();
-
-    # pass in a reference to the args hash as the first argument
-    $parser->getoptions(
-        \%args,
-        q(verbose|v),
-        q(quiet|q),
-        q(help|h),
-        q(config|c=s),
-        q(logfile|l=s),
-        q(host|h=s),
-        q(port|p=s),
-        q(mount|m=s),
-        q(nonblocking|b),
-        q(password|a=s),
-        q(user|u=s),
-        q(name|n=s),
-        q(url|r=s),
-        q(genre|g=s),
-        q(description|d=s),
-        q(public|x),
-        q(filelist|f=s),
-    ); # $parser->getoptions
-
-# -v|--verbose       Verbose script execution
-
-=head1 SYNOPSIS
-
- -q|--quiet         Quiet script execution; only prints errors
- -h|--help          Shows this help text
- -c|--config        Configuration file to use for script options
- -l|--logfile       Logfile to use for script output; default is STDOUT
- -h|--host          Server hostname or IP address to connect to
- -p|--port          Server port to connect to
- -m|--mount         Mountpoint, where clients connect to on the server
- -b|--nonblocking   Set server connection to be non-blocking
- -a|--password      Server password
- -u|--user          Server username (defaults to 'source')
- -n|--name          Name of the stream (shown along with title metadata)
- -r|--url           URL to the homepage of the stream
- -g|--genre         Genre (used in directory listings on YP servers)
- -d|--description   Description of the stream
- -x|--public        Public flag, lists stream on YP servers when set
- -f|--filelist      File containing a list of MP3/OGG files to stream
-
-Example usage:
-
- simplebake.pl --name stream.example.com --port 7767 \
-    --mount somemount --filelist /path/to/mp3-ogg.txt
-
-You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
-password to the Icecast server, and the script will use that instead of the
-source password set elsewhere.
-
-=cut
-
     # create a logger object
-    my $logger = Streambake::Logger->new(%args);
+    my $config = Streambake::Config->new();
+    # create a logger object
+    my $logger = Streambake::Logger->new($config);
 
     my $conn = Streambake::Server->new(
-        args    => \%args,
+        config  => $config,
         logger  => $logger,
     ); # my $conn = Streambake::Server->new
     # install a signal handler that causes us to exit on HUP
 
-    $SIG{HUP} = $SIG{INT} = sub { 
+    $SIG{HUP} = sub { 
         # close the connection to the icecast server
         $conn->close();
-        die q(script sent HUP; exiting...); 
+        die q(Received SIGHUP; exiting...); 
+    } # $SIG{HUP}
+    $SIG{INT} = sub { 
+        # close the connection to the icecast server
+        $conn->close();
+        die q(Received SIGINT; exiting...); 
     } # $SIG{HUP}
 
     # verify the playlist file can be opened and then read it
+    # FIXME add a check for STDIN here
     if ( -r $args{filelist} ) {
         open(FL, "< " . $args{filelist}) 
             || die q( ERR: could not open ) . $args{filelist} . qq(: $!);
@@ -317,16 +412,7 @@ source password set elsewhere.
         warn qq(couldn't connect to server; ) . $conn->get_error . qq(\n);
     } # if ($conn->open)
 
-=head1 DESCRIPTION
-
-B<simplebake.pl> is meant to be used as a quick testing script to verify that
-all of the correct C libraries and Perl modules needed to stream audio via an
-Icecast server are installed, and that all of the Icecast login information
-provided to the script is valid.  The script can also be used for as a simple
-script for streaming a list of files on a local filesystem.  The script aims
-to use as few non-core Perl modules as possible, so that it will run with any
-modern (5.8-ish and newer) Perl installation with no extra libraries beyond
-L<Shout> installed.
+=head1 MISCELLANIA
 
 =head2 Generating Filelists
 
