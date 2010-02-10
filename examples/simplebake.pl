@@ -129,6 +129,12 @@ L<Shout> installed.
 Creates the L<Simplebake::Config> object, and parses out options using
 L<Getopt::Long>.
 
+=cut
+
+sub new {
+
+}
+
 =item get_args()
 
 Returns the parsed script arguments as a hash.
@@ -160,7 +166,7 @@ my @valid_args
 
 =over 
 
-=item new(args => \%args, logger => $logger)
+=item new(config => $config, logger => $logger)
 
 Creates the L<Simplebake::Server> object, and populates it with default values
 if no C<%args> hash is passed into it.  Returns the copy to the object that is
@@ -231,9 +237,36 @@ sub new {
     return $self;
 } # sub new
 
+=item open()
+
+Calls the C<open()> method of the L<Shout> module.
+
+=cut
+
+
+sub open {
+    my $self = shift;
+    my $conn = $self->{_conn};
+# FIXME what does Shout return for the open call?
+    return $conn->open();
+} # sub open
+
+=item close()
+
+Calls the C<close()> method of the L<Shout> module.
+
+=cut
+
+sub close {
+    my $self = shift;
+    my $conn = $self->{_conn};
+# FIXME what does Shout return for the close call?
+    return $conn->close();
+} # sub open
+
 =back
 
-=head2 Simplebake::Server
+=head2 Simplebake::Logger
 
 =cut
 
