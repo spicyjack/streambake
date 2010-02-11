@@ -31,54 +31,6 @@ Version 0.01
 
 our $VERSION = '0.01';
 
-######################
-# Simplebake::Config #
-######################
-package Simplebake::Config;
-use strict;
-use warnings;
-
-sub new {
-    my $class = shift;
-
-    my $self = bless ({}, $class);
-
-    # script arguments 
-    my %args; 
-
-    # FIXME move this into it's own object, and move it closer to the top of
-    # this file, place this new object in the correct order of the POD
-    # documentation
-    my $parser = Getopt::Long::Parser->new();
-
-    # pass in a reference to the args hash as the first argument
-    $parser->getoptions(
-        \%args,
-        q(verbose|v),
-        q(quiet|q),
-        q(help|h),
-        q(config|c=s),
-        q(logfile|l=s),
-        q(host|h=s),
-        q(port|p=s),
-        q(mount|m=s),
-        q(nonblocking|b),
-        q(password|a=s),
-        q(user|u=s),
-        q(name|n=s),
-        q(url|r=s),
-        q(genre|g=s),
-        q(description|d=s),
-        q(public|x),
-        q(filelist|f=s),
-    ); # $parser->getoptions
-
-    $self->{_args} = \%args;
-    return $self;
-} # sub new
-
-# -v|--verbose       Verbose script execution
-
 =head1 SYNOPSIS
 
  -q|--quiet         Quiet script execution; only prints errors
@@ -122,9 +74,18 @@ L<Shout> installed.
 
 =head2 Simplebake::Config
 
+=cut 
+
+######################
+# Simplebake::Config #
+######################
+package Simplebake::Config;
+use strict;
+use warnings;
+
 =over
 
-=item new()
+=item new( )
 
 Creates the L<Simplebake::Config> object, and parses out options using
 L<Getopt::Long>.
@@ -132,14 +93,93 @@ L<Getopt::Long>.
 =cut
 
 sub new {
+    my $class = shift;
 
-}
+    my $self = bless ({}, $class);
 
-=item get_args()
+    # script arguments 
+    my %args; 
 
-Returns the parsed script arguments as a hash.
+    # FIXME move this into it's own object, and move it closer to the top of
+    # this file, place this new object in the correct order of the POD
+    # documentation
+    my $parser = Getopt::Long::Parser->new();
 
-=back
+    # pass in a reference to the args hash as the first argument
+    $parser->getoptions(
+        \%args,
+        q(verbose|v),
+        q(quiet|q),
+        q(help|h),
+        q(config|c=s),
+        q(logfile|l=s),
+        q(host|h=s),
+        q(port|p=s),
+        q(mount|m=s),
+        q(nonblocking|b),
+        q(password|a=s),
+        q(user|u=s),
+        q(name|n=s),
+        q(url|r=s),
+        q(genre|g=s),
+        q(description|d=s),
+        q(public|x),
+        q(filelist|f=s),
+    ); # $parser->getoptions
+
+    $self->{_args} = \%args;
+    return $self;
+} # sub new
+
+# -v|--verbose       Verbose script execution
+
+=item get($key)
+
+Returns the scalar value of the key passed in as C<key>, or C<undef> if the
+key does not exist in the L<Simplebake::Config> object.
+
+=cut
+
+sub get {
+    my $self = shift;
+    my $key = shift;
+    # turn the args reference back into a hash with a copy
+    my %args = %{$self->{_args}};
+
+    if ( exists $args{$key} ) { return $args{$key}; }
+    return undef;
+} # sub get
+
+=item set( key => $value )
+
+Sets in the L<Simplebake::Config> object the key/value pair passed in as
+arguments.  Returns the old value if the key already existed in the
+L<Simplebake::Config> object, or C<undef> otherwise.
+
+=cut
+
+sub set {
+    my $self = shift;
+    my $key = shift;
+    my $value = shift;
+    # turn the args reference back into a hash with a copy
+    my %args = %{$self->{_args}};
+
+    if ( exists $args{$key} ) { 
+        my $oldvalue = $args{$key};
+        $args{$key} = $value;
+        $self->{_args} = \%args;
+        return $oldvalue;
+    } else {
+        $args{$key} = $value;
+        $self->{_args} = \%args;
+    } # if ( exists $args{$key} )
+    return undef;
+} # sub get
+
+=item get_args( )
+
+Returns a hash containing the parsed script arguments.
 
 =cut
 
@@ -148,6 +188,8 @@ sub get_args {
     # hash-ify the return arguments
     return %{$self->{_args}};
 } # get_args
+
+=back
 
 =head2 Simplebake::Server
 
@@ -210,22 +252,28 @@ sub new {
     } # if ( ! exists $args{password} )
 
     # now the rest of the arguments
-    if ( ! defined $config->get(q(host)) ) { 
-        $config->set(host => q(localhost)); }
-    if ( ! exists $args{port} ) { $args{port} = q(8000); }
-    if ( ! exists $args{user} ) { $args{user} = q(source); }
-    if ( ! exists $args{mount} ) { $args{mount} = q(default); }
-    if ( ! exists $args{name} ) { $args{name} = q(Streambake - simplebake.pl);
-    if ( ! exists $args{url} ) { $args{url} =
-        q(http://code.google.com/p/streambake/) 
-    }; # if ( ! exists $args{url} )
-    if ( ! exists $args{public} ) { $args{public} = 0; }
+    $config->set( host => q(localhost) )
+        unless ( defined $config->get(q(host)) );
+    $config->set( port => q(8000) )
+        unless ( defined $config->get(q(port)) );
+    $config->set( user => q(source) )
+        unless ( defined $config->get(q(user)) );
+    $config->set( mount => q(default) )
+        unless ( defined $config->get(q(mount)) );
+    $config->set( name => q(Streambake - simplebake.pl) )
+        unless ( defined $config->get(q(name)) );
+    $config->set( url => q(http://code.google.com/p/streambake/) )
+        unless ( defined $config->get(q(url)) );
+    $config->set( public => 0 )
+        unless ( defined $config->get(q(user)) );
 
-    # create the Shout object
-    $conn = Shout->new(%args);
+    # we should have things set up enough now to be able to create the Shout
+    # object
+    my $conn = Shout->new(%args);
+    die qq( ERR: could not create Shout object: $!) unless ( defined $conn );
     # set some other misc settings
-    $conn->format(SHOUT_FORMAT_MP3);
-    $conn->protocol(SHOUT_PROTOCOL_HTTP);
+    $conn->format(q(SHOUT_FORMAT_MP3));
+    $conn->protocol(q(SHOUT_PROTOCOL_HTTP));
     $conn->set_audio_info(
         SHOUT_AI_BITRATE => 256, 
         SHOUT_AI_SAMPLERATE => 44100,
@@ -237,32 +285,102 @@ sub new {
     return $self;
 } # sub new
 
-=item open()
+=item open( )
 
-Calls the C<open()> method of the L<Shout> module.
+Calls the C<open()> method of the L<Shout> module.  Returns C<1> upon success,
+or dies and returns the error message if the C<open()> call fails.
 
 =cut
-
 
 sub open {
     my $self = shift;
     my $conn = $self->{_conn};
-# FIXME what does Shout return for the open call?
-    return $conn->open();
+
+    die q( ERR: Failed to open connection: ) . $conn->get_error()
+        unless $conn->open();
+    return 1;
 } # sub open
 
-=item close()
+=item close( )
 
-Calls the C<close()> method of the L<Shout> module.
+Calls the C<close()> method of the L<Shout> module.  Returns C<1> upon
+success, or dies and returns the error message if the C<close()> call fails.
 
 =cut
 
 sub close {
     my $self = shift;
     my $conn = $self->{_conn};
-# FIXME what does Shout return for the close call?
-    return $conn->close();
-} # sub open
+
+    die q( ERR: Failed to open connection: ) . $conn->get_error()
+        unless $conn->close();
+    return 1;
+} # sub close
+
+=item set_metadata( $metadata )
+
+Sets the stream metadata on the Icecast server to C<$metadata>.  Returns
+C<true> if the call succeeds, or C<undef> if the call fails.
+
+=cut
+
+sub set_metadata {
+    my $self = shift;
+    my $metadata = shift;
+    my $conn = $self->{_conn};
+
+    # return success if we can set the metadata
+    return 1 if ( $conn->set_metadata($metadata) );
+    # return failure if something went wrong
+    return undef;
+} # sub set_metadata
+
+=item send(data => $buffer, [ length => $length ])
+
+Sends C<$buffer> data of optional C<$length> to the Icecast server.  If
+C<$length> is missing, it will be computed by the L<Shout> module.  Returns
+C<true> if the call succeeds, or sets an error message and returns C<undef> if
+the call fails.
+
+=cut
+
+sub send {
+    my $self = shift;
+    my %args = @_;
+
+    my $conn = $self->{_conn};
+
+    # we always need the data to be sent; the length is optional, Shout.pm
+    # computes it if it's missing.
+    if ( ! exists $args{data} ) {
+        die q| ERR: send() called without 'data' argument|;
+    } # if ( ! exists $args{data} )
+
+    # die if something went wrong
+    if ( exists $args{length} ) {
+        die q( ERR: Failed to send data: ) . $conn->get_error()
+            unless ( $conn->send($args{data}, $args{length}) );
+    } else {
+        die q( ERR: Failed to send data: ) . $conn->get_error()
+            unless ( $conn->send($args{data}) );
+    } # if ( exists $args{length} )
+    return 1;
+} # sub set_metadata
+
+=item sync( )
+
+Sleep until the connection is ready for more data; blocks until the server is
+ready for more data.  Always returns a true value.
+
+=cut
+
+sub sync {
+    my $self = shift;
+    my $conn = $self->{_conn};
+
+    $conn->sync();
+    return 1;
+} # sub sync
 
 =back
 
@@ -296,7 +414,7 @@ sub new {
     my $self = bless ({}, $class);
     if ( exists $args{logfile} ) {
         $self->{_logfile} = $args{logfile};
-        open (LOG, qq( > $logfile)) 
+        open (LOG, q( > ) . $self->{_logfile}) 
             || die q(Can't open logfile ) . $self->{_logfile} . qq(: $!);
         $self->{_OUTFH} = *LOG;
     } else {
@@ -312,6 +430,13 @@ sub new {
     return $self;
 } # sub new
 
+=item log($message)
+
+Log C<$message> to the logfile, or I<STDOUT> if the B<--logfile> option was
+not used.
+
+=cut
+
 sub log {
     my $self = shift;
     my $msg = shift;
@@ -319,6 +444,13 @@ sub log {
     my $FH = $self->{_OUTFH};
     print $FH $msg . qq(\n);
 } # sub log
+
+=item timelog($message)
+
+Log C<$message> with a timestamp to the logfile, or I<STDOUT> if the
+B<--logfile> option was not used.
+
+=cut
 
 sub timelog {
     my $self = shift;
@@ -328,6 +460,10 @@ sub timelog {
     my $FH = $self->{_OUTFH};
     print $FH $timestamp . q(: ) . $msg . qq(\n);
 } # sub timelog
+
+=back
+
+=cut
 
 ################
 # package main #
@@ -355,12 +491,12 @@ use bytes;
         # close the connection to the icecast server
         $conn->close();
         die q(Received SIGHUP; exiting...); 
-    } # $SIG{HUP}
+    }; # $SIG{HUP}
     $SIG{INT} = sub { 
         # close the connection to the icecast server
         $conn->close();
         die q(Received SIGINT; exiting...); 
-    } # $SIG{HUP}
+    }; # $SIG{HUP}
 
     # verify the playlist file can be opened and then read it
     # FIXME add a check for STDIN here
@@ -381,7 +517,8 @@ use bytes;
             . $conn->get(q(mount)) 
             . q(' as user ')
             . $conn->get(q(user)) 
-            . qq('\n);
+            . qq('\n)
+        );
 
         # make a copy of the playlist before we start munging it
         my @song_q = @playlist;
@@ -413,10 +550,8 @@ use bytes;
             # if we connect, grab data from stdin and shoot it to the server
             my ($buff, $len);
 
-            warn q(Opening file for streaming at ) 
-                . sprintf(q(%02u), $dt->day) . $dt->month_abbr . $dt->year 
-                . q( ) . $dt->hms . qq(\n);
-            warn qq('$current_song'\n); 
+            $logger->timelog(q(Opening file for streaming));
+            $logger->log(qq($current_song)); 
             $conn->set_metadata( 
                 "song" => "$artist_name - $album_name - $track_name" );
             #undef $tf;
@@ -424,9 +559,8 @@ use bytes;
                 || die qq(Can't open $current_song : '$!');
             my $bytes_read;
             while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
-                unless ( $conn->send($buff, 4096) ) {
+                unless ( $conn->send($buff, length($buff)) ) {
                     warn "Error while sending: " . $conn->get_error . "\n";
-                    # 
                     $conn->sync;
                     last;
                 } # unless ($conn->send($buff)) 
@@ -455,11 +589,11 @@ You can generate filelists with something like this on *NIX:
 
 =head2 Configuration File Syntax 
 
-You can use the C<--config> switch to specify the name of a file to be parsed
+You can use the B<--config> switch to specify the name of a file to be parsed
 for script configuration options.  The options understood by the script are
-the same options shown in the SYNOPSIS section above.  The configuration file
-consists of key/value pairs, one per line.  Any line that starts with the
-pound sign/comment character is ignored.
+the same as the long options (B<--host>, B<--port>, etc) shown in the SYNOPSIS
+section above.  The configuration file consists of key/value pairs, one per
+line.  Any line that starts with the pound sign/comment character is ignored.
 
 Example configuration file:
 
@@ -474,7 +608,7 @@ Example configuration file:
 
 You can send the C<HUP> signal at any time to cause the script to exit.
 
- kill -HUP <<PID of script>>
+ kill -HUP <PID of script>
 
 =head1 AUTHOR
 
