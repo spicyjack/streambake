@@ -74,6 +74,10 @@ L<Shout> installed.
 
 =head2 Simplebake::Config
 
+An object used for storing configuration data.
+
+=head3 Object Methods
+
 =cut 
 
 ######################
@@ -99,10 +103,8 @@ sub new {
 
     # script arguments 
     my %args; 
-
-    # FIXME move this into it's own object, and move it closer to the top of
-    # this file, place this new object in the correct order of the POD
-    # documentation
+    
+    # parse the command line arguments (if any)
     my $parser = Getopt::Long::Parser->new();
 
     # pass in a reference to the args hash as the first argument
@@ -192,6 +194,11 @@ sub get_args {
 =back
 
 =head2 Simplebake::Server
+
+Wraps the L<Shout> module with some defaults that may or may not work.
+Actually, the "defaults" most likely won't work.
+
+=head3 Object Methods
 
 =cut
 
@@ -386,6 +393,10 @@ sub sync {
 
 =head2 Simplebake::Logger
 
+A simple logger module, for logging script output and errors.
+
+=head3 Object Methods
+
 =cut
 
 ######################
@@ -476,6 +487,8 @@ use Getopt::Long;
 use Shout;
 use bytes;
 
+    # for holding a list of files
+    my @playlist;
     # create a logger object
     my $config = Streambake::Config->new();
     # create a logger object
@@ -499,16 +512,25 @@ use bytes;
     }; # $SIG{HUP}
 
     # verify the playlist file can be opened and then read it
-    # FIXME add a check for STDIN here
-    if ( -r $args{filelist} ) {
-        open(FL, "< " . $args{filelist}) 
-            || die q( ERR: could not open ) . $args{filelist} . qq(: $!);
-        @playlist = <FL>;
+    if ( defined $config->get(q(filelist)) ) {
+        # read from STDIN?
+        if ( $config->get(q(filelist)) eq q(-) ) {
+            @playlist = <STDIN>;
+        # read from a filelist somewhere?
+        } elsif ( -r $config->get(q(filelist)) ) {
+            open(FL, "< " . $config->get(q(filelist)) )
+                || die q( ERR: could not open ) . $config->get(q(filelist)) 
+                    . qq(: $!);
+            @playlist = <FL>;
+            close(FL);
+        # nope; bail!
+        } else {
+            die q( ERR: File ) . $config->get(q(filelist)) 
+                . q( does not exist or is not readable);
+        } # if ( -r $config->get(q(filelist)) )
     } else {
-        die q( ERR: File ) . $args{filelist} . q( does not exist or )
-            . q(is not readable);
-    } # if ( -r $args{filelist} )
-
+        die q( ERR: no --filelist argument specified; See --help for options);
+    } # if ( defined $config->get(q(filelist)) ) 
     # try to connect to the icecast server
     if ( $conn->open() ) {
         $logger->timelog(q(INFO: Connected to server ') 
@@ -585,7 +607,7 @@ use bytes;
 
 You can generate filelists with something like this on *NIX:
 
- find /path/to/your/files -name "*.mp3" > output_filelist.txt
+ find /path/to/your/media -name "*.mp3" > output_filelist.txt
 
 =head2 Configuration File Syntax 
 
@@ -608,7 +630,9 @@ Example configuration file:
 
 You can send the C<HUP> signal at any time to cause the script to exit.
 
- kill -HUP <PID of script>
+ kill -HUP <PID of Perl process running script>
+
+The C<Ctrl-C> key combination will also cause the script to exit.
 
 =head1 AUTHOR
 
