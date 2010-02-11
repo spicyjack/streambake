@@ -86,6 +86,7 @@ An object used for storing configuration data.
 package Simplebake::Config;
 use strict;
 use warnings;
+use Pod::Usage;
 
 =over
 
@@ -115,7 +116,7 @@ sub new {
         q(help|h),
         q(config|c=s),
         q(logfile|l=s),
-        q(host|h=s),
+        q(host|o=s),
         q(port|p=s),
         q(mount|m=s),
         q(nonblocking|b),
@@ -129,6 +130,10 @@ sub new {
         q(filelist|f=s),
     ); # $parser->getoptions
 
+    # dump if we get called with --help
+    if ( $args{help} ) {
+        pod2usage(-exitstatus => 1);
+    }
     $self->{_args} = \%args;
     return $self;
 } # sub new
@@ -208,6 +213,7 @@ package Simplebake::Server;
 ######################
 use strict;
 use warnings;
+use Shout;
 
 # a list of valid arguments to the get() method
 my @valid_args 
@@ -240,8 +246,8 @@ sub new {
         if ( defined $config->get(q(password)) ) {
             if ( defined $config->get(q(verbose)) ) {
                 $logger->log(qq(WARN: password set on command line )
-                    . qq(and in environment\n));
-                $logger->log(qq(WARN: using password from environment\n));
+                    . qq(and in environment));
+                $logger->log(qq(WARN: using password from environment));
             } # if ( exists $args{verbose} )
             $config->set(password => $ENV{ICECAST_SOURCE_PASS});
         } # if ( exists $args{password} )
@@ -250,11 +256,11 @@ sub new {
     # set defaults here for any missing arugments
     # password first, since it gets a big fat error message
     if ( ! defined $config->get(q(password)) ) {
-        $logger->log(qq(WARN: using default source password of 'hackme';\n));
-        $logger->log(qq(WARN: this is probably not what you want;\n));
-        $logger->log(qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,\n));
-        $logger->log(qq(WARN: use --password on the command line,\n));
-        $logger->log(qq(WARN: or set the password in a configuration file\n));
+        $logger->log(qq(WARN: using default source password of 'hackme';));
+        $logger->log(qq(WARN: this is probably not what you want;));
+        $logger->log(qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,));
+        $logger->log(qq(WARN: use --password on the command line,));
+        $logger->log(qq(WARN: or set the password in a configuration file));
         $config->set( password => q(hackme) );
     } # if ( ! exists $args{password} )
 
@@ -274,13 +280,21 @@ sub new {
     $config->set( public => 0 )
         unless ( defined $config->get(q(user)) );
 
+    # create a copy of the args hash, then sanitize it prior to passing it
+    # into Shout
+    my %shoutargs = %args;
+    delete $shoutargs{config};
+    delete $shoutargs{filelist};
+    delete $shoutargs{quiet};
+    delete $shoutargs{verbose};
+    delete $shoutargs{logger};
     # we should have things set up enough now to be able to create the Shout
     # object
-    my $conn = Shout->new(%args);
+    my $conn = Shout->new(%shoutargs);
     die qq( ERR: could not create Shout object: $!) unless ( defined $conn );
     # set some other misc settings
-    $conn->format(q(SHOUT_FORMAT_MP3));
-    $conn->protocol(q(SHOUT_PROTOCOL_HTTP));
+    $conn->format(SHOUT_FORMAT_MP3);
+    $conn->protocol(SHOUT_PROTOCOL_HTTP);
     $conn->set_audio_info(
         SHOUT_AI_BITRATE => 256, 
         SHOUT_AI_SAMPLERATE => 44100,
@@ -420,11 +434,11 @@ parsed/acted upon.
 
 sub new {
     my $class = shift;
-    my %args = @_;
+    my $config = shift;
 
     my $self = bless ({}, $class);
-    if ( exists $args{logfile} ) {
-        $self->{_logfile} = $args{logfile};
+    if ( defined $config->get(q(logfile)) ) {
+        $self->{_logfile} = $config->get(q(logfile));
         open (LOG, q( > ) . $self->{_logfile}) 
             || die q(Can't open logfile ) . $self->{_logfile} . qq(: $!);
         $self->{_OUTFH} = *LOG;
@@ -433,7 +447,7 @@ sub new {
     } # if ( exists $args{logfile} )
 
     $self->{_quiet} = 0;
-    if ( exists $args{quiet} ) {
+    if ( defined $config->get(q(quiet)) ) {
         $self->{_quiet} = 1;
     } # if ( exists $args{quiet} )
 
@@ -484,20 +498,19 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Shout;
 use bytes;
 
     # for holding a list of files
     my @playlist;
     # create a logger object
-    my $config = Streambake::Config->new();
+    my $config = Simplebake::Config->new();
     # create a logger object
-    my $logger = Streambake::Logger->new($config);
+    my $logger = Simplebake::Logger->new($config);
 
-    my $conn = Streambake::Server->new(
+    my $conn = Simplebake::Server->new(
         config  => $config,
         logger  => $logger,
-    ); # my $conn = Streambake::Server->new
+    ); # my $conn = Simplebake::Server->new
     # install a signal handler that causes us to exit on HUP
 
     $SIG{HUP} = sub { 
