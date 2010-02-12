@@ -6,17 +6,11 @@
 # streambake@googlecode.com / http://groups.google.com/group/streambake
 
 # TODO
-# - consume the config options into an object (Simplebake::Config)
 # - log format could look something like:
 # filename
 # time - opening file
 # time - updating metadata
 # time - closing file
-# - simple config file format
-# name: value
-# name = value <-- easier to reuse when you go to Config::IniFiles
-# - maybe use Getopt::Long to parse config info from the config file that's
-# read into a $scalar
 
 =head1 NAME
 
@@ -477,6 +471,19 @@ sub sync {
     return 1;
 } # sub sync
 
+=item get_error( )
+
+Return the text error message returned if the last server operation failed.
+
+=cut
+
+sub get_error {
+    my $self = shift;
+    my $conn = $self->{_conn};
+
+    return $conn->get_error();
+} # sub sync
+
 =back
 
 =head2 Simplebake::Logger
@@ -620,14 +627,12 @@ use bytes;
     } # if ( defined $config->get(q(filelist)) ) 
     # try to connect to the icecast server
     if ( $conn->open() ) {
-        $logger->timelog(q(INFO: Connected to server ') 
+        $logger->timelog(q(INFO: Connected to server));
+        $logger->log(q(- server hostname:port/mountpoint: http://) 
             . $config->get(q(host)) . q(:) . $config->get(q(port)) 
-            . q(' at mountpoint ') 
-            . $config->get(q(mount)) 
-            . q(' as user ')
-            . $config->get(q(user)) 
-            . qq('\n)
+            . q(/) . $config->get(q(mount))
         );
+        $logger->log(q(- source user: ') . $config->get(q(user)) );
 
         # make a copy of the playlist before we start munging it
         my @song_q = @playlist;
@@ -636,13 +641,17 @@ use bytes;
         while ( 1 ) {
             my $current_song;
             my $song_q_length = scalar(@song_q);
-            warn qq(There are currently $song_q_length songs in the song Q\n);
+            $logger->timelog(q(INFO: ) . $song_q_length 
+                . qq( songs currently in the song Q));
             my $random_song = int(rand($song_q_length));
             $current_song = splice(@song_q, $random_song, 1);
             chomp($current_song);
-            warn qq(Current song is $current_song\n);
+            $logger->timelog(q(INFO: Queued new file:));
+            $logger->log(qq(INFO: $current_song));
             if ( ! -e $current_song ) { 
-                warn qq(File '$current_song' doesn't exist\n); 
+                $logger->timelog(
+                    qq(WARN: File '$current_song' does not exist)); 
+                # skip to the next song on the list
                 next;
             } # if ( ! -e $current_song ) 
             # just get the name of the file for metadata
@@ -659,8 +668,7 @@ use bytes;
             # if we connect, grab data from stdin and shoot it to the server
             my ($buff, $len);
 
-            $logger->timelog(q(Opening file for streaming));
-            $logger->log(qq($current_song)); 
+            $logger->timelog(qq(INFO: Opening '$track_name' for streaming));
             $conn->set_metadata( 
                 "song" => "$artist_name - $album_name - $track_name" );
             #undef $tf;
@@ -670,7 +678,8 @@ use bytes;
             while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
                 # send a block of data, and error out if it fails
                 unless ( $conn->send(data => $buff, length => length($buff)) ) {
-                    warn "Error while sending: " . $conn->get_error . "\n";
+                    $logger->timelog(q( ERR: while sending buffer to server:));
+                    $logger->log(q( ERR:) . $conn->get_error);
                     $conn->sync;
                     last;
                 } # unless ($conn->send($buff)) 
@@ -678,15 +687,16 @@ use bytes;
                 $conn->sync;
             } # while (($len = sysread(MP3FILE, $buff, 4096)) > 0)
             close(MP3FILE);
-            warn qq(Closing file;\n$current_song\n);
+            $logger->timelog(qq(INFO: Closing file '$track_name'));
 
             if ( scalar(@song_q) == 0 ) {
-                print qq(Reloading song queue;\n);
+                $logger->timelog(qq(INFO: === Reloading song queue ===));
                 @song_q = @playlist;
             } # if ( scalar(@song_q) == 0 )  
         } # while ( 1 )
     } else {
-        warn qq(couldn't connect to server; ) . $conn->get_error . qq(\n);
+        $logger->timelog(qq(WARN: couldn't connect to server; ));
+        $logger->timelog(q(WARN: ) . $conn->get_error());
     } # if ($conn->open)
 
 =head1 MISCELLANIA
