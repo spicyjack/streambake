@@ -3,14 +3,7 @@
 # Copyright (c) 2010 by Brian Manning <elspicyjack at gmail dot com>
 # PLEASE DO NOT E-MAIL THE AUTHOR WITH ISSUES; the proper venue for issues
 # with this script is the Streambake mailing list:
-# streambake@googlecode.com / http://groups.google.com/group/streambake
-
-# TODO
-# - log format could look something like:
-# filename
-# time - opening file
-# time - updating metadata
-# time - closing file
+# streambake@googlegroups.com / http://groups.google.com/group/streambake
 
 =head1 NAME
 
@@ -349,7 +342,17 @@ package Simplebake::Server;
 ######################
 use strict;
 use warnings;
-use Shout;
+
+BEGIN {
+    eval qq(use Shout;);
+    if ( $@ ) {
+        warn qq( ERR: Shout module not installed\n);
+        warn qq( ERR: === Begin error output ===\n);
+        warn qq($@\n);
+        warn qq( ERR: === Begin error output ===\n);
+        return undef;
+    } # if ( $@ )
+} # BEGIN
 
 =over 
 
@@ -613,6 +616,9 @@ use bytes;
         logger  => $logger,
     ); # my $conn = Simplebake::Server->new
     # install a signal handler that causes us to exit on HUP
+
+    # hopefully this should catch when the Shout module is not installed
+    die qq( ERR: Could not create Shout object\n) unless ( defined $conn );
 
     $SIG{HUP} = sub { 
         # close the connection to the icecast server
