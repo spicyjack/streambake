@@ -100,6 +100,10 @@ L<Getopt::Long>.
 # a list of valid arguments to the get() method
 my @_valid_shout_args 
     = qw(host port mount password user name url genre description public);
+# a list of valid arguments to the get() method
+my @_valid_script_args = ( 
+    @_valid_shout_args, qw(verbose quiet config logfile filelist) 
+); # my @_valid_script_args 
 
 sub new {
     my $class = shift;
@@ -145,7 +149,8 @@ sub new {
 
     # generate a config file and exit?
     if ( defined $self->get(q(gen-config)) ) {
-
+        # apply the default configuration options to the Config object
+        $self->_apply_defaults();
         # now print out the sample config file
         print qq(# sample simplebake config file\n);
         print qq(# any line that starts with '#' is a comment\n);
@@ -153,8 +158,10 @@ sub new {
         print qq(# generated on ) . POSIX::strftime( q(%c), localtime() ) 
             . qq(\n);
         foreach my $arg ( @_valid_shout_args ) {
-            print $arg . qq( = ) . $self->get($arg) . qq(\n);
+            print $arg . q( = ) . $self->get($arg) . qq(\n);
         } # foreach my $arg ( @_valid_shout_args )
+        # cheat a bit and add this last one
+        print qq(filelist = /path/to/filelist.txt\n);
         exit 0;
     } # if ( exists $args{gen-config} )
 
@@ -168,7 +175,7 @@ sub new {
                 if ( defined $self->get(q(verbose)));
             next if ( $line =~ /^#/ );
             my ($key, $value);
-            if ( scalar(grep($line, @_valid_shout_args)) > 0 ) {
+            if ( scalar(grep($line, @_valid_script_args)) > 0 ) {
                 ($key, $value) = split(/\s*=\s*/, $line);
                 $self->set($key => $value);
             } else {
@@ -212,14 +219,14 @@ sub _apply_defaults {
     $self->set( port => q(8000) ) unless ( defined $self->get(q(port)) );
     $self->set( user => q(source) ) unless ( defined $self->get(q(user)) );
     $self->set( mount => q(default) ) unless ( defined $self->get(q(mount)) );
-    $self->set( name => q("Streambake - simplebake.pl") )
+    $self->set( name => q(Streambake - simplebake.pl) )
         unless ( defined $self->get(q(name)) );
-    $self->set( url => q("http://code.google.com/p/streambake/") )
+    $self->set( url => q(http://code.google.com/p/streambake/) )
         unless ( defined $self->get(q(url)) );
-    $self->set( genre => q("mish-mash") ) 
+    $self->set( genre => q(mish-mash) ) 
         unless ( defined $self->get(q(genre)) );
     $self->set( 
-        description => q("I'm too lazy to set a simplebake description") )
+        description => q(I'm too lazy to set a simplebake description) )
         unless ( defined $self->get(q(description)) );
     $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
 
@@ -311,6 +318,20 @@ sub get_shout_args {
     return %return_args;
 } # sub get_shout_args
 
+=item get_server_connect_string( )
+
+Returns the Icecast connect string for this server connection in a human
+readable form (includes the C<http://> prefix).
+
+=cut
+
+sub get_server_connect_string {
+    my $self = shift;
+    
+    return q(http://) . $self->get(q(host)) . q(:) . $self->get(q(port)) 
+        . q(/) . $self->get(q(mount))
+} # sub get_server_connect_string
+
 =back
 
 =head2 Simplebake::Server
@@ -329,7 +350,6 @@ package Simplebake::Server;
 use strict;
 use warnings;
 use Shout;
-
 
 =over 
 
@@ -625,14 +645,12 @@ use bytes;
     } else {
         die q( ERR: no --filelist argument specified; See --help for options);
     } # if ( defined $config->get(q(filelist)) ) 
+
     # try to connect to the icecast server
     if ( $conn->open() ) {
         $logger->timelog(q(INFO: Connected to server));
-        $logger->log(q(- server hostname:port/mountpoint: http://) 
-            . $config->get(q(host)) . q(:) . $config->get(q(port)) 
-            . q(/) . $config->get(q(mount))
-        );
-        $logger->log(q(- source user: ') . $config->get(q(user)) );
+        $logger->log(q(- server ) . $config->get_server_connect_string() );
+        $logger->log(q(- source user: ') . $config->get(q(user)) . q('));
 
         # make a copy of the playlist before we start munging it
         my @song_q = @playlist;
@@ -641,16 +659,22 @@ use bytes;
         while ( 1 ) {
             my $current_song;
             my $song_q_length = scalar(@song_q);
-            $logger->timelog(q(INFO: ) . $song_q_length 
+            $logger->timelog(q(INFO: Queue status));
+            $logger->log(q(- ) . $song_q_length 
                 . qq( songs currently in the song Q));
             my $random_song = int(rand($song_q_length));
             $current_song = splice(@song_q, $random_song, 1);
             chomp($current_song);
-            $logger->timelog(q(INFO: Queued new file:));
-            $logger->log(qq(INFO: $current_song));
+            $logger->timelog(q(INFO: Streaming file));
+            if ( length($current_song) > 70 ) {
+                $logger->log(qq(- ...) . substr($current_song, -70));
+            } else {
+                $logger->log(qq(- $current_song));
+            } # if ( length($current_song) > 70 )
             if ( ! -e $current_song ) { 
-                $logger->timelog(
-                    qq(WARN: File '$current_song' does not exist)); 
+                $logger->timelog( qq(WARN: Missing file) );
+                $logger->log(qq(- File '...) . substr($current_song, -60)
+                    . q(' does not exist)); 
                 # skip to the next song on the list
                 next;
             } # if ( ! -e $current_song ) 
@@ -665,30 +689,37 @@ use bytes;
             if ( $track_name =~ /^\d+ / ) { $track_name =~ s/^\d+ //; }
             my $album_name = $song_metadata[-2];
             my $artist_name = $song_metadata[-3];
-            # if we connect, grab data from stdin and shoot it to the server
-            my ($buff, $len);
 
-            $logger->timelog(qq(INFO: Opening '$track_name' for streaming));
+            # buffer for holding data read from the file
+            my $buff;
+            # update the metadata
+            $logger->log(qq(- Updating metadata on server ) 
+                . $config->get_server_connect_string() );
             $conn->set_metadata( 
                 "song" => "$artist_name - $album_name - $track_name" );
-            #undef $tf;
+            # open the file
+            $logger->log(qq(- Opening file for streaming));
             open(MP3FILE, "< $current_song") 
                 || die qq(Can't open $current_song : '$!');
-            my $bytes_read;
-            while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
+            $logger->log(qq(- Streaming file to ) 
+                . $config->get_server_connect_string() );
+            while (sysread(MP3FILE, $buff, 4096) > 0) {
                 # send a block of data, and error out if it fails
                 unless ( $conn->send(data => $buff, length => length($buff)) ) {
                     $logger->timelog(q( ERR: while sending buffer to server:));
-                    $logger->log(q( ERR:) . $conn->get_error);
+                    $logger->timelog(q( ERR:) . $conn->get_error);
                     $conn->sync;
                     last;
                 } # unless ($conn->send($buff)) 
                 # must be careful not to send the data too fast :)
                 $conn->sync;
-            } # while (($len = sysread(MP3FILE, $buff, 4096)) > 0)
+            } # while (sysread(MP3FILE, $buff, 4096) > 0)
+            # close the file now that we've read it
+            $logger->timelog(qq(INFO: Closing file));
+            $logger->log(qq(- $current_song));
             close(MP3FILE);
-            $logger->timelog(qq(INFO: Closing file '$track_name'));
 
+            # check to see if the song Q is empty
             if ( scalar(@song_q) == 0 ) {
                 $logger->timelog(qq(INFO: === Reloading song queue ===));
                 @song_q = @playlist;
@@ -709,11 +740,11 @@ You can generate filelists with something like this on *NIX:
 
 =head2 Configuration File Syntax 
 
-You can use the B<--config> switch to specify the name of a file to be parsed
-for script configuration options.  The options understood by the script are
-the same as the long options (B<--host>, B<--port>, etc) shown in the SYNOPSIS
-section above.  The configuration file consists of key/value pairs, one per
-line.  Any line that starts with the pound sign/comment character is ignored.
+The configuration file consists of key/value pairs, one per line.  Any line
+that starts with the pound sign/comment character is ignored.  The options
+that can be used in the configuration file are the same as the long options
+(B<--host>, B<--port>, etc) shown in the SYNOPSIS section above, minus the
+leading dashes.  
 
 Example configuration file:
 
@@ -723,6 +754,15 @@ Example configuration file:
  mount: somemount
  password: $om3P$$w0rd
  filelist: /path/to/mp3-ogg.txt
+
+You can use the B<--gen-config> command line switch to generate a
+configuration file that can be used with the B<--config> switch.
+
+ perl simplebake.pl --gen-config > sample_config.txt
+
+Note that the parameters output with the B<--gen-config> switch are the
+defaults used by the script when the user does not supply those options to the
+script.
 
 =head1 EXITING SCRIPT
 
