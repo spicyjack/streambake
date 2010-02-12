@@ -33,11 +33,16 @@ our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
+ Script options:
  -q|--quiet         Quiet script execution; only prints errors
  -h|--help          Shows this help text
  -c|--config        Configuration file to use for script options
  -l|--logfile       Logfile to use for script output; default is STDOUT
- -h|--host          Server hostname or IP address to connect to
+ -f|--filelist      File containing a list of MP3/OGG files to stream
+ -j|--gen-config    Generate a blank config file containing Shout options
+
+ Shout module options used by this script:
+ -o|--host          Server hostname or IP address to connect to
  -p|--port          Server port to connect to
  -m|--mount         Mountpoint, where clients connect to on the server
  -b|--nonblocking   Set server connection to be non-blocking
@@ -48,7 +53,7 @@ our $VERSION = '0.01';
  -g|--genre         Genre (used in directory listings on YP servers)
  -d|--description   Description of the stream
  -x|--public        Public flag, lists stream on YP servers when set
- -f|--filelist      File containing a list of MP3/OGG files to stream
+
 
 Example usage:
 
@@ -87,6 +92,7 @@ package Simplebake::Config;
 use strict;
 use warnings;
 use Pod::Usage;
+use POSIX qw(strftime);
 
 =over
 
@@ -96,6 +102,10 @@ Creates the L<Simplebake::Config> object, and parses out options using
 L<Getopt::Long>.
 
 =cut
+
+# a list of valid arguments to the get() method
+my @_valid_shout_args 
+    = qw(host port mount password user name url genre description public);
 
 sub new {
     my $class = shift;
@@ -111,11 +121,15 @@ sub new {
     # pass in a reference to the args hash as the first argument
     $parser->getoptions(
         \%args,
+        # script options
         q(verbose|v),
         q(quiet|q),
         q(help|h),
         q(config|c=s),
         q(logfile|l=s),
+        q(filelist|f=s),
+        q(gen-config|j),
+        # Shout options
         q(host|o=s),
         q(port|p=s),
         q(mount|m=s),
@@ -127,18 +141,106 @@ sub new {
         q(genre|g=s),
         q(description|d=s),
         q(public|x),
-        q(filelist|f=s),
     ); # $parser->getoptions
 
-    # dump if we get called with --help
-    if ( $args{help} ) {
-        pod2usage(-exitstatus => 1);
-    }
+    # assign the args hash to this object so it can be reused later on
     $self->{_args} = \%args;
+
+    # dump and bail if we get called with --help
+    if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
+
+    # generate a config file and exit?
+    if ( defined $self->get(q(gen-config)) ) {
+
+        # now print out the sample config file
+        print qq(# sample simplebake config file\n);
+        print qq(# any line that starts with '#' is a comment\n);
+        print qq|# please quote your strings :)\n|;
+        print qq(# generated on ) . POSIX::strftime( q(%c), localtime() ) 
+            . qq(\n);
+        foreach my $arg ( @_valid_shout_args ) {
+            print $arg . qq( = ) . $self->get($arg) . qq(\n);
+        } # foreach my $arg ( @_valid_shout_args )
+        exit 0;
+    } # if ( exists $args{gen-config} )
+
+    # read a config file if that's specified
+    if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
+        open( CFG, q(<) . $self->get(q(config)) );
+        my @config_lines = <CFG>;
+        foreach my $line ( @config_lines ) {
+            chomp $line;
+            warn qq(VERB: parsing line '$line'\n) 
+                if ( defined $self->get(q(verbose)));
+            next if ( $line =~ /^#/ );
+            my ($key, $value);
+            if ( scalar(grep($line, @_valid_shout_args)) > 0 ) {
+                ($key, $value) = split(/\s*=\s*/, $line);
+                $self->set($key => $value);
+            } else {
+                warn qq|WARN: unknown config key: $key ($value)\n|;
+            } # if ( grep($key, @_valid_shout_args) > 0 )
+        } # foreach my $line ( @config_lines )
+    } # if ( exists $args{config} && -r $args{config} )
+
+    # check to see if a source password was set in the environment
+    if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
+        if ( defined $self->get(q(password)) ) {
+            if ( defined $self->get(q(verbose)) ) {
+                warn qq(WARN: password set on command line )
+                    . qq(and in environment\n);
+                warn qq(WARN: using password from environment\n);
+            } # if ( exists $args{verbose} )
+            $self->set(key => q(password), value => $ENV{ICECAST_SOURCE_PASS});
+        } # if ( exists $args{password} )
+    } # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
+
+    # some checks to make sure we have needed arguments
+    die qq( ERR: script called without a --filelist argument;\n)
+        . qq( ERR: run script with --help switch for usage examples\n)
+        unless ( defined $self->get(q(filelist)) );
+
+    # apply script defaults to whatver remaining key/value pairs don't have
+    # anything set
+    $self->_apply_defaults();
+
+    # return this object to the caller
     return $self;
 } # sub new
 
 # -v|--verbose       Verbose script execution
+
+# set defaults here for any missing arugments
+sub _apply_defaults {
+    my $self = shift;
+    # set some defaults if they haven't been set by now
+    $self->set( host => q(localhost) )  unless ( defined $self->get(q(host) ) );
+    $self->set( port => q(8000) ) unless ( defined $self->get(q(port)) );
+    $self->set( user => q(source) ) unless ( defined $self->get(q(user)) );
+    $self->set( mount => q(default) ) unless ( defined $self->get(q(mount)) );
+    $self->set( name => q("Streambake - simplebake.pl") )
+        unless ( defined $self->get(q(name)) );
+    $self->set( url => q("http://code.google.com/p/streambake/") )
+        unless ( defined $self->get(q(url)) );
+    $self->set( genre => q("mish-mash") ) 
+        unless ( defined $self->get(q(genre)) );
+    $self->set( 
+        description => q("I'm too lazy to set a simplebake description") )
+        unless ( defined $self->get(q(description)) );
+    $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
+
+    # generate a big fat error message unless we're generating a config file
+    if ( ! defined $self->get(q(password)) ) {
+        if ( ! defined $self->get(q(gen-config)) ) {
+            warn qq(WARN: using default source password of 'hackme';\n);
+            warn qq(WARN: this is probably not what you want;\n);
+            warn qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,\n);
+            warn qq(WARN: use --password on the command line,\n);
+            warn qq(WARN: or set the password in a configuration file\n);
+        } # if ( ! defined $self->get(q(gen-config)) )     
+        $self->set( password => q(hackme) );
+    } # if ( defined $self->get(q(password)) )
+} # sub _apply_defaults
 
 =item get($key)
 
@@ -196,6 +298,25 @@ sub get_args {
     return %{$self->{_args}};
 } # get_args
 
+=item get_shout_args( )
+
+Returns a hash containing the parsed script arguments.  The hash is filtered
+so that it only contains valid arguments for the L<Shout> module.
+
+=cut
+
+sub get_shout_args {
+    my $self = shift;
+
+    my %return_args;
+    foreach my $key ( @_valid_shout_args ) {
+        warn qq(DEBG: key/value = '$key'/') . $self->get($key) . qq('\n)
+            if ( defined $self->get(q(verbose)) );
+        $return_args{$key} = $self->get($key);
+    } # foreach my $key ( keys(%args) )
+    return %return_args;
+} # sub get_shout_args
+
 =back
 
 =head2 Simplebake::Server
@@ -215,9 +336,6 @@ use strict;
 use warnings;
 use Shout;
 
-# a list of valid arguments to the get() method
-my @valid_args 
-    = qw(host port mount password user name url genre description public);
 
 =over 
 
@@ -241,53 +359,9 @@ sub new {
     # bless this class into an object
     my $self = bless ({}, $class);
 
-    # check to see if a source password was set in the environment
-    if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
-        if ( defined $config->get(q(password)) ) {
-            if ( defined $config->get(q(verbose)) ) {
-                $logger->log(qq(WARN: password set on command line )
-                    . qq(and in environment));
-                $logger->log(qq(WARN: using password from environment));
-            } # if ( exists $args{verbose} )
-            $config->set(password => $ENV{ICECAST_SOURCE_PASS});
-        } # if ( exists $args{password} )
-    } # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
-
-    # set defaults here for any missing arugments
-    # password first, since it gets a big fat error message
-    if ( ! defined $config->get(q(password)) ) {
-        $logger->log(qq(WARN: using default source password of 'hackme';));
-        $logger->log(qq(WARN: this is probably not what you want;));
-        $logger->log(qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,));
-        $logger->log(qq(WARN: use --password on the command line,));
-        $logger->log(qq(WARN: or set the password in a configuration file));
-        $config->set( password => q(hackme) );
-    } # if ( ! exists $args{password} )
-
-    # now the rest of the arguments
-    $config->set( host => q(localhost) )
-        unless ( defined $config->get(q(host)) );
-    $config->set( port => q(8000) )
-        unless ( defined $config->get(q(port)) );
-    $config->set( user => q(source) )
-        unless ( defined $config->get(q(user)) );
-    $config->set( mount => q(default) )
-        unless ( defined $config->get(q(mount)) );
-    $config->set( name => q(Streambake - simplebake.pl) )
-        unless ( defined $config->get(q(name)) );
-    $config->set( url => q(http://code.google.com/p/streambake/) )
-        unless ( defined $config->get(q(url)) );
-    $config->set( public => 0 )
-        unless ( defined $config->get(q(user)) );
-
     # create a copy of the args hash, then sanitize it prior to passing it
     # into Shout
-    my %shoutargs = %args;
-    delete $shoutargs{config};
-    delete $shoutargs{filelist};
-    delete $shoutargs{quiet};
-    delete $shoutargs{verbose};
-    delete $shoutargs{logger};
+    my %shoutargs = $config->get_shout_args();
     # we should have things set up enough now to be able to create the Shout
     # object
     my $conn = Shout->new(%shoutargs);
@@ -347,11 +421,11 @@ C<true> if the call succeeds, or C<undef> if the call fails.
 
 sub set_metadata {
     my $self = shift;
-    my $metadata = shift;
+    my @args = @_;
     my $conn = $self->{_conn};
 
     # return success if we can set the metadata
-    return 1 if ( $conn->set_metadata($metadata) );
+    return 1 if ( $conn->set_metadata(@_) );
     # return failure if something went wrong
     return undef;
 } # sub set_metadata
@@ -547,11 +621,11 @@ use bytes;
     # try to connect to the icecast server
     if ( $conn->open() ) {
         $logger->timelog(q(INFO: Connected to server ') 
-            . $conn->get(q(host)) . q(:) . $conn->get(q(port)) 
+            . $config->get(q(host)) . q(:) . $config->get(q(port)) 
             . q(' at mountpoint ') 
-            . $conn->get(q(mount)) 
+            . $config->get(q(mount)) 
             . q(' as user ')
-            . $conn->get(q(user)) 
+            . $config->get(q(user)) 
             . qq('\n)
         );
 
@@ -594,7 +668,8 @@ use bytes;
                 || die qq(Can't open $current_song : '$!');
             my $bytes_read;
             while (($len = sysread(MP3FILE, $buff, 4096)) > 0) {
-                unless ( $conn->send($buff, length($buff)) ) {
+                # send a block of data, and error out if it fails
+                unless ( $conn->send(data => $buff, length => length($buff)) ) {
                     warn "Error while sending: " . $conn->get_error . "\n";
                     $conn->sync;
                     last;
