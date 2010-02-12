@@ -666,14 +666,16 @@ use bytes;
             $current_song = splice(@song_q, $random_song, 1);
             chomp($current_song);
             $logger->timelog(q(INFO: Streaming file));
+            my $display_song;
             if ( length($current_song) > 70 ) {
-                $logger->log(qq(- ...) . substr($current_song, -70));
+                $display_song = q(...) . substr($current_song, -70);
             } else {
-                $logger->log(qq(- $current_song));
+                $display_song = $current_song;
             } # if ( length($current_song) > 70 )
+            $logger->log(qq(- $display_song));
             if ( ! -e $current_song ) { 
                 $logger->timelog( qq(WARN: Missing file) );
-                $logger->log(qq(- File '...) . substr($current_song, -60)
+                $logger->log(qq(- File '...) . substr($current_song, -55)
                     . q(' does not exist)); 
                 # skip to the next song on the list
                 next;
@@ -716,7 +718,7 @@ use bytes;
             } # while (sysread(MP3FILE, $buff, 4096) > 0)
             # close the file now that we've read it
             $logger->timelog(qq(INFO: Closing file));
-            $logger->log(qq(- $current_song));
+            $logger->log(qq(- $display_song));
             close(MP3FILE);
 
             # check to see if the song Q is empty
