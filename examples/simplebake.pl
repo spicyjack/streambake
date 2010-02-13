@@ -634,10 +634,10 @@ use bytes;
 
     # for holding a list of files
     my @playlist;
+    # skip the current song?
+    my $skip_current_song = undef;
     # create a logger object
     my $config = Simplebake::Config->new();
-
-    
 
     # fork into the background and run as a daemon if requested
     if ( defined $config->get(q(daemon)) ) {
@@ -682,6 +682,12 @@ use bytes;
         $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
     }; # $SIG{INT} = $SIG{TERM}
 
+    # reroute some signals to our handler
+    $SIG{HUP} = sub { 
+        $skip_current_song = 1;
+        $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
+    }; # $SIG{HUP  = sub
+
     # verify the playlist file can be opened and then read it
     if ( defined $config->get(q(filelist)) ) {
         # read from STDIN?
@@ -713,7 +719,7 @@ use bytes;
         my @song_q = @playlist;
 
         # endless loop
-        while ( 1 ) {
+        ENDLESS: while ( 1 ) {
             my $current_song;
             my $song_q_length = scalar(@song_q);
             $logger->timelog(q(INFO: Song Q status));
@@ -772,6 +778,13 @@ use bytes;
             $logger->log(qq(- Streaming file to ) 
                 . $config->get_server_connect_string() );
             while (sysread(MP3FILE, $buff, 4096) > 0) {
+                # the user veto'ed this song
+                if ( defined $skip_current_song ) {
+                    # this event is logged in the HUP handler
+                    $skip_current_song = undef;
+                    close(MP3FILE);
+                    next ENDLESS;
+                } # if ( defined $skip_current_song )
                 # send a block of data, and error out if it fails
                 unless ( $conn->send(data => $buff, length => length($buff)) ) {
                     $logger->timelog(q( ERR: while sending buffer to server:));
@@ -786,8 +799,6 @@ use bytes;
             $logger->timelog(qq(INFO: Closing file));
             $logger->log(qq(- $display_song));
             close(MP3FILE);
-
-
         } # while ( 1 )
     } else {
         $logger->timelog(qq(WARN: couldn't connect to server; ));
