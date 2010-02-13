@@ -24,6 +24,7 @@ our $VERSION = '0.01';
  -q|--quiet         Quiet script execution; only prints errors
  -h|--help          Shows this help text
  -c|--config        Configuration file to use for script options
+ -d|--daemon        Fork and run as a daemon; requires --logfile
  -l|--logfile       Logfile to use for script output; default is STDOUT
  -f|--filelist      File containing a list of MP3/OGG files to stream
  -j|--gen-config    Generate a blank config file containing Shout options
@@ -38,7 +39,7 @@ our $VERSION = '0.01';
  -n|--name          Name of the stream (shown along with title metadata)
  -r|--url           URL to the homepage of the stream
  -g|--genre         Genre (used in directory listings on YP servers)
- -d|--description   Description of the stream
+ -s|--description   Description of the stream
  -x|--public        Public flag, lists stream on YP servers when set
 
 
@@ -117,6 +118,7 @@ sub new {
         q(quiet|q),
         q(help|h),
         q(config|c=s),
+        q(daemon|d),
         q(logfile|l=s),
         q(filelist|f=s),
         q(gen-config|j),
@@ -130,7 +132,7 @@ sub new {
         q(name|n=s),
         q(url|r=s),
         q(genre|g=s),
-        q(description|d=s),
+        q(description|s=s),
         q(public|x),
     ); # $parser->getoptions
 
@@ -155,6 +157,8 @@ sub new {
         } # foreach my $arg ( @_valid_shout_args )
         # cheat a bit and add this last one
         print qq(filelist = /path/to/filelist.txt\n);
+        print qq(logfile = /path/to/output.log\n);
+        print qq(daemon = 0\n);
         exit 0;
     } # if ( exists $args{gen-config} )
 
@@ -524,6 +528,7 @@ package Simplebake::Logger;
 use strict;
 use warnings;
 use POSIX qw(strftime);
+use IO::File;
 
 =over 
 
@@ -542,10 +547,12 @@ sub new {
 
     my $self = bless ({}, $class);
     if ( defined $config->get(q(logfile)) ) {
-        $self->{_logfile} = $config->get(q(logfile));
-        open (LOG, q( > ) . $self->{_logfile}) 
-            || die q(Can't open logfile ) . $self->{_logfile} . qq(: $!);
-        $self->{_OUTFH} = *LOG;
+        # append to the existing logfile, if any
+        my $log = IO::File->new(q( >> ) . $config->get(q(logfile)));
+        die q(Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
+            unless ( defined $log );
+        $log->autoflush(1);
+        $self->{_OUTFH} = $log;
     } else {
         $self->{_OUTFH} = *STDOUT;
     } # if ( exists $args{logfile} )
@@ -608,8 +615,35 @@ use bytes;
     my @playlist;
     # create a logger object
     my $config = Simplebake::Config->new();
-    # create a logger object
+
+    
+
+    # fork into the background and run as a daemon if requested
+    if ( defined $config->get(q(daemon)) ) {
+        # if we want to "properly" background, we should be writing output to
+        # a logfile
+        if ( defined $config->get(q(logfile)) ) {
+            my $pid = fork();
+            if ( defined $pid ) { 
+                # parent, which exits
+                if ( $pid > 0 ) {
+                    warn qq(INFO: Fork; parent PID $$ is exiting...\n);
+                    exit 0;
+                # child, which continues
+                } else { 
+                    warn qq(INFO: Fork; child PID is $$\n);
+                } # if ( $pid > 0 )
+            } else {
+                die qq( ERR: Forking failed: $!\n);
+            } # if ( defined $pid )
+        } else {
+            die qq( ERR: --daemon requires --logfile; see --help\n);
+        } # if ( defined $config->get(q(logfile)) )
+    } # if ( defined $config->get(q(daemon)) )
+
+    # create a logger object, and prime the logfile for this session
     my $logger = Simplebake::Logger->new($config);
+    $logger->timelog(qq(INFO: Starting simplebake.pl; my PID is $$));
 
     my $conn = Simplebake::Server->new(
         config  => $config,
@@ -620,15 +654,12 @@ use bytes;
     # hopefully this should catch when the Shout module is not installed
     die qq( ERR: Could not create Shout object\n) unless ( defined $conn );
 
-    $SIG{HUP} = sub { 
+    # reroute some signals to our handler
+    $SIG{HUP} = $SIG{INT} = sub { 
         # close the connection to the icecast server
         $conn->close();
-        die q(Received SIGHUP; exiting...); 
-    }; # $SIG{HUP}
-    $SIG{INT} = sub { 
-        # close the connection to the icecast server
-        $conn->close();
-        die q(Received SIGINT; exiting...); 
+        $logger->timelog(q(CRIT: Received SIG[HUP|INT]; exiting...));
+        #die q(CRIT: Received SIG[HUP|INT]; exiting...); 
     }; # $SIG{HUP}
 
     # verify the playlist file can be opened and then read it
