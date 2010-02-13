@@ -96,7 +96,7 @@ my @_valid_shout_args
     = qw(host port mount password user name url genre description public);
 # a list of valid arguments to the get() method
 my @_valid_script_args = ( 
-    @_valid_shout_args, qw(verbose quiet config logfile filelist) 
+    @_valid_shout_args, qw(verbose quiet config logfile filelist daemon) 
 ); # my @_valid_script_args 
 
 sub new {
@@ -171,12 +171,13 @@ sub new {
             warn qq(VERB: parsing line '$line'\n) 
                 if ( defined $self->get(q(verbose)));
             next if ( $line =~ /^#/ );
-            my ($key, $value);
-            if ( scalar(grep($line, @_valid_script_args)) > 0 ) {
-                ($key, $value) = split(/\s*=\s*/, $line);
+            my ($key, $value) = split(/\s*=\s*/, $line);
+            warn qq(VERB: key/value for line is '$key'/'$value'\n) 
+                if ( defined $self->get(q(verbose)));
+            if ( grep(/$key/, @_valid_script_args) > 0 ) {
                 $self->set($key => $value);
             } else {
-                warn qq|WARN: unknown config key: $key ($value)\n|;
+                warn qq|WARN: unknown config key (value): $key ($value)\n|;
             } # if ( grep($key, @_valid_shout_args) > 0 )
         } # foreach my $line ( @config_lines )
     } # if ( exists $args{config} && -r $args{config} )
@@ -397,6 +398,8 @@ sub new {
 
     # add the connection object to the attributes of this object
     $self->{_conn} = $conn;
+    $self->{_logger} = $logger;
+    $self->{_config} = $config;
     # return this object to the caller
     return $self;
 } # sub new
@@ -411,9 +414,14 @@ or dies and returns the error message if the C<open()> call fails.
 sub open {
     my $self = shift;
     my $conn = $self->{_conn};
+    my $logger =  $self->{_logger};
 
-    die q( ERR: Failed to open connection: ) . $conn->get_error()
-        unless $conn->open();
+    unless ( $conn->open() ) {;
+        $logger->timelog(q( ERR: Failed to open connection: ) 
+            . $conn->get_error());
+        exit 1;
+    } # unless ( $conn->open() )
+
     return 1;
 } # sub open
 
@@ -427,9 +435,15 @@ success, or dies and returns the error message if the C<close()> call fails.
 sub close {
     my $self = shift;
     my $conn = $self->{_conn};
+        
+    my $logger =  $self->{_logger};
 
-    die q( ERR: Failed to open connection: ) . $conn->get_error()
-        unless $conn->close();
+    unless ( $conn->close() ) {;
+        $logger->timelog(q( ERR: Failed to close connection: )
+            . $conn->get_error());
+        exit 1;
+    } # unless ( $conn->close() )
+
     return 1;
 } # sub close
 
@@ -465,6 +479,7 @@ sub send {
     my %args = @_;
 
     my $conn = $self->{_conn};
+    my $logger =  $self->{_logger};
 
     # we always need the data to be sent; the length is optional, Shout.pm
     # computes it if it's missing.
@@ -474,11 +489,17 @@ sub send {
 
     # die if something went wrong
     if ( exists $args{length} ) {
-        die q( ERR: Failed to send data: ) . $conn->get_error()
-            unless ( $conn->send($args{data}, $args{length}) );
+        unless ( $conn->send($args{data}, $args{length}) ) {
+            $logger->timelog(q( ERR: Failed to send data: ) 
+                . $conn->get_error());
+            exit 1;
+        } # unless ( $conn->send($args{data}, $args{length}) ) 
     } else {
-        die q( ERR: Failed to send data: ) . $conn->get_error()
-            unless ( $conn->send($args{data}) );
+        unless ( $conn->send($args{data}) ) {
+            $logger->timelog(q( ERR: Failed to send data: ) 
+                . $conn->get_error());
+            exit 1;
+        } # unless ( $conn->send($args{data}, $args{length}) ) 
     } # if ( exists $args{length} )
     return 1;
 } # sub set_metadata
@@ -649,18 +670,17 @@ use bytes;
         config  => $config,
         logger  => $logger,
     ); # my $conn = Simplebake::Server->new
-    # install a signal handler that causes us to exit on HUP
 
     # hopefully this should catch when the Shout module is not installed
     die qq( ERR: Could not create Shout object\n) unless ( defined $conn );
 
     # reroute some signals to our handler
-    $SIG{HUP} = $SIG{INT} = sub { 
+    $SIG{INT} = $SIG{TERM} = sub { 
+        my $signal = shift;
         # close the connection to the icecast server
         $conn->close();
-        $logger->timelog(q(CRIT: Received SIG[HUP|INT]; exiting...));
-        #die q(CRIT: Received SIG[HUP|INT]; exiting...); 
-    }; # $SIG{HUP}
+        $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
+    }; # $SIG{INT} = $SIG{TERM}
 
     # verify the playlist file can be opened and then read it
     if ( defined $config->get(q(filelist)) ) {
@@ -696,11 +716,21 @@ use bytes;
         while ( 1 ) {
             my $current_song;
             my $song_q_length = scalar(@song_q);
-            $logger->timelog(q(INFO: Queue status));
-            $logger->log(q(- ) . $song_q_length 
-                . qq( songs currently in the song Q));
+            $logger->timelog(q(INFO: Song Q status));
+            if ( $song_q_length == 1 ) {
+                $logger->log(q(- 1 song currently in the song Q));
+            } else {
+                $logger->log(q(- ) . $song_q_length 
+                    . qq( songs currently in the song Q));
+            } # if ( $song_q_length == 1 )
             my $random_song = int(rand($song_q_length));
             $current_song = splice(@song_q, $random_song, 1);
+            # check to see if the song Q is empty
+            # we need to reload it now in case $current_song is missing
+            if ( scalar(@song_q) == 0 ) {
+                $logger->timelog(qq(INFO: Reloading song queue));
+                @song_q = @playlist;
+            } # if ( scalar(@song_q) == 0 )  
             chomp($current_song);
             $logger->timelog(q(INFO: Streaming file));
             my $display_song;
@@ -712,8 +742,7 @@ use bytes;
             $logger->log(qq(- $display_song));
             if ( ! -e $current_song ) { 
                 $logger->timelog( qq(WARN: Missing file) );
-                $logger->log(qq(- File '...) . substr($current_song, -55)
-                    . q(' does not exist)); 
+                $logger->log(qq(- ) . $display_song); 
                 # skip to the next song on the list
                 next;
             } # if ( ! -e $current_song ) 
@@ -758,11 +787,7 @@ use bytes;
             $logger->log(qq(- $display_song));
             close(MP3FILE);
 
-            # check to see if the song Q is empty
-            if ( scalar(@song_q) == 0 ) {
-                $logger->timelog(qq(INFO: === Reloading song queue ===));
-                @song_q = @playlist;
-            } # if ( scalar(@song_q) == 0 )  
+
         } # while ( 1 )
     } else {
         $logger->timelog(qq(WARN: couldn't connect to server; ));
