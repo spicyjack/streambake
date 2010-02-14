@@ -5,6 +5,14 @@
 # with this script is the Streambake mailing list:
 # streambake@googlegroups.com / http://groups.google.com/group/streambake
 
+# TODO
+# tests
+# - incorrect filenames/directories for config files and logfiles
+# - missing config file
+# - logging to STDOUT and piping logs to a file
+#   - this would be used when wrapping a shell script for use through stunnel
+# - logging to a file in daemon mode
+
 =head1 NAME
 
 B<simplebake.pl> - Using a list of MP3/OGG files, stream those files to an
