@@ -10,7 +10,7 @@
 # - incorrect filenames/directories for config files and logfiles
 # - missing config file
 # - logging to STDOUT and piping logs to a file
-#   - this would be used when wrapping a shell script for use through stunnel
+#   - fixed below by wrapping IO::Handle around STDOUT and setting autoflush
 # - logging to a file in daemon mode
 
 =head1 NAME
@@ -558,6 +558,7 @@ use strict;
 use warnings;
 use POSIX qw(strftime);
 use IO::File;
+use IO::Handle;
 
 =over 
 
@@ -583,7 +584,10 @@ sub new {
         $log->autoflush(1);
         $self->{_OUTFH} = $log;
     } else {
-        $self->{_OUTFH} = *STDOUT;
+        my $log = IO::Handle->new();
+        $log->fdopen(fileno(STDOUT), q(w)); 
+        $log->autoflush(1);
+        $self->{_OUTFH} = $log;
     } # if ( exists $args{logfile} )
 
     $self->{_quiet} = 0;
