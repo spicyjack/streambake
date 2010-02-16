@@ -28,11 +28,13 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
+
+# -v|--verbose       Verbose script execution
 
 =head1 SYNOPSIS
 
@@ -58,6 +60,9 @@ our $VERSION = '0.01';
  -s|--description   Description of the stream
  -x|--public        Public flag, lists stream on YP servers when set
 
+*NIX recognized by the script:
+ SIGINT (aka Ctrl-C) Quits the program
+ SIGHUP Skips the current song
 
 Example usage:
 
@@ -95,6 +100,7 @@ An object used for storing configuration data.
 package Simplebake::Config;
 use strict;
 use warnings;
+use Getopt::Long;
 use Pod::Usage;
 use POSIX qw(strftime);
 
@@ -107,10 +113,10 @@ L<Getopt::Long>.
 
 =cut
 
-# a list of valid arguments to the get() method
+# a list of valid arguments that would be used with the Shout module
 my @_valid_shout_args 
     = qw(host port mount password user name url genre description public);
-# a list of valid arguments to the get() method
+# a list of valid arguments to this script
 my @_valid_script_args = ( 
     @_valid_shout_args, qw(verbose quiet config logfile filelist daemon) 
 ); # my @_valid_script_args 
@@ -171,7 +177,7 @@ sub new {
         foreach my $arg ( @_valid_shout_args ) {
             print $arg . q( = ) . $self->get($arg) . qq(\n);
         } # foreach my $arg ( @_valid_shout_args )
-        # cheat a bit and add this last one
+        # cheat a bit and add these last config settings
         print qq(filelist = /path/to/filelist.txt\n);
         print qq(logfile = /path/to/output.log\n);
         print qq(daemon = 0\n);
@@ -222,8 +228,6 @@ sub new {
     # return this object to the caller
     return $self;
 } # sub new
-
-# -v|--verbose       Verbose script execution
 
 # set defaults here for any missing arugments
 sub _apply_defaults {
@@ -364,6 +368,7 @@ package Simplebake::Server;
 use strict;
 use warnings;
 
+# a check to verify the shout module is available
 BEGIN {
     eval qq(use Shout;);
     if ( $@ ) {
@@ -371,7 +376,7 @@ BEGIN {
         warn qq( ERR: === Begin error output ===\n);
         warn qq($@\n);
         warn qq( ERR: === Begin error output ===\n);
-        return undef;
+        die qq( ERR: Shout module not installed\n);
     } # if ( $@ )
 } # BEGIN
 
@@ -649,8 +654,7 @@ package main;
 use strict;
 use warnings;
 
-use Getopt::Long;
-use bytes;
+#use bytes; # I think this is used for the sysread call when reading MP3 files
 
     # for holding a list of files
     my @playlist;
@@ -793,16 +797,18 @@ use bytes;
                 "song" => "$artist_name - $album_name - $track_name" );
             # open the file
             $logger->log(qq(- Opening file for streaming));
-            open(MP3FILE, "< $current_song") 
+            open(STREAMFILE, "< $current_song") 
                 || die qq(Can't open $current_song : '$!');
+			# treat STREAMFILE as binary data
+			binmode(STREAMFILE);
             $logger->log(qq(- Streaming file to ) 
                 . $config->get_server_connect_string() );
-            while (sysread(MP3FILE, $buff, 4096) > 0) {
+            while (sysread(STREAMFILE, $buff, 4096) > 0) {
                 # the user veto'ed this song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
                     $skip_current_song = undef;
-                    close(MP3FILE);
+                    close(STREAMFILE);
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
                 # send a block of data, and error out if it fails
@@ -814,11 +820,11 @@ use bytes;
                 } # unless ($conn->send($buff)) 
                 # must be careful not to send the data too fast :)
                 $conn->sync;
-            } # while (sysread(MP3FILE, $buff, 4096) > 0)
+            } # while (sysread(STREAMFILE, $buff, 4096) > 0)
             # close the file now that we've read it
             $logger->timelog(qq(INFO: Closing file));
             $logger->log(qq(- $display_song));
-            close(MP3FILE);
+            close(STREAMFILE);
         } # while ( 1 )
     } else {
         $logger->timelog(qq(WARN: couldn't connect to server; ));
