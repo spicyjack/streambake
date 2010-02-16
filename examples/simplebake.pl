@@ -12,6 +12,14 @@
 # - logging to STDOUT and piping logs to a file
 #   - this would be used when wrapping a shell script for use through stunnel
 # - logging to a file in daemon mode
+# - reading files from STDIN when using "-" as the filelist filename
+
+# - Create a Simplebake::Songlist object that holds the complete list of
+# songs, and then the script can query it for new songs as needed
+#   - Send a SIGUSR1 to reload the songlist file (if a file was used and not
+#   STDIN)
+# - add a '--list-signals' option that lists the current signals that the
+# script understands
 
 =head1 NAME
 
