@@ -1,0 +1,29 @@
+diff -rNu libshout-2.2.2/examples/nonblocking.c libshout-2.2.2-W32Sleep/examples/nonblocking.c
+--- libshout-2.2.2/examples/nonblocking.c	Mon Jun 19 10:54:05 2006
++++ libshout-2.2.2-W32Sleep/examples/nonblocking.c	Tue Feb 16 15:53:35 2010
+@@ -68,7 +68,10 @@
+ 
+ 	while (ret == SHOUTERR_BUSY) {
+ 	  printf("Connection pending. Sleeping...\n");
+-	  sleep(1);
++	  /* Sleep (captial 'S') is a replacement for the sleep() function on
++	   * Windows platforms; function sleeps the number of milliseconds
++	   * provided as the argument */
++	  Sleep(1000);
+ 	  ret = shout_get_connected(shout);
+ 	}
+ 	
+diff -rNu libshout-2.2.2/include/os.h libshout-2.2.2-W32Sleep/include/os.h
+--- libshout-2.2.2/include/os.h	Mon Jun 27 14:33:22 2005
++++ libshout-2.2.2-W32Sleep/include/os.h	Tue Feb 16 15:36:00 2010
+@@ -1,7 +1,7 @@
+ #ifdef _WIN32
+ typedef __int64 int64_t;
+ typedef unsigned __int64 uint64_t;
+-typedef unsigned __int32 uint32_t;
+-typedef __int32 int32_t;
+-typedef int  ssize_t;
++/* typedef unsigned __int32 uint32_t; */
++/* typedef __int32 int32_t; */
++/* typedef int  ssize_t; */
+ #endif
