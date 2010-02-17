@@ -14,7 +14,7 @@
 # - logging to a file in daemon mode
 # - reading files from STDIN when using "-" as the filelist filename
 
-# - Create a Simplebake::Songlist object that holds the complete list of
+# - Create a Simplebake::Playlist object that holds the complete list of
 # songs, and then the script can query it for new songs as needed
 #   - Send a SIGUSR1 to reload the songlist file (if a file was used and not
 #   STDIN)
@@ -45,7 +45,7 @@ our $VERSION = '0.02';
  -d|--daemon        Fork and run as a daemon; requires --logfile
  -l|--logfile       Logfile to use for script output; default is STDOUT
  -f|--filelist      File containing a list of MP3/OGG files to stream
- -j|--gen-config    Generate a blank config file containing Shout options
+ -j|--gen-config    Generate a config file containing script defaults
 
  Shout module options used by this script:
  -o|--host          Server hostname or IP address to connect to
@@ -60,18 +60,27 @@ our $VERSION = '0.02';
  -s|--description   Description of the stream
  -x|--public        Public flag, lists stream on YP servers when set
 
-*NIX recognized by the script:
- SIGINT (aka Ctrl-C) Quits the program
- SIGHUP Skips the current song
-
-Example usage:
+ Example usage:
 
  simplebake.pl --name stream.example.com --port 7767 \
     --mount somemount --filelist /path/to/mp3-ogg.txt
 
+ simplebake.pl --config /path/to/config/file.cfg
+
+ # Generate a config file to modify containing the script defaults
+ simplebake.pl --gen-config
+
 You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
 password to the Icecast server, and the script will use that instead of the
 source password set elsewhere.
+
+ *NIX signals recognized by the script:
+  SIGINT     (aka Ctrl-C) Quits the program
+  SIGHUP     Skips the currently playing song
+  SIGUSR1    Reloads playlist from disk when --filelist is used
+
+ For example, to skip to the next song in the filelist with:
+  kill -HUP <PID of Perl process executing simplebake.pl>
 
 =head1 DESCRIPTION
 
@@ -171,9 +180,8 @@ sub new {
         # now print out the sample config file
         print qq(# sample simplebake config file\n);
         print qq(# any line that starts with '#' is a comment\n);
-        print qq|# please quote your strings :)\n|;
-        print qq(# generated on ) . POSIX::strftime( q(%c), localtime() ) 
-            . qq(\n);
+        print qq(# sample config generated on ) 
+            . POSIX::strftime( q(%c), localtime() ) . qq(\n);
         foreach my $arg ( @_valid_shout_args ) {
             print $arg . q( = ) . $self->get($arg) . qq(\n);
         } # foreach my $arg ( @_valid_shout_args )
@@ -385,8 +393,7 @@ BEGIN {
 =item new(config => $config, logger => $logger)
 
 Creates the L<Simplebake::Server> object, and populates it with default values
-if no C<%args> hash is passed into it.  Returns the copy to the object that is
-created.
+if no C<%args> hash is passed into it.  Returns the object that is created.
 
 =cut
 
@@ -580,7 +587,7 @@ use IO::Handle;
 Creates the L<Simplebake::Logger> object, and sets up various filehandles
 needed to log to files or C<STDOUT>.  Requires a L<Simplebake::Config> object
 as the argument, so that options having to deal with logging can be
-parsed/acted upon.
+parsed/acted upon.  Returns the logger object to the caller.
 
 =cut
 
@@ -589,19 +596,20 @@ sub new {
     my $config = shift;
 
     my $self = bless ({}, $class);
+
+    my $logfd;
     if ( defined $config->get(q(logfile)) ) {
         # append to the existing logfile, if any
-        my $log = IO::File->new(q( >> ) . $config->get(q(logfile)));
-        die q(Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
-            unless ( defined $log );
-        $log->autoflush(1);
-        $self->{_OUTFH} = $log;
+        my $logfd = IO::File->new(q( >> ) . $config->get(q(logfile)));
+        die q( ERR: Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
+            unless ( defined $logfd );
     } else {
-        my $log = IO::Handle->new();
-        $log->fdopen(fileno(STDOUT), q(w)); 
-        $log->autoflush(1);
-        $self->{_OUTFH} = $log;
+        my $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
+        die qq( ERR: could not wrap STDOUT in IO::Handle object: $!) 
+            unless ( defined $logfd );
     } # if ( exists $args{logfile} )
+    $logfd->autoflush(1);
+    $self->{_OUTFH} = $logfd;
 
     $self->{_quiet} = 0;
     if ( defined $config->get(q(quiet)) ) {
@@ -647,6 +655,106 @@ sub timelog {
 
 =cut
 
+=head2 Simplebake::Playlist
+
+Holds a list of songs to stream.  The main script will query this object for
+songs to stream, and also will also send this object signals to reload the
+playlist from disk when a playlist file is used (as opposed to piping the
+playlist in to the script on STDIN).
+
+=head3 Object Methods
+
+=cut
+
+########################
+# Simplebake::Playlist #
+########################
+package Simplebake::Playlist;
+use strict;
+use warnings;
+
+my (@_playlist, @_song_q);
+
+=over 
+
+=item new(config => $config, logger => $logger)
+
+Creates the L<Simplebake::Playlist> object, reads the playlist file from disk
+or from C<STDIN>.  Returns the playlist object to the caller.
+
+=cut
+
+sub new {
+    my $class = shift;
+    my %args = @_;
+
+    my ($config, $logger);
+    if ( exists $args{config} ) { 
+        $config = $args{config};
+    } else {
+        die qq( ERR: Simplebake::Config object required as 'config =>');
+    } # if ( exists $args{config} )
+
+    if ( exists $args{logger} ) { 
+        $logger = $args{logger};
+    } else {
+        die qq( ERR: Simplebake::Logger object required as 'logger =>');
+    } # if ( exists $args{logger} )
+
+    my $self = bless ({}, $class);
+
+    # verify the playlist file can be opened and then read it
+    if ( defined $config->get(q(filelist)) ) {
+        # read from STDIN?
+        if ( $config->get(q(filelist)) eq q(-) ) {
+            @_playlist = <STDIN>;
+        # read from a filelist somewhere?
+        } elsif ( -r $config->get(q(filelist)) ) {
+            open(FL, "< " . $config->get(q(filelist)) )
+                || die q( ERR: could not open ) . $config->get(q(filelist)) 
+                    . qq(: $!);
+            @_playlist = <FL>;
+            close(FL);
+        # nope; bail!
+        } else {
+            die q( ERR: File ) . $config->get(q(filelist)) 
+                . q( does not exist or is not readable);
+        } # if ( -r $config->get(q(filelist)) )
+    } else {
+        die q( ERR: no --filelist argument specified; See --help for options);
+    } # if ( defined $config->get(q(filelist)) ) 
+
+    # make a copy of the playlist before we start munging it
+    @_song_q = @_playlist;
+    $self->{_logger} = $logger;
+    $self->{_config} = $config;
+    return $self
+} # sub new
+
+=item new(config => $config, logger => $logger)
+
+Creates the L<Simplebake::Playlist> object, reads the playlist file from disk
+or from C<STDIN>.  Returns the playlist object to the caller.
+
+=cut
+
+sub get_song {
+
+    my $random_song = int( rand($playlist->get_song_q_count()) );
+    $current_song = splice(@song_q, $random_song, 1);
+    # check to see if the song Q is empty
+    # we need to reload it now in case $current_song is missing
+    if ( scalar(@song_q) == 0 ) {
+        $logger->timelog(qq(INFO: Reloading song queue));
+        @song_q = @playlist;
+    } # if ( scalar(@song_q) == 0 )  
+    chomp($current_song);
+} # sub get_song
+
+=back
+
+=cut
+
 ################
 # package main #
 ################
@@ -656,8 +764,6 @@ use warnings;
 
 #use bytes; # I think this is used for the sysread call when reading MP3 files
 
-    # for holding a list of files
-    my @playlist;
     # skip the current song?
     my $skip_current_song = undef;
     # create a logger object
@@ -690,6 +796,11 @@ use warnings;
     my $logger = Simplebake::Logger->new($config);
     $logger->timelog(qq(INFO: Starting simplebake.pl; my PID is $$));
 
+    my $playlist = Simplebake::Playlist->new(
+        config  => $config,
+        logger  => $logger,
+    ); # my $conn = Simplebake::Playlist->new
+
     my $conn = Simplebake::Server->new(
         config  => $config,
         logger  => $logger,
@@ -698,7 +809,8 @@ use warnings;
     # hopefully this should catch when the Shout module is not installed
     die qq( ERR: Could not create Shout object\n) unless ( defined $conn );
 
-    # reroute some signals to our handler
+    # reroute some signals to our handlers
+    # exiting the script
     $SIG{INT} = $SIG{TERM} = sub { 
         my $signal = shift;
         # close the connection to the icecast server
@@ -706,32 +818,17 @@ use warnings;
         $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
     }; # $SIG{INT} = $SIG{TERM}
 
-    # reroute some signals to our handler
+    # skipping songs
     $SIG{HUP} = sub { 
         $skip_current_song = 1;
         $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
     }; # $SIG{HUP  = sub
 
-    # verify the playlist file can be opened and then read it
-    if ( defined $config->get(q(filelist)) ) {
-        # read from STDIN?
-        if ( $config->get(q(filelist)) eq q(-) ) {
-            @playlist = <STDIN>;
-        # read from a filelist somewhere?
-        } elsif ( -r $config->get(q(filelist)) ) {
-            open(FL, "< " . $config->get(q(filelist)) )
-                || die q( ERR: could not open ) . $config->get(q(filelist)) 
-                    . qq(: $!);
-            @playlist = <FL>;
-            close(FL);
-        # nope; bail!
-        } else {
-            die q( ERR: File ) . $config->get(q(filelist)) 
-                . q( does not exist or is not readable);
-        } # if ( -r $config->get(q(filelist)) )
-    } else {
-        die q( ERR: no --filelist argument specified; See --help for options);
-    } # if ( defined $config->get(q(filelist)) ) 
+    # reloading the playlist when an actual file is used (as opposed to STDIN)
+    $SIG{USR1} = sub { 
+        $skip_current_song = 1;
+        $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
+    }; # $SIG{HUP  = sub
 
     # try to connect to the icecast server
     if ( $conn->open() ) {
@@ -739,29 +836,17 @@ use warnings;
         $logger->log(q(- server ) . $config->get_server_connect_string() );
         $logger->log(q(- source user: ') . $config->get(q(user)) . q('));
 
-        # make a copy of the playlist before we start munging it
-        my @song_q = @playlist;
-
         # endless loop
         ENDLESS: while ( 1 ) {
-            my $current_song;
-            my $song_q_length = scalar(@song_q);
             $logger->timelog(q(INFO: Song Q status));
-            if ( $song_q_length == 1 ) {
+            if ( $playlist->get_song_q_count() == 1 ) {
                 $logger->log(q(- 1 song currently in the song Q));
             } else {
-                $logger->log(q(- ) . $song_q_length 
+                $logger->log(q(- ) . $playlist->get_song_q_count()
                     . qq( songs currently in the song Q));
             } # if ( $song_q_length == 1 )
-            my $random_song = int(rand($song_q_length));
-            $current_song = splice(@song_q, $random_song, 1);
-            # check to see if the song Q is empty
-            # we need to reload it now in case $current_song is missing
-            if ( scalar(@song_q) == 0 ) {
-                $logger->timelog(qq(INFO: Reloading song queue));
-                @song_q = @playlist;
-            } # if ( scalar(@song_q) == 0 )  
-            chomp($current_song);
+            my $current_song = $playlist->get_song();
+
             $logger->timelog(q(INFO: Streaming file));
             my $display_song;
             if ( length($current_song) > 70 ) {
