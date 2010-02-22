@@ -653,8 +653,6 @@ sub timelog {
 
 =back
 
-=cut
-
 =head2 Simplebake::Playlist
 
 Holds a list of songs to stream.  The main script will query this object for
