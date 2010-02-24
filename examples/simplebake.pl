@@ -600,11 +600,11 @@ sub new {
     my $logfd;
     if ( defined $config->get(q(logfile)) ) {
         # append to the existing logfile, if any
-        my $logfd = IO::File->new(q( >> ) . $config->get(q(logfile)));
+        $logfd = IO::File->new(q( >> ) . $config->get(q(logfile)));
         die q( ERR: Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
             unless ( defined $logfd );
     } else {
-        my $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
+        $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
         die qq( ERR: could not wrap STDOUT in IO::Handle object: $!) 
             unless ( defined $logfd );
     } # if ( exists $args{logfile} )
@@ -701,10 +701,32 @@ sub new {
 
     my $self = bless ({}, $class);
 
+	# save the config and logger objects so that this object's methods can use
+	# them
+    $self->{_logger} = $logger;
+    $self->{_config} = $config;
+    return $self
+} # sub new
+
+=item load_playlist( )
+
+Loads the playlist from a file if the C<--filelist> parameter was used when
+the script was started.  If the playlist was read via C<STDIN>, nothing is
+read.  This method then reloads the song queue from the playlist.
+
+=cut
+
+sub load_playlist {
+	my $self = shift;
+
+	# copy the playlist object to a local name
+	my $config = $self->{_config};
+	my $logger = $self->{_logger};
+
     # verify the playlist file can be opened and then read it
     if ( defined $config->get(q(filelist)) ) {
-        # read from STDIN?
-        if ( $config->get(q(filelist)) eq q(-) ) {
+        # read from STDIN, but only if we've never read from STDIN before
+        if ( $config->get(q(filelist)) eq q(-) && scalar(@_playlist) == 0) {
             @_playlist = <STDIN>;
         # read from a filelist somewhere?
         } elsif ( -r $config->get(q(filelist)) ) {
@@ -723,31 +745,61 @@ sub new {
     } # if ( defined $config->get(q(filelist)) ) 
 
     # make a copy of the playlist before we start munging it
+	$logger->timelog(qq(INFO: Playlist loaded ) 
+		. scalar(@_playlist) .  q(songs));
+
+	sleep 5;
+	# copy the contents of the playlist to the song_q
     @_song_q = @_playlist;
-    $self->{_logger} = $logger;
-    $self->{_config} = $config;
-    return $self
-} # sub new
+} # sub load_playlist
 
-=item new(config => $config, logger => $logger)
+=item get_song( )
 
-Creates the L<Simplebake::Playlist> object, reads the playlist file from disk
-or from C<STDIN>.  Returns the playlist object to the caller.
+Retrieves a song from the current song queue.  The song queue will
+automagically reload itself if the last song is returned from the song queue.
 
 =cut
 
 sub get_song {
+	my $self = shift;
 
-    my $random_song = int( rand($playlist->get_song_q_count()) );
-    $current_song = splice(@song_q, $random_song, 1);
-    # check to see if the song Q is empty
-    # we need to reload it now in case $current_song is missing
-    if ( scalar(@song_q) == 0 ) {
+	# grab a copy of the logger object
+	my $logger = $self->{_logger};
+
+	# figure out what the next song will be
+    my $random_song = int( rand($self->get_song_q_count()) );
+	# splice it out of the song_q array
+    my $current_song = splice(@_song_q, $random_song, 1);
+    # check to see if the song_q is empty
+    if ( scalar(@_song_q) == 0 ) {
         $logger->timelog(qq(INFO: Reloading song queue));
-        @song_q = @playlist;
+        @_song_q = @_playlist;
     } # if ( scalar(@song_q) == 0 )  
-    chomp($current_song);
+	# return the current song (filename) to the caller
+    return chomp($current_song);
 } # sub get_song
+
+=item get_song_q_count( )
+
+Returns the number of songs left in the song queue.
+
+=cut
+
+sub get_song_q_count {
+	my $self = shift;
+
+	# grab the logger object
+	my $logger = $self->{_logger};
+
+	$logger->timelog(q(INFO: song_q status));
+	my $song_q_count = scalar(@_song_q);
+	if ( $song_q_count == 1 ) {
+    	$logger->log(q(- 1 song currently in the song_q));
+	} else {
+    	$logger->log(qq(- $song_q_count  songs currently in the song_q));
+    } # if ( $song_q_length == 1 )	
+	return 
+} # sub get_song_q_count
 
 =back
 
@@ -798,6 +850,8 @@ use warnings;
         config  => $config,
         logger  => $logger,
     ); # my $conn = Simplebake::Playlist->new
+	# initialize the playlist and song_q
+	$playlist->load_playlist();
 
     my $conn = Simplebake::Server->new(
         config  => $config,
@@ -814,19 +868,19 @@ use warnings;
         # close the connection to the icecast server
         $conn->close();
         $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
-    }; # $SIG{INT} = $SIG{TERM}
+    }; # $SIG{INT}
 
     # skipping songs
     $SIG{HUP} = sub { 
         $skip_current_song = 1;
         $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
-    }; # $SIG{HUP  = sub
+    }; # $SIG{HUP}
 
     # reloading the playlist when an actual file is used (as opposed to STDIN)
     $SIG{USR1} = sub { 
-        $skip_current_song = 1;
-        $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
-    }; # $SIG{HUP  = sub
+		$playlist->load_playlist();
+        $logger->timelog(qq(INFO: Received SIGUSR1; reloading playlist));
+    }; # $SIG{USR1}
 
     # try to connect to the icecast server
     if ( $conn->open() ) {
@@ -836,13 +890,8 @@ use warnings;
 
         # endless loop
         ENDLESS: while ( 1 ) {
-            $logger->timelog(q(INFO: Song Q status));
-            if ( $playlist->get_song_q_count() == 1 ) {
-                $logger->log(q(- 1 song currently in the song Q));
-            } else {
-                $logger->log(q(- ) . $playlist->get_song_q_count()
-                    . qq( songs currently in the song Q));
-            } # if ( $song_q_length == 1 )
+
+
             my $current_song = $playlist->get_song();
 
             $logger->timelog(q(INFO: Streaming file));
