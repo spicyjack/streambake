@@ -746,37 +746,42 @@ sub load_playlist {
 
     # make a copy of the playlist before we start munging it
 	$logger->timelog(qq(INFO: Playlist loaded ) 
-		. scalar(@_playlist) .  q(songs));
+		. scalar(@_playlist) .  q( songs));
 
-	sleep 5;
 	# copy the contents of the playlist to the song_q
     @_song_q = @_playlist;
 } # sub load_playlist
 
 =item get_song( )
 
-Retrieves a song from the current song queue.  The song queue will
-automagically reload itself if the last song is returned from the song queue.
+Retrieves a song from the song queue.  The song queue will automagically
+reload itself when it becomes empty.
 
 =cut
 
 sub get_song {
 	my $self = shift;
 
-	# grab a copy of the logger object
+	# grab a copy of the logger and config objects
 	my $logger = $self->{_logger};
+	my $config = $self->{_config};
 
 	# figure out what the next song will be
     my $random_song = int( rand($self->get_song_q_count()) );
 	# splice it out of the song_q array
     my $current_song = splice(@_song_q, $random_song, 1);
+    chomp($current_song);
     # check to see if the song_q is empty
     if ( scalar(@_song_q) == 0 ) {
         $logger->timelog(qq(INFO: Reloading song queue));
         @_song_q = @_playlist;
     } # if ( scalar(@song_q) == 0 )  
+
+	$logger->timelog(qq(INFO: Returning new song $current_song))
+        if ( defined $config->get(q(verbose)));
+
 	# return the current song (filename) to the caller
-    return chomp($current_song);
+    return $current_song;
 } # sub get_song
 
 =item get_song_q_count( )
@@ -796,9 +801,9 @@ sub get_song_q_count {
 	if ( $song_q_count == 1 ) {
     	$logger->log(q(- 1 song currently in the song_q));
 	} else {
-    	$logger->log(qq(- $song_q_count  songs currently in the song_q));
+    	$logger->log(qq(- $song_q_count songs currently in the song_q));
     } # if ( $song_q_length == 1 )	
-	return 
+	return $song_q_count;
 } # sub get_song_q_count
 
 =back
@@ -890,10 +895,8 @@ use warnings;
 
         # endless loop
         ENDLESS: while ( 1 ) {
-
-
+            # grab a song from the playlist
             my $current_song = $playlist->get_song();
-
             $logger->timelog(q(INFO: Streaming file));
             my $display_song;
             if ( length($current_song) > 70 ) {
