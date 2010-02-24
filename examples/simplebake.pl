@@ -72,6 +72,9 @@ our $VERSION = '0.02';
  # Generate a config file to modify containing the script defaults
  simplebake.pl --gen-config
 
+ # Generate a filelist with this on *NIX platforms
+ find /path/to/files -name "*.mp3" > /path/to/output/filelist.txt
+
 You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
 password to the Icecast server, and the script will use that instead of the
 source password set elsewhere.
@@ -191,6 +194,7 @@ sub new {
         } # foreach my $arg ( @_valid_shout_args )
         # cheat a bit and add these last config settings
         print qq(filelist = /path/to/filelist.txt\n);
+        print qq(# commenting the logfile will log to STDOUT instead\n);
         print qq(logfile = /path/to/output.log\n);
         print qq(# daemon mode is disabled by default\n);
         print qq(#daemon = 0\n);
@@ -233,7 +237,7 @@ sub new {
     } # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
 
     # some checks to make sure we have needed arguments
-    die qq( ERR: script called without a --filelist argument;\n)
+    die qq( ERR: script called without --config or --filelist arguments;\n)
         . qq( ERR: run script with --help switch for usage examples\n)
         unless ( defined $self->get(q(filelist)) );
 
@@ -387,22 +391,10 @@ package Simplebake::Server;
 ######################
 use strict;
 use warnings;
-
-# a check to verify the shout module is available
-BEGIN {
-    eval qq(use Shout;);
-    if ( $@ ) {
-        warn qq( ERR: Shout module not installed\n);
-        warn qq( ERR: === Begin error output ===\n);
-        warn qq($@\n);
-        warn qq( ERR: === Begin error output ===\n);
-        die qq( ERR: Shout module not installed\n);
-    } # if ( $@ )
-} # BEGIN
-
+   
 # constants swiped from shout.h; yes, hardcoding them is bad, but this lets
-# the above test work instead of the script dying because of the SHOUT
-# barewords that used to be used
+# the below eval() test work instead of the script dying because of the SHOUT
+# barewords that were being used by this object
 use constant {
     SB_FORMAT_OGG => 0,
     SB_FORMAT_MP3 => 1,
@@ -410,6 +402,8 @@ use constant {
     SB_PROTOCOL_XAUDIOCAST => 1,
     SB_PROTOCOL_ICY => 2,
 }; # use constant
+
+
 
 =over 
 
@@ -428,6 +422,7 @@ sub new {
     # method
     my $config = $args{config};
     my $logger = $args{logger};
+
 
     # bless this class into an object
     my $self = bless ({}, $class);
@@ -879,6 +874,15 @@ use warnings;
     # create a logger object
     my $config = Simplebake::Config->new();
 
+    # a check to verify the shout module is available
+    eval qq(use Shout;);
+    if ( $@ ) {
+        warn qq( ERR: Shout module not installed\n);
+        warn qq( ERR: === Begin error output ===\n);
+        warn qq($@\n);
+        warn qq( ERR: === End error output ===\n);
+        die qq(Missing 'Shout' Perl module; exiting...);
+    } # if ( $@ )
     # fork into the background and run as a daemon if requested
     if ( defined $config->get(q(daemon)) ) {
         # if we want to "properly" background, we should be writing output to
