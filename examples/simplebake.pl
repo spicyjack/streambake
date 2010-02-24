@@ -143,6 +143,8 @@ sub new {
 
     # script arguments 
     my %args; 
+    # is the shout module available
+    my $shout_available;
     
     # parse the command line arguments (if any)
     my $parser = Getopt::Long::Parser->new();
@@ -176,6 +178,21 @@ sub new {
 
     # assign the args hash to this object so it can be reused later on
     $self->{_args} = \%args;
+
+    # a check to verify the shout module is available
+    # it's put here so some warning is given if --help was called
+    eval qq(use Shout;);
+    if ( $@ ) {
+        if ( $self->get(q(help)) ) {
+            warn qq(\nWARNING: Shout module is not installed on this host!\n\n);
+        } else {
+            warn qq( ERR: Shout module not installed\n);
+            warn qq( ERR: === Begin error output ===\n);
+            warn qq($@\n);
+            warn qq( ERR: === End error output ===\n);
+            die qq(Missing 'Shout' Perl module; exiting...);
+        } # if ( $self->get(q(help)) )
+    } # if ( $@ )
 
     # dump and bail if we get called with --help
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
@@ -874,15 +891,7 @@ use warnings;
     # create a logger object
     my $config = Simplebake::Config->new();
 
-    # a check to verify the shout module is available
-    eval qq(use Shout;);
-    if ( $@ ) {
-        warn qq( ERR: Shout module not installed\n);
-        warn qq( ERR: === Begin error output ===\n);
-        warn qq($@\n);
-        warn qq( ERR: === End error output ===\n);
-        die qq(Missing 'Shout' Perl module; exiting...);
-    } # if ( $@ )
+
     # fork into the background and run as a daemon if requested
     if ( defined $config->get(q(daemon)) ) {
         # if we want to "properly" background, we should be writing output to
