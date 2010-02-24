@@ -62,9 +62,11 @@ our $VERSION = '0.02';
 
  Example usage:
 
- simplebake.pl --name stream.example.com --port 7767 \
+ # Create a stream listenable at http://stream.example.com:8000/somemount
+ simplebake.pl --name stream.example.com --port 8000 \
     --mount somemount --filelist /path/to/mp3-ogg.txt
 
+ # Use a configuration file for script options
  simplebake.pl --config /path/to/config/file.cfg
 
  # Generate a config file to modify containing the script defaults
@@ -127,7 +129,8 @@ my @_valid_shout_args
     = qw(host port mount password user name url genre description public);
 # a list of valid arguments to this script
 my @_valid_script_args = ( 
-    @_valid_shout_args, qw(verbose quiet config logfile filelist daemon) 
+    @_valid_shout_args, qw(verbose quiet config logfile filelist daemon),
+    qw(throttle_count throttle_time throttle_delay)
 ); # my @_valid_script_args 
 
 sub new {
@@ -188,7 +191,16 @@ sub new {
         # cheat a bit and add these last config settings
         print qq(filelist = /path/to/filelist.txt\n);
         print qq(logfile = /path/to/output.log\n);
-        print qq(daemon = 0\n);
+        print qq(# daemon mode is disabled by default\n);
+        print qq(#daemon = 0\n);
+        print qq(# options for throttling are only available in config file\n);
+        print qq(# check this many times before throttling\n);
+        print qq(throttle_count = 3\n);
+        print qq(# this many seconds minimum between get_song calls\n);
+        print qq(throttle_time = 3\n);
+        print qq(# sleep this many seconds before continuing\n);
+        print qq(throttle_delay = 5\n);
+
         exit 0;
     } # if ( exists $args{gen-config} )
 
@@ -240,7 +252,7 @@ sub new {
 # set defaults here for any missing arugments
 sub _apply_defaults {
     my $self = shift;
-    # set some defaults if they haven't been set by now
+    # icecast defaults
     $self->set( host => q(localhost) )  unless ( defined $self->get(q(host) ) );
     $self->set( port => q(8000) ) unless ( defined $self->get(q(port)) );
     $self->set( user => q(source) ) unless ( defined $self->get(q(user)) );
@@ -256,6 +268,14 @@ sub _apply_defaults {
         unless ( defined $self->get(q(description)) );
     $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
 
+    # script defaults
+    $self->set( q(throttle_count) => 3 ) 
+        unless ( defined $self->get(q(throttle_count)) );
+    $self->set( q(throttle_time) => 3 ) 
+        unless ( defined $self->get(q(throttle_time)) );
+    $self->set( q(throttle_delay) => 5 ) 
+        unless ( defined $self->get(q(throttle_delay)) );
+    
     # generate a big fat error message unless we're generating a config file
     if ( ! defined $self->get(q(password)) ) {
         if ( ! defined $self->get(q(gen-config)) ) {
@@ -672,6 +692,8 @@ use strict;
 use warnings;
 
 my (@_playlist, @_song_q);
+my $_last_request_time = 0;
+my $_throttle_counter = 0;
 
 =over 
 
@@ -726,8 +748,17 @@ sub load_playlist {
     # verify the playlist file can be opened and then read it
     if ( defined $config->get(q(filelist)) ) {
         # read from STDIN, but only if we've never read from STDIN before
-        if ( $config->get(q(filelist)) eq q(-) && scalar(@_playlist) == 0) {
-            @_playlist = <STDIN>;
+        if ( $config->get(q(filelist)) eq q(-) ) {
+            # read files from STDIN
+            if (scalar(@_playlist) == 0) {
+                # nothing in the playlist yet, do the actual read
+                @_playlist = <STDIN>;
+            } else {
+                # we've already read from STDIN, don't do it again; give
+                # a nice warning to the user though
+            	$logger->timelog(qq(WARN: Can't reload playlist from STDIN));
+                return undef;
+            } # if (scalar(@_playlist) == 0)
         # read from a filelist somewhere?
         } elsif ( -r $config->get(q(filelist)) ) {
             open(FL, "< " . $config->get(q(filelist)) )
@@ -745,11 +776,12 @@ sub load_playlist {
     } # if ( defined $config->get(q(filelist)) ) 
 
     # make a copy of the playlist before we start munging it
-	$logger->timelog(qq(INFO: Playlist loaded ) 
+	$logger->timelog(qq(INFO: Playlist contains ) 
 		. scalar(@_playlist) .  q( songs));
 
 	# copy the contents of the playlist to the song_q
     @_song_q = @_playlist;
+    return 1;
 } # sub load_playlist
 
 =item get_song( )
@@ -765,7 +797,22 @@ sub get_song {
 	# grab a copy of the logger and config objects
 	my $logger = $self->{_logger};
 	my $config = $self->{_config};
+    my $current_time = time();
+    
+    # check whether or not we need to throttle
+    if ( ( $_last_request_time + $config->get(q(throttle_time)) ) 
+        >= $current_time ) {
+        $_throttle_counter++;
+        if ( $_throttle_counter > $config->get(q(throttle_count)) ) {
+            $logger->timelog(qq(WARN: Throttling triggered; playlist error?));
+            sleep( $config->get(q(throttle_delay)) );
+        } # if ( $_throttle_counter > $config->get(q(throttle_count)) )
+    } else {
+        # decrement the counter if we're good on time now
+        if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
+    } # if ( ( $_last_request_time + $config->get(q(throttle_time)) )
 
+    $_last_request_time = $current_time;
 	# figure out what the next song will be
     my $random_song = int( rand($self->get_song_q_count()) );
 	# splice it out of the song_q array
@@ -870,9 +917,9 @@ use warnings;
     # exiting the script
     $SIG{INT} = $SIG{TERM} = sub { 
         my $signal = shift;
+        $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
         # close the connection to the icecast server
         $conn->close();
-        $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
     }; # $SIG{INT}
 
     # skipping songs
@@ -883,8 +930,8 @@ use warnings;
 
     # reloading the playlist when an actual file is used (as opposed to STDIN)
     $SIG{USR1} = sub { 
-		$playlist->load_playlist();
         $logger->timelog(qq(INFO: Received SIGUSR1; reloading playlist));
+		$playlist->load_playlist();
     }; # $SIG{USR1}
 
     # try to connect to the icecast server
