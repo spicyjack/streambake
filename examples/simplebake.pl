@@ -155,6 +155,7 @@ sub new {
         q(daemon|d),
         q(logfile|l=s),
         q(filelist|f=s),
+        q(throttle|t=i),
         q(gen-config|j),
         # Shout options
         q(host|o=s),
@@ -193,13 +194,8 @@ sub new {
         print qq(logfile = /path/to/output.log\n);
         print qq(# daemon mode is disabled by default\n);
         print qq(#daemon = 0\n);
-        print qq(# options for throttling are only available in config file\n);
-        print qq(# check this many times before throttling\n);
-        print qq(throttle_count = 3\n);
-        print qq(# this many seconds minimum between get_song calls\n);
-        print qq(throttle_time = 3\n);
-        print qq(# sleep this many seconds before continuing\n);
-        print qq(throttle_delay = 5\n);
+        print qq(# throttle delay; set to 0 to exit instead of throttling\n);
+        print qq(throttle = 1\n);
 
         exit 0;
     } # if ( exists $args{gen-config} )
@@ -269,12 +265,8 @@ sub _apply_defaults {
     $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
 
     # script defaults
-    $self->set( q(throttle_count) => 3 ) 
-        unless ( defined $self->get(q(throttle_count)) );
-    $self->set( q(throttle_time) => 3 ) 
-        unless ( defined $self->get(q(throttle_time)) );
-    $self->set( q(throttle_delay) => 5 ) 
-        unless ( defined $self->get(q(throttle_delay)) );
+    $self->set( q(throttle) => 1 ) 
+        unless ( defined $self->get(q(throttle)) );
     
     # generate a big fat error message unless we're generating a config file
     if ( ! defined $self->get(q(password)) ) {
@@ -408,6 +400,17 @@ BEGIN {
     } # if ( $@ )
 } # BEGIN
 
+# constants swiped from shout.h; yes, hardcoding them is bad, but this lets
+# the above test work instead of the script dying because of the SHOUT
+# barewords that used to be used
+use constant {
+    SB_FORMAT_OGG => 0,
+    SB_FORMAT_MP3 => 1,
+    SB_PROTOCOL_HTTP => 0,
+    SB_PROTOCOL_XAUDIOCAST => 1,
+    SB_PROTOCOL_ICY => 2,
+}; # use constant
+
 =over 
 
 =item new(config => $config, logger => $logger)
@@ -437,8 +440,10 @@ sub new {
     my $conn = Shout->new(%shoutargs);
     die qq( ERR: could not create Shout object: $!) unless ( defined $conn );
     # set some other misc settings
-    $conn->format(SHOUT_FORMAT_MP3);
-    $conn->protocol(SHOUT_PROTOCOL_HTTP);
+    # see note above about the definition/copying of the constants from
+    # shout.h
+    $conn->format(SB_FORMAT_MP3);
+    $conn->protocol(SB_PROTOCOL_HTTP);
     $conn->set_audio_info(
         SHOUT_AI_BITRATE => 256, 
         SHOUT_AI_SAMPLERATE => 44100,
@@ -691,6 +696,10 @@ package Simplebake::Playlist;
 use strict;
 use warnings;
 
+use constant {
+    THROTTLE_MAX_COUNT => 3,
+    THROTTLE_CHECK_TIME => 3,
+}; # use constant
 my (@_playlist, @_song_q);
 my $_last_request_time = 0;
 my $_throttle_counter = 0;
@@ -800,12 +809,11 @@ sub get_song {
     my $current_time = time();
     
     # check whether or not we need to throttle
-    if ( ( $_last_request_time + $config->get(q(throttle_time)) ) 
-        >= $current_time ) {
+    if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
         $_throttle_counter++;
-        if ( $_throttle_counter > $config->get(q(throttle_count)) ) {
+        if ( $_throttle_counter > THROTTLE_MAX_COUNT ) {
             $logger->timelog(qq(WARN: Throttling triggered; playlist error?));
-            sleep( $config->get(q(throttle_delay)) );
+            sleep( $config->get(q(throttle)) );
         } # if ( $_throttle_counter > $config->get(q(throttle_count)) )
     } else {
         # decrement the counter if we're good on time now
@@ -986,6 +994,8 @@ use warnings;
             $logger->log(qq(- Streaming file to ) 
                 . $config->get_server_connect_string() );
             while (sysread(STREAMFILE, $buff, 4096) > 0) {
+                $logger->log(qq(- Read a block of data...))
+                    if ( defined $config->get(q(verbose)) );
                 # the user veto'ed this song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
@@ -994,20 +1004,24 @@ use warnings;
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
                 # send a block of data, and error out if it fails
+                $logger->log(qq(- Sending block of data...)) 
+                    if ( defined $config->get(q(verbose)) );
                 unless ( $conn->send(data => $buff, length => length($buff)) ) {
                     $logger->timelog(q( ERR: while sending buffer to server:));
                     $logger->timelog(q( ERR:) . $conn->get_error);
                     $conn->sync;
-                    last;
+                    last ENDLESS;
                 } # unless ($conn->send($buff)) 
                 # must be careful not to send the data too fast :)
                 $conn->sync;
             } # while (sysread(STREAMFILE, $buff, 4096) > 0)
             # close the file now that we've read it
             $logger->timelog(qq(INFO: Closing file));
-            $logger->log(qq(- $display_song));
+            #$logger->log(qq(- $display_song));
             close(STREAMFILE);
-        } # while ( 1 )
+        } # ENDLESS while ( 1 )
+        $logger->timelog(qq(WARN: server closed connection; exiting...));
+        die q(we died here :/);
     } else {
         $logger->timelog(qq(WARN: couldn't connect to server; ));
         $logger->timelog(q(WARN: ) . $conn->get_error());
