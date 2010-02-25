@@ -24,11 +24,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 # -q|--quiet         Quiet script execution; only prints errors
 
@@ -143,6 +143,10 @@ my @_valid_script_args = (
     qw(throttle)
 ); # my @_valid_script_args 
 
+# a list of arguments that won't cause the script to barf if Shout is not
+# installed
+
+
 sub new {
     my $class = shift;
 
@@ -191,7 +195,7 @@ sub new {
     BEGIN {
         eval q( use Shout; );
         if ( $@ ) {
-            if ( grep(/-h|--help/, @ARGV) > 0 ) {
+            if ( defined grep(/-h|--help|-j|--gen-config/, @ARGV) ) {
                 warn qq(\nWARNING: Shout Perl module is not installed!\n\n);
             } else {
                 warn qq( ERR: Shout module not installed\n);
@@ -222,8 +226,7 @@ sub new {
         print qq(filelist = /path/to/filelist.txt\n);
         print qq(# commenting the logfile will log to STDOUT instead\n);
         print qq(logfile = /path/to/output.log\n);
-        print qq(# 0 = don't fork, anything else to fork\n);
-        print qq(# default is not to fork\n);
+        print qq(# 0 = don't fork, 1 = fork and run in background\n);
         print qq(daemon = 0\n);
         print qq(# throttle delay; set to 0 to exit instead of throttling\n);
         print qq(throttle = 1\n);
@@ -431,8 +434,6 @@ use constant {
     SB_PROTOCOL_XAUDIOCAST => 1,
     SB_PROTOCOL_ICY => 2,
 }; # use constant
-
-
 
 =over 
 
@@ -1071,15 +1072,6 @@ that can be used in the configuration file are the same as the long options
 (B<--host>, B<--port>, etc) shown in the SYNOPSIS section above, minus the
 leading dashes.  
 
-Example configuration file:
-
- # any line that starts with the comment character is ignored
- host: stream.example.com
- port: 7767
- mount: somemount
- password: $om3P$$w0rd
- filelist: /path/to/mp3-ogg.txt
-
 You can use the B<--gen-config> command line switch to generate a
 configuration file that can be used with the B<--config> switch.
 
@@ -1089,13 +1081,32 @@ Note that the parameters output with the B<--gen-config> switch are the
 defaults used by the script when the user does not supply those options to the
 script.
 
-=head1 EXITING SCRIPT
+=head1 UNIX SIGNALS
 
-You can send the C<HUP> signal at any time to cause the script to exit.
+=over 4
 
- kill -HUP <PID of Perl process running script>
+=item SIGINT
 
-The C<Ctrl-C> key combination will also cause the script to exit.
+You can send the C<INT> signal at any time to cause the script to exit.
+
+ kill -INT <PID of Perl process running script>
+
+The C<Ctrl-C> key combination will also cause the script to exit if the script
+is running in the foreground (C<daemon = 0>).
+
+=item SIGHUP
+
+Sending a C<SIGHUP> to the Perl process running this script will cause the
+script to skip the currently playing song.
+
+=item SIGUSR1    
+
+Sending a C<SIGUSR1> will cause the script to reload the playlist from disk if
+the C<--filelist> option was used on the command line or C<filelist =
+/path/to/some/file.txt> in a config file.  This signal is ignored when the
+playlist is read from C<STDIN>.
+
+=back
 
 =head1 AUTHOR
 
