@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 
 # Copyright (c) 2010 by Brian Manning <elspicyjack at gmail dot com>
-# PLEASE DO NOT E-MAIL THE AUTHOR WITH ISSUES; the proper venue for issues
-# with this script is the Streambake mailing list:
+# PLEASE DO NOT E-MAIL THE AUTHOR ABOUT THIS SCRIPT!
+# For help with script errors and feature requests, 
+# please contact the Streambake mailing list:
 # streambake@googlegroups.com / http://groups.google.com/group/streambake
 
 # TODO
@@ -14,8 +15,11 @@
 # - logging to a file in daemon mode
 # - reading files from STDIN when using "-" as the filelist filename
 
-# - add a '--list-signals' option that lists the current signals that the
-# script understands
+# - create a Simplebake::File object, which gets created every time a song
+# gets popped off of the Simplebake::Playlist stack
+#   - create methods for retrieving artist/album/song
+#   - create the method for truncating the filename for log output
+#   ($display_song)
 
 =head1 NAME
 
@@ -24,11 +28,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 # -q|--quiet         Quiet script execution; only prints errors
 
@@ -417,10 +421,10 @@ Actually, the "defaults" most likely won't work.
 
 =cut
 
-package Simplebake::Server;
 ######################
 # Simplebake::Server #
 ######################
+package Simplebake::Server;
 use strict;
 use warnings;
    
@@ -933,7 +937,8 @@ use warnings;
 
     # create a logger object, and prime the logfile for this session
     my $logger = Simplebake::Logger->new($config);
-    $logger->timelog(qq(INFO: Starting simplebake.pl; my PID is $$));
+    $logger->timelog(qq(INFO: Starting simplebake.pl, version $VERSION));
+    $logger->timelog(qq(INFO: my PID is $$));
 
     my $playlist = Simplebake::Playlist->new(
         config  => $config,
@@ -974,27 +979,30 @@ use warnings;
     # try to connect to the icecast server
     if ( $conn->open() ) {
         $logger->timelog(q(INFO: Connected to server));
-        $logger->log(q(- server ) . $config->get_server_connect_string() );
+        $logger->log(q(- server URL: ) . $config->get_server_connect_string() );
         $logger->log(q(- source user: ') . $config->get(q(user)) . q('));
 
         # endless loop
         ENDLESS: while ( 1 ) {
             # grab a song from the playlist
             my $current_song = $playlist->get_song();
-            $logger->timelog(q(INFO: Streaming file));
             my $display_song;
-            if ( length($current_song) > 70 ) {
-                $display_song = q(...) . substr($current_song, -70);
+            if ( length($current_song) > 60 ) {
+                $display_song = q(...) . substr($current_song, -60);
             } else {
                 $display_song = $current_song;
             } # if ( length($current_song) > 70 )
-            $logger->log(qq(- $display_song));
+            # skip this song if it's missing
             if ( ! -e $current_song ) { 
-                $logger->timelog( qq(WARN: Missing file) );
+                $logger->timelog( qq(WARN: Missing file on filesystem!) );
                 $logger->log(qq(- ) . $display_song); 
                 # skip to the next song on the list
                 next;
             } # if ( ! -e $current_song ) 
+            $logger->timelog(q(INFO: Begin streaming new file));
+            $logger->log(qq(- Filename: $display_song));
+            $logger->log(q(- Server URL: ) 
+                . $config->get_server_connect_string() );
             # just get the name of the file for metadata
             my @song_metadata = split(q(/), $current_song);
             # generate the metadata items using the song's filename
@@ -1009,19 +1017,17 @@ use warnings;
 
             # buffer for holding data read from the file
             my $buff;
-            # update the metadata
-            $logger->log(qq(- Updating metadata on server ) 
-                . $config->get_server_connect_string() );
-            $conn->set_metadata( 
-                "song" => "$artist_name - $album_name - $track_name" );
             # open the file
             $logger->log(qq(- Opening file for streaming));
             open(STREAMFILE, "< $current_song") 
                 || die qq(Can't open $current_song : '$!');
 			# treat STREAMFILE as binary data
 			binmode(STREAMFILE);
-            $logger->log(qq(- Streaming file to ) 
-                . $config->get_server_connect_string() );
+            # update the metadata
+            $logger->log(qq(- Updating metadata on server ));
+            $conn->set_metadata( 
+                "song" => "$artist_name - $album_name - $track_name" );
+            $logger->log(qq(- Streaming file to server )); 
             while (sysread(STREAMFILE, $buff, 4096) > 0) {
                 $logger->log(qq(- Read a block of data...))
                     if ( defined $config->get(q(verbose)) );
