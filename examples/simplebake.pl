@@ -14,10 +14,6 @@
 # - logging to a file in daemon mode
 # - reading files from STDIN when using "-" as the filelist filename
 
-# - Create a Simplebake::Playlist object that holds the complete list of
-# songs, and then the script can query it for new songs as needed
-#   - Send a SIGUSR1 to reload the songlist file (if a file was used and not
-#   STDIN)
 # - add a '--list-signals' option that lists the current signals that the
 # script understands
 
@@ -181,7 +177,7 @@ sub new {
 
     # a check to verify the shout module is available
     # it's put here so some warning is given if --help was called
-    eval qq(use Shout;);
+    eval { use Shout; };
     if ( $@ ) {
         if ( $self->get(q(help)) ) {
             warn qq(\nWARNING: Shout module is not installed on this host!\n\n);
@@ -213,8 +209,9 @@ sub new {
         print qq(filelist = /path/to/filelist.txt\n);
         print qq(# commenting the logfile will log to STDOUT instead\n);
         print qq(logfile = /path/to/output.log\n);
-        print qq(# daemon mode is disabled by default\n);
-        print qq(#daemon = 0\n);
+        print qq(# 0 = don't fork, anything else to fork\n);
+        print qq(# default is not to fork\n);
+        print qq(daemon = 0\n);
         print qq(# throttle delay; set to 0 to exit instead of throttling\n);
         print qq(throttle = 1\n);
 
@@ -288,6 +285,8 @@ sub _apply_defaults {
     # script defaults
     $self->set( q(throttle) => 1 ) 
         unless ( defined $self->get(q(throttle)) );
+    $self->set( q(daemon) => 0 ) 
+        unless ( defined $self->get(q(daemon)) );
     
     # generate a big fat error message unless we're generating a config file
     if ( ! defined $self->get(q(password)) ) {
@@ -893,7 +892,10 @@ use warnings;
 
 
     # fork into the background and run as a daemon if requested
-    if ( defined $config->get(q(daemon)) ) {
+    # note that we're comparing a string here, not an integer; this way, the
+    # user can put just about anything in there (string or number) and things
+    # will Just Work
+    if ( defined $config->get(q(daemon)) && $config->get(q(daemon)) != q(0) ) {
         # if we want to "properly" background, we should be writing output to
         # a logfile
         if ( defined $config->get(q(logfile)) ) {
