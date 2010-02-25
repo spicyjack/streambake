@@ -30,17 +30,18 @@ Version 0.02
 
 our $VERSION = '0.02';
 
-# -v|--verbose       Verbose script execution
+# -q|--quiet         Quiet script execution; only prints errors
 
 =head1 SYNOPSIS
 
  Script options:
- -q|--quiet         Quiet script execution; only prints errors
+ -v|--verbose       Verbose script execution
  -h|--help          Shows this help text
  -c|--config        Configuration file to use for script options
  -d|--daemon        Fork and run as a daemon; requires --logfile
  -l|--logfile       Logfile to use for script output; default is STDOUT
  -f|--filelist      File containing a list of MP3/OGG files to stream
+ -t|--throttle      Throttle script this many seconds when missing files
  -j|--gen-config    Generate a config file containing script defaults
 
  Shout module options used by this script:
@@ -58,16 +59,17 @@ our $VERSION = '0.02';
 
  Example usage:
 
- # Create a stream listenable at http://stream.example.com:8000/somemount
- simplebake.pl --name stream.example.com --port 8000 \
-    --mount somemount --filelist /path/to/mp3-ogg.txt
+ # Generate a config file to modify that contains the script defaults
+ simplebake.pl --gen-config
 
  # Use a configuration file for script options
  simplebake.pl --config /path/to/config/file.cfg
 
- # Generate a config file to modify containing the script defaults
- simplebake.pl --gen-config
-
+ # Create a stream listenable at http://stream.example.com:8000/somemount
+ simplebake.pl --name stream.example.com --port 8000 \
+    --mount somemount --filelist /path/to/mp3-ogg.txt \
+    --throttle 1
+ 
  # Generate a filelist with this on *NIX platforms
  find /path/to/files -name "*.mp3" > /path/to/output/filelist.txt
 
@@ -93,6 +95,15 @@ script for streaming a list of files on a local filesystem.  The script aims
 to use as few non-core Perl modules as possible, so that it will run with any
 modern (5.8-ish and newer) Perl installation with no extra libraries beyond
 L<Shout> installed.
+
+If throttling is enabled (C<throttle> set to a positive integer),
+when the script encounters a file in the filelist that's missing on the
+filesystem, the script will wait this many seconds before trying to read
+another file.  This is to help prevent the script from running away and
+causing a denial of service to other processes on the same machine.  The
+default value for throttling is C<throttle = 1> or C<--throttle=1>).  If
+C<throttle = 0> is set in the config file or C<--throttle=0> is set on the
+command line, the script will B<exit> when a file is missing on the fileystem. 
 
 =head1 OBJECTS
 
@@ -129,7 +140,7 @@ my @_valid_shout_args
 # a list of valid arguments to this script
 my @_valid_script_args = ( 
     @_valid_shout_args, qw(verbose quiet config logfile filelist daemon),
-    qw(throttle_count throttle_time throttle_delay)
+    qw(throttle)
 ); # my @_valid_script_args 
 
 sub new {
@@ -177,18 +188,20 @@ sub new {
 
     # a check to verify the shout module is available
     # it's put here so some warning is given if --help was called
-    eval { use Shout; };
-    if ( $@ ) {
-        if ( $self->get(q(help)) ) {
-            warn qq(\nWARNING: Shout module is not installed on this host!\n\n);
-        } else {
-            warn qq( ERR: Shout module not installed\n);
-            warn qq( ERR: === Begin error output ===\n);
-            warn qq($@\n);
-            warn qq( ERR: === End error output ===\n);
-            die qq(Missing 'Shout' Perl module; exiting...);
-        } # if ( $self->get(q(help)) )
-    } # if ( $@ )
+    BEGIN {
+        eval q( use Shout; );
+        if ( $@ ) {
+            if ( grep(/-h|--help/, @ARGV) > 0 ) {
+                warn qq(\nWARNING: Shout Perl module is not installed!\n\n);
+            } else {
+                warn qq( ERR: Shout module not installed\n);
+                warn qq( ERR: === Begin error output ===\n\n);
+                warn qq($@\n);
+                warn qq( ERR: === End error output ===\n);
+                die qq(Missing 'Shout' Perl module; exiting...);
+            } # if ( $self->get(q(help)) )
+        } # if ( $@ )
+    } # BEGIN
 
     # dump and bail if we get called with --help
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
