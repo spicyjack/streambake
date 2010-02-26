@@ -28,11 +28,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 # -q|--quiet         Quiet script execution; only prints errors
 
@@ -657,7 +657,11 @@ sub new {
         $logfd = IO::File->new(q( >> ) . $config->get(q(logfile)));
         die q( ERR: Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
             unless ( defined $logfd );
+        # apply UTF-8-ness to the filehandle 
+        $logfd->binmode(qq|:encoding(utf8)|);
     } else {
+        # set :utf8 on STDOUT before wrapping it in IO::Handle
+        binmode(STDOUT, qq|:encoding(utf8)|);
         $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
         die qq( ERR: could not wrap STDOUT in IO::Handle object: $!) 
             unless ( defined $logfd );
@@ -789,6 +793,8 @@ sub load_playlist {
         if ( $config->get(q(filelist)) eq q(-) ) {
             # read files from STDIN
             if (scalar(@_playlist) == 0) {
+                # set UTF-8 encoding on STDIN before you read it
+                binmode(STDOUT, qq|:encoding(utf8)|);
                 # nothing in the playlist yet, do the actual read
                 @_playlist = <STDIN>;
             } else {
@@ -799,11 +805,16 @@ sub load_playlist {
             } # if (scalar(@_playlist) == 0)
         # read from a filelist somewhere?
         } elsif ( -r $config->get(q(filelist)) ) {
-            open(FL, "< " . $config->get(q(filelist)) )
-                || die q( ERR: could not open ) . $config->get(q(filelist)) 
-                    . qq(: $!);
-            @_playlist = <FL>;
-            close(FL);
+            # open the filelist using an IO::File object
+            my $plfd = IO::File->new(q( < ) . $config->get(q(filelist)));
+            die q( ERR: could not open ) . $config->get(q(filelist)) 
+                unless ( defined $plfd );
+            # apply UTF-8-ness to the filehandle 
+            $plfd->binmode(qq|:encoding(utf8)|);
+            # same as @_playlist = <FH>;
+            @_playlist = $plfd->getlines();
+            $plfd->close();
+            undef $plfd;
         # nope; bail!
         } else {
             die q( ERR: File ) . $config->get(q(filelist)) 
