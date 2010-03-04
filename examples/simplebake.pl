@@ -794,7 +794,7 @@ sub load_playlist {
             # read files from STDIN
             if (scalar(@_playlist) == 0) {
                 # set UTF-8 encoding on STDIN before you read it
-                binmode(STDOUT, qq|:encoding(utf8)|);
+#                binmode(STDIN, qq|:encoding(utf8)|);
                 # nothing in the playlist yet, do the actual read
                 @_playlist = <STDIN>;
             } else {
