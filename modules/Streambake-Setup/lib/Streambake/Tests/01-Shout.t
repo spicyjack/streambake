@@ -9,12 +9,7 @@ my %return_hash = (
     mod_version     => q(),
 );
 
-BEGIN {
-    # Shout has it's VERSION string in a BEGIN{} block; must instantiate an
-    # object to be able to read it
-    use Shout; 
-    Shout->new(); 
-} 
+eval 'use Shout; Shout->new(); ';
 
 # if there's no error from the eval, then the module is available
 if ( $@ ) {

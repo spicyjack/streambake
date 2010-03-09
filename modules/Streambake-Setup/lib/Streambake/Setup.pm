@@ -123,11 +123,11 @@ sub prove_all {
             if ( $self->is_verbose() )  { 
                 print qq(Test file '$filename'\n);
                 print qq(  module name: ) . $test_reply{mod_name} . qq(\n);
-                print qq(  module description: ) 
+                print qq(  description: ) 
                     . $test_reply{mod_description} . qq(\n);
-                print qq(  module version: ) 
+                print qq(  version:     ) 
                     . $test_reply{mod_version} . qq(\n);
-                print qq(  module required? - ) 
+                print qq(  required?    ) 
                     . $test_reply{mod_required} . qq(\n);
             } else {
                 print qq(   ) . $test_reply{mod_name} . q( available;)
@@ -140,15 +140,19 @@ sub prove_all {
                 print qq(  module name: ) . $test_reply{mod_name} . qq(\n);
                 print qq(  Test returned an error; module )
                     . $test_reply{mod_name} . qq( not available!\n);
-                print qq(  == Begin test error output ==\n);
+                print qq(=== Begin test error output ===\n);
                 # we need to chomp the test failure output as a separate step
                 my $test_failure = $test_reply{mod_test_failure};
                 chomp($test_failure);
                 print $test_failure . qq(\n);
-                print qq(  == End test error output ==\n);
+                print qq(=== End test error output ===\n);
             } else {
-                print qq(   ) . $test_reply{mod_name} . q( not available;)
-                    . q| (required: | . $test_reply{mod_required} . qq|)\n|;
+                if ( ! defined $test_reply{mod_name} ) {
+                    print qq(   $filename testfile failed to run;\n)
+                } else {
+                    print qq(   ) . $test_reply{mod_name} . q( not available;)
+                        . q| (required: | . $test_reply{mod_required} . qq|)\n|;
+                } #  if ( ! defined $test_reply{mod_name} )
             } # if ( $self->is_verbose() )
         } # if ( $test_reply{available} )
     } # foreach my $file ( $rule->in($test_dir) )
