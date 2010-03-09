@@ -1,15 +1,23 @@
 #!/usr/bin/env perl
 
+# set up some defaults for the data to be returned to the Setup module
+my %return_hash = (
+    mod_name        => q(DBD::SQLite),
+    mod_required    => q(no), 
+    mod_description => q(database driver for SQLite databases),
+    mod_available   => 0,
+    mod_version     => q(),
+);
 # this protects the test if the module is not installed/available
-eval { use DBD::SQLite };
-# any error text from the eval?
+eval q( use DBD::SQLite; );
+
+# if there's no error from the eval, then the module is available
 if ( $@ ) {
-    die qq(DBD::SQLite not available);
-} else { 
-    return (
-        required => q(no), 
-        description => q(DBD::SQLite, database driver for SQLite databases),
-        output_text => q(DBD::SQLite available, version: )
-            . $DBD::SQLite::VERSION,
-    );
+    # save the output of the eval to the return hash
+    $return_hash{mod_test_failure} = $@;
+} else {
+    $return_hash{mod_available} = 1;
+    $return_hash{mod_version} = $DBD::SQLite::VERSION;
 } # if ( $@ )
+
+return %return_hash;

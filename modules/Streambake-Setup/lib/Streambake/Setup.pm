@@ -18,11 +18,11 @@ software/hardware requirements are in place to run an instance of Streambake.
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 =head1 SYNOPSIS
@@ -119,25 +119,38 @@ sub prove_all {
         # evaluate the code in the test file, return whatever it spits out
         # the test text will return some output we want to show to the user
         my %test_reply = eval $test_text;
-        if ( length($@) > 0 ) {
+        if ( $test_reply{mod_available} ) {
+            if ( $self->is_verbose() )  { 
+                print qq(Test file '$filename'\n);
+                print qq(  module name: ) . $test_reply{mod_name} . qq(\n);
+                print qq(  module description: ) 
+                    . $test_reply{mod_description} . qq(\n);
+                print qq(  module version: ) 
+                    . $test_reply{mod_version} . qq(\n);
+                print qq(  module required? - ) 
+                    . $test_reply{mod_required} . qq(\n);
+            } else {
+                print qq(   ) . $test_reply{mod_name} . q( available;)
+                    . q| (required: | . $test_reply{mod_required} 
+                    . q|, version: | . $test_reply{mod_version}. qq|)\n|; 
+            } # if ( defined $self->{_verbose} )
+        } else {
             if ( $self->is_verbose() ) {
                 print qq(Test file '$filename'\n);
-                print qq( !! Test returned an error; module not available!\n);
-                print qq( ======= Begin Module Load Output =======\n);
-                print $@; 
-                print qq( ======= End Module Load Output =======\n);
+                print qq(  module name: ) . $test_reply{mod_name} . qq(\n);
+                print qq(  Test returned an error; module )
+                    . $test_reply{mod_name} . qq( not available!\n);
+                print qq(  == Begin test error output ==\n);
+                # we need to chomp the test failure output as a separate step
+                my $test_failure = $test_reply{mod_test_failure};
+                chomp($test_failure);
+                print $test_failure . qq(\n);
+                print qq(  == End test error output ==\n);
             } else {
-                print qq(Test file '$filename'\n);
-                print qq( !! Test returned an error; module not available!\n);
-                print qq| (Hint: use --verbose to print test errors)\n|;
+                print qq(   ) . $test_reply{mod_name} . q( not available;)
+                    . q| (required: | . $test_reply{mod_required} . qq|)\n|;
             } # if ( $self->is_verbose() )
-        }
-        if ( scalar(keys(%test_reply)) > 0 ) {
-           print qq(Test file '$filename'\n);
-           print qq( description - ) . $test_reply{description} . qq(\n);
-           print qq( required? - ) . $test_reply{required} . qq(\n);
-           print qq( test text output: ) . $test_reply{output_text} . qq(\n);
-        } # if ( length($@) > 0 )
+        } # if ( $test_reply{available} )
     } # foreach my $file ( $rule->in($test_dir) )
 } # sub prove_all
 

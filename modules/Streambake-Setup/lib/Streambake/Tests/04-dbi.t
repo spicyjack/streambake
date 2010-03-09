@@ -1,14 +1,23 @@
 #!/usr/bin/env perl
 
+# set up some defaults for the data to be returned to the Setup module
+my %return_hash = (
+    mod_name        => q(DBI),
+    mod_required    => q(no), 
+    mod_description => q(database independent interface to SQL databases),
+    mod_available   => 0,
+    mod_version     => q(),
+);
 # this protects the test if the module is not installed/available
-eval { use DBI };
-# any error text from the eval?
+eval q(use DBI);
+
+# if there's no error from the eval, then the module is available
 if ( $@ ) {
-    die qq(DBI not available);
-} else { 
-    return (
-        required => q(no), 
-        description => q(DBI, database independent interface to SQL databases),
-        output_text => q(DBI available, version: ) . $DBI::VERSION,
-    );
+    # save the output of the eval to the return hash
+    $return_hash{mod_test_failure} = $@;
+} else {
+    $return_hash{mod_available} = 1;
+    $return_hash{mod_version} = $DBI::VERSION;
 } # if ( $@ )
+
+return %return_hash;
