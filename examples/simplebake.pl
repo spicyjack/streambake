@@ -15,12 +15,6 @@
 # - logging to a file in daemon mode
 # - reading files from STDIN when using "-" as the filelist filename
 
-# - create a Simplebake::File object, which gets created every time a song
-# gets popped off of the Simplebake::Playlist stack
-#   - create methods for retrieving artist/album/song
-#   - create the method for truncating the filename for log output
-#   ($display_song)
-
 =head1 NAME
 
 B<simplebake.pl> - Using a list of MP3/OGG files, stream those files to an
@@ -28,13 +22,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
-
-# -q|--quiet         Quiet script execution; only prints errors
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -143,13 +135,12 @@ my @_valid_shout_args
     = qw(host port mount password user name url genre description public);
 # a list of valid arguments to this script
 my @_valid_script_args = ( 
-    @_valid_shout_args, qw(verbose quiet config logfile filelist daemon),
-    qw(throttle)
+    @_valid_shout_args, qw(verbose config logfile filelist daemon),
+    qw(throttle sequential)
 ); # my @_valid_script_args 
 
 # a list of arguments that won't cause the script to barf if Shout is not
 # installed
-
 
 sub new {
     my $class = shift;
@@ -169,7 +160,7 @@ sub new {
         \%args,
         # script options
         q(verbose|v),
-        q(quiet|q),
+        q(sequential|q),
         q(help|h),
         q(config|c=s),
         q(daemon|d),
@@ -227,14 +218,18 @@ sub new {
             print $arg . q( = ) . $self->get($arg) . qq(\n);
         } # foreach my $arg ( @_valid_shout_args )
         # cheat a bit and add these last config settings
-        print qq(filelist = /path/to/filelist.txt\n);
-        print qq(# commenting the logfile will log to STDOUT instead\n);
-        print qq(logfile = /path/to/output.log\n);
-        print qq(# 0 = don't fork, 1 = fork and run in background\n);
-        print qq(daemon = 0\n);
-        print qq(# throttle delay; set to 0 to exit instead of throttling\n);
-        print qq(throttle = 1\n);
-
+        # here document syntax
+        print <<EOC;
+filelist = /path/to/filelist.txt;
+# commenting the logfile will log to STDOUT instead
+logfile = /path/to/output.log
+# 0 = don't fork, 1 = fork and run in background
+daemon = 0
+# play files from filelist in sequential order; 0 = random, 1 = sequential
+sequential = 0
+# throttle delay; set to 0 to exit instead of throttling
+throttle = 1
+EOC
         exit 0;
     } # if ( exists $args{gen-config} )
 
@@ -303,11 +298,13 @@ sub _apply_defaults {
     $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
 
     # script defaults
-    $self->set( q(throttle) => 1 ) 
-        unless ( defined $self->get(q(throttle)) );
     $self->set( q(daemon) => 0 ) 
         unless ( defined $self->get(q(daemon)) );
-    
+    $self->set( q(sequential) => 0 ) 
+        unless ( defined $self->get(q(sequential)) );    
+    $self->set( q(throttle) => 1 ) 
+        unless ( defined $self->get(q(throttle)) );    
+
     # generate a big fat error message unless we're generating a config file
     if ( ! defined $self->get(q(password)) ) {
         if ( ! defined $self->get(q(gen-config)) ) {
@@ -457,10 +454,6 @@ sub new {
     my $config = $args{config};
     my $logger = $args{logger};
 
-
-    # bless this class into an object
-    my $self = bless ({}, $class);
-
     # create a copy of the args hash, then sanitize it prior to passing it
     # into Shout
     my %shoutargs = $config->get_shout_args();
@@ -479,9 +472,12 @@ sub new {
     ); # $self->{_conn}->set_audio_info
 
     # add the connection object to the attributes of this object
-    $self->{_conn} = $conn;
-    $self->{_logger} = $logger;
-    $self->{_config} = $config;
+    # bless this class into an object
+    my $self = bless ({
+        _conn   => $conn,
+        _logger => $logger,
+        _config => $config,
+    }, $class);
     # return this object to the caller
     return $self;
 } # sub new
@@ -649,8 +645,6 @@ sub new {
     my $class = shift;
     my $config = shift;
 
-    my $self = bless ({}, $class);
-
     my $logfd;
     if ( defined $config->get(q(logfile)) ) {
         # append to the existing logfile, if any
@@ -667,12 +661,10 @@ sub new {
             unless ( defined $logfd );
     } # if ( exists $args{logfile} )
     $logfd->autoflush(1);
-    $self->{_OUTFH} = $logfd;
 
-    $self->{_quiet} = 0;
-    if ( defined $config->get(q(quiet)) ) {
-        $self->{_quiet} = 1;
-    } # if ( exists $args{quiet} )
+    my $self = bless ({
+        _OUTFH => $logfd,
+    }, $class);
 
     # return this object to the caller
     return $self;
@@ -733,6 +725,7 @@ use constant {
     THROTTLE_MAX_COUNT => 3,
     THROTTLE_CHECK_TIME => 3,
 }; # use constant
+
 my (@_playlist, @_song_q);
 my $_last_request_time = 0;
 my $_throttle_counter = 0;
@@ -763,12 +756,13 @@ sub new {
         die qq( ERR: Simplebake::Logger object required as 'logger =>');
     } # if ( exists $args{logger} )
 
-    my $self = bless ({}, $class);
+    my $self = bless ({
+        # save the config and logger objects so that this object's methods can
+        # use them
+        _logger => $logger,
+        _config => $config,
+    }, $class);
 
-	# save the config and logger objects so that this object's methods can use
-	# them
-    $self->{_logger} = $logger;
-    $self->{_config} = $config;
     return $self
 } # sub new
 
@@ -835,8 +829,9 @@ sub load_playlist {
 
 =item get_song( )
 
-Retrieves a song from the song queue.  The song queue will automagically
-reload itself when it becomes empty.
+Retrieves a song from the song queue and returns it as a L<Simplebake::File>
+object.  The song queue will automagically reload itself when it becomes
+empty.
 
 =cut
 
@@ -860,23 +855,42 @@ sub get_song {
         if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
     } # if ( ( $_last_request_time + $config->get(q(throttle_time)) )
 
+    # housekeeping for --throttle mode
     $_last_request_time = $current_time;
 	# figure out what the next song will be
-    my $random_song = int( rand($self->get_song_q_count()) );
-	# splice it out of the song_q array
-    my $current_song = splice(@_song_q, $random_song, 1);
-    chomp($current_song);
+    my $next_song;
+    # play songs in the same sequence as they appear in the filelist, or play
+    # them in sequence from the top of the file to the bottom?
+    if ( $config->get(q(sequential)) ) {
+        $next_song = shift(@_song_q);
+    } else {
+        my $random_song = int( rand($self->get_song_q_count()) );
+    	# splice it out of the song_q array
+        $next_song = splice(@_song_q, $random_song, 1);
+    } # if ( $config->get(q(sequential) )
+    # remove the newline
+    chomp($next_song);
+
+    # create a Simplebake::File object
+    my $song_obj = Simplebake::File->new( 
+        streamfile => $next_song,
+        logger => $logger,
+    ); # my $song_obj = Simplebake::File->new
+    
     # check to see if the song_q is empty
     if ( scalar(@_song_q) == 0 ) {
         $logger->timelog(qq(INFO: Reloading song queue));
         @_song_q = @_playlist;
     } # if ( scalar(@song_q) == 0 )  
 
-	$logger->timelog(qq(INFO: Returning new song $current_song))
-        if ( defined $config->get(q(verbose)));
+    if ( defined $song_obj ) {
+    	$logger->timelog(qq(INFO: Returning new song ) 
+            . $song_obj->get_filename() )
+            if ( defined $config->get(q(verbose)));
+    } # if ( defined $song_obj )
 
 	# return the current song (filename) to the caller
-    return $current_song;
+    return $song_obj;
 } # sub get_song
 
 =item get_song_q_count( )
@@ -903,6 +917,163 @@ sub get_song_q_count {
 
 =back
 
+=head2 Simplebake::File
+
+An object that represents the file that is to be streamed to the
+Icecast/Shoutcast server.  This is a helper object for the file that helps out
+different functions related to file metadata and logging output.  Returns
+C<undef> if the file doesn't exist on the filesystem or can't be read.
+
+=head3 Object Methods
+
+=cut
+
+####################
+# Simplebake::File #
+####################
+package Simplebake::File;
+use strict;
+use warnings;
+
+=over 
+
+=item new(streamfile => $file, logger => $logger)
+
+Creates an object that wraps the file to be streamed, so that requests for
+file metadata can be answered.
+
+=cut
+
+sub new {
+    my $class = shift;
+    my %args = @_;
+
+    my ($streamfile, $logger);
+    if ( exists $args{streamfile} ) { 
+        $streamfile = $args{streamfile};
+    } else {
+        die qq( ERR: Missing file to be streamed as 'streamfile =>');
+    } # if ( exists $args{config} )
+
+    if ( exists $args{logger} ) { 
+        $logger = $args{logger};
+    } else {
+        die qq( ERR: Simplebake::Logger object required as 'logger =>');
+    } # if ( exists $args{logger} )
+
+    my $self = bless ({
+        # save the config and logger objects so that this object's methods can
+        # use them
+        _logger => $logger,
+        _streamfile => $streamfile,
+    }, $class);
+
+    # some tests of the actual file on the filesystem
+    # does it exist?
+    unless ( -e $self->get_filename() ) { 
+        $logger->timelog( qq(WARN: Missing file on filesystem!) );
+        $logger->log(qq(- ) . $self->get_display_name() );
+        # return an undefined object so that callers know something's wrong
+        undef $self;
+    } # unless ( -e $self->get_filename() )
+    # can we read it
+    unless ( -r $self->get_filename() ) { 
+        $logger->timelog( qq(WARN: Can't read file on filesystem!) );
+        $logger->log(qq(- ) . $self->get_display_name() );
+        # return an undefined object so that callers know something's wrong
+        undef $self;
+    } # unless ( -r $self->get_filename() )
+
+    # do some of the cutty-up bits here if we have a valid file
+    if ( defined $self ) {
+        # just get the name of the file for metadata
+        my @song_metadata = split(q(/), $self->get_filename() );
+        # generate the metadata items using the song's filename
+        $self->{_track_name} = $song_metadata[-1];
+        $self->{_track_name} =~ s/\.mp3$//;
+        # remove leading numbers with dashes from the track name
+        if ( $self->{_track_name} =~ /^\d+-/ ) { 
+            $self->{_track_name} =~ s/^\d+-//; 
+        }
+        # remove leading numbers with spaces from the trackname
+        if ( $self->{_track_name} =~ /^\d+ / ) { 
+            $self->{_track_name} =~ s/^\d+ //; 
+        }
+        $self->{_album_name} = $song_metadata[-2];
+        $self->{_artist_name} = $song_metadata[-3];
+    } # if ( defined $self )
+
+    return $self
+} # sub new
+
+=item get_filename()
+
+Returns the full filename of the file to be streamed.
+
+=cut
+
+sub get_filename {
+    my $self = shift;
+    return $self->{_streamfile};
+} # sub get_filename
+
+=item get_track_name()
+
+Returns the track name as determined by the filename of the file that is being
+streamed. 
+
+=cut
+
+sub get_track_name {
+    my $self = shift;
+    return $self->{_track_name};
+} # sub get_track_name
+
+=item get_album_name()
+
+Returns the album name as determined by the filename of the file that is being
+streamed. 
+
+=cut
+
+sub get_album_name {
+    my $self = shift;
+    return $self->{_album_name};
+} # sub get_album_name
+
+=item get_artist_name()
+
+Returns the artist name as determined by the filename of the file that is
+being streamed. 
+
+=cut
+
+sub get_artist_name {
+    my $self = shift;
+    return $self->{_artist_name};
+} # sub get_artist_name
+
+=item get_display_name()
+
+Returns the filename, truncated to 60 characters (with an ellipsis in front)
+so it fits nicely when log output is going to a terminal.
+
+=cut
+
+sub get_display_name {
+    my $self = shift;
+    my $song = $self->get_filename();
+    my $display_song; # the returned filename
+
+    if ( length($song) > 60 ) {
+        $display_song = q(...) . substr($song, -60);
+    } else {
+        $display_song = $song;
+    } # if ( length($song) > 60 )
+} # sub get_display_name
+
+=back
+
 =cut
 
 ################
@@ -918,7 +1089,6 @@ use warnings;
     my $skip_current_song = undef;
     # create a logger object
     my $config = Simplebake::Config->new();
-
 
     # fork into the background and run as a daemon if requested
     # note that we're comparing a string here, not an integer; this way, the
@@ -996,48 +1166,31 @@ use warnings;
         # endless loop
         ENDLESS: while ( 1 ) {
             # grab a song from the playlist
-            my $current_song = $playlist->get_song();
-            my $display_song;
-            if ( length($current_song) > 60 ) {
-                $display_song = q(...) . substr($current_song, -60);
-            } else {
-                $display_song = $current_song;
-            } # if ( length($current_song) > 70 )
-            # skip this song if it's missing
-            if ( ! -e $current_song ) { 
-                $logger->timelog( qq(WARN: Missing file on filesystem!) );
-                $logger->log(qq(- ) . $display_song); 
-                # skip to the next song on the list
-                next;
-            } # if ( ! -e $current_song ) 
+            my $song = $playlist->get_song();
+            # if the Simplebake::File object is not created for whatever
+            # reason, go ahead and skip to the next song
+            next unless ( defined $song );
+
             $logger->timelog(q(INFO: Begin streaming new file));
-            $logger->log(qq(- Filename: $display_song));
+            $logger->log(qq(- Filename: ) . $song->get_display_name() );
             $logger->log(q(- Server URL: ) 
                 . $config->get_server_connect_string() );
-            # just get the name of the file for metadata
-            my @song_metadata = split(q(/), $current_song);
-            # generate the metadata items using the song's filename
-            my $track_name = $song_metadata[-1];
-            $track_name =~ s/\.mp3$//;
-            # remove leading numbers with dashes from the track name
-            if ( $track_name =~ /^\d+-/ ) { $track_name =~ s/^\d+-//; }
-            # remove leading numbers with spaces from the trackname
-            if ( $track_name =~ /^\d+ / ) { $track_name =~ s/^\d+ //; }
-            my $album_name = $song_metadata[-2];
-            my $artist_name = $song_metadata[-3];
 
             # buffer for holding data read from the file
             my $buff;
             # open the file
             $logger->log(qq(- Opening file for streaming));
-            open(STREAMFILE, "< $current_song") 
-                || die qq(Can't open $current_song : '$!');
+            open(STREAMFILE, q(<) .  $song->get_filename() ) 
+                || die qq(Can't open ) . $song->get_filename() 
+                . q( : '$!');
 			# treat STREAMFILE as binary data
 			binmode(STREAMFILE);
             # update the metadata
             $logger->log(qq(- Updating metadata on server ));
-            $conn->set_metadata( 
-                "song" => "$artist_name - $album_name - $track_name" );
+            $conn->set_metadata( song => 
+                $song->get_artist_name() . q( - )
+                . $song->get_album_name() . q( - ) 
+                . $song->get_track_name() );
             $logger->log(qq(- Streaming file to server )); 
             while (sysread(STREAMFILE, $buff, 4096) > 0) {
                 $logger->log(qq(- Read a block of data...))
