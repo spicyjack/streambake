@@ -30,6 +30,8 @@ our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
+ perl simplebake.pl [OPTIONS]
+
  Script options:
  -v|--verbose       Verbose script execution
  -h|--help          Shows this help text
@@ -38,6 +40,7 @@ our $VERSION = '0.06';
  -l|--logfile       Logfile to use for script output; default is STDOUT
  -f|--filelist      File containing a list of MP3/OGG files to stream
  -t|--throttle      Throttle script this many seconds when missing files
+ -q|--sequential    Play songs sequentially (default: shuffle songs)
  -j|--gen-config    Generate a config file containing script defaults
 
  Shout module options used by this script:
@@ -66,7 +69,7 @@ our $VERSION = '0.06';
     --mount somemount --filelist /path/to/mp3-ogg.txt \
     --throttle 1
  
- # Generate a filelist with this on *NIX platforms
+     # Generate a filelist with this on *NIX platforms
  find /path/to/files -name "*.mp3" > /path/to/output/filelist.txt
 
 You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
