@@ -976,13 +976,17 @@ sub new {
         # return an undefined object so that callers know something's wrong
         undef $self;
     } # unless ( -e $self->get_filename() )
-    # can we read it
-    unless ( -r $self->get_filename() ) { 
-        $logger->timelog( qq(WARN: Can't read file on filesystem!) );
-        $logger->log(qq(- ) . $self->get_display_name() );
-        # return an undefined object so that callers know something's wrong
-        undef $self;
-    } # unless ( -r $self->get_filename() )
+
+    # previous step may have set $self to undef
+    if ( defined $self ) {
+        # can we read the file?
+        unless ( -r $self->get_filename() ) { 
+            $logger->timelog( qq(WARN: Can't read file on filesystem!) );
+            $logger->log(qq(- ) . $self->get_display_name() );
+            # return an undefined object so that callers know something's wrong
+            undef $self;
+        } # unless ( -r $self->get_filename() )
+    } # if ( defined $self )
 
     # do some of the cutty-up bits here if we have a valid file
     if ( defined $self ) {
