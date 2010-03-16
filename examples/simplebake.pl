@@ -1195,11 +1195,14 @@ use warnings;
             my $buff;
             # open the file
             $logger->log(qq(- Opening file for streaming));
-            open(STREAMFILE, q(<) .  $song->get_filename() ) 
+            open(AUDIOSTREAM, q(<) .  $song->get_filename() ) 
                 || die qq(Can't open ) . $song->get_filename() 
                 . q( : '$!');
-			# treat STREAMFILE as binary data
-			binmode(STREAMFILE);
+            #open(AUDIOSTREAM, q(/bin/cat ") . $song->get_filename() 
+            #    . q(" | lame --quiet -V 4 --mp3input - - |) )
+            #    || die qq(Can't open ) . $song->get_filename() . qq( : '$!');
+			# treat AUDIOSTREAM as binary data
+			binmode(AUDIOSTREAM);
             # update the metadata
             $logger->log(qq(- Updating metadata on server ));
             $conn->set_metadata( song => 
@@ -1207,14 +1210,14 @@ use warnings;
                 . $song->get_album_name() . q( - ) 
                 . $song->get_track_name() );
             $logger->log(qq(- Streaming file to server )); 
-            while (sysread(STREAMFILE, $buff, 4096) > 0) {
+            while (sysread(AUDIOSTREAM, $buff, 4096) > 0) {
                 $logger->log(qq(- Read a block of data...))
                     if ( defined $config->get(q(verbose)) );
                 # the user veto'ed this song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
                     $skip_current_song = undef;
-                    close(STREAMFILE);
+                    close(AUDIOSTREAM);
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
                 # send a block of data, and error out if it fails
@@ -1228,11 +1231,11 @@ use warnings;
                 } # unless ($conn->send($buff)) 
                 # must be careful not to send the data too fast :)
                 $conn->sync;
-            } # while (sysread(STREAMFILE, $buff, 4096) > 0)
+            } # while (sysread(AUDIOSTREAM, $buff, 4096) > 0)
             # close the file now that we've read it
             $logger->timelog(qq(INFO: Closing file));
             #$logger->log(qq(- $display_song));
-            close(STREAMFILE);
+            close(AUDIOSTREAM);
         } # ENDLESS while ( 1 )
         $logger->timelog(qq(WARN: server closed connection; exiting...));
         die q(we died here :/);
