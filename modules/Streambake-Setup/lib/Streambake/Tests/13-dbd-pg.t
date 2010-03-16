@@ -7,6 +7,7 @@ my %return_hash = (
     mod_description => q(database driver for PostgreSQL databases),
     mod_available   => 0,
     mod_version     => q(),
+    mod_purpose     => q(source),
 );
 # this protects the test if the module is not installed/available
 eval q( use DBD::Pg; );

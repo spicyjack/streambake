@@ -7,6 +7,7 @@ my %return_hash = (
     mod_description => q(a Perl interface to 'libshout'),
     mod_available   => 0,
     mod_version     => q(),
+    mod_purpose     => q(streaming),
 );
 
 eval 'use Shout; Shout->new(); ';

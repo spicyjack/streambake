@@ -7,6 +7,7 @@ my %return_hash = (
     mod_description => q(A complete modern object system),
     mod_available   => 0,
     mod_version     => q(),
+    mod_purpose     => q(core),
 );
 # this protects the test if the module is not installed/available
 eval q( use Moose; );

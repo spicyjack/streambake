@@ -39,6 +39,7 @@ our $VERSION = '0.06';
  -f|--filelist      File containing a list of MP3/OGG files to stream
  -t|--throttle      Throttle script this many seconds when missing files
  -j|--gen-config    Generate a config file containing script defaults
+ --check-config     Check the config file given by C<--config> and exit
 
  Shout module options used by this script:
  -o|--host          Server hostname or IP address to connect to
@@ -168,6 +169,7 @@ sub new {
         q(filelist|f=s),
         q(throttle|t=i),
         q(gen-config|j),
+        q(check-config),
         # Shout options
         q(host|o=s),
         q(port|p=s),
@@ -237,6 +239,7 @@ EOC
     if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
         open( CFG, q(<) . $self->get(q(config)) );
         my @config_lines = <CFG>;
+        my $config_errors = 0;
         foreach my $line ( @config_lines ) {
             chomp $line;
             warn qq(VERB: parsing line '$line'\n) 
@@ -248,9 +251,17 @@ EOC
             if ( grep(/$key/, @_valid_script_args) > 0 ) {
                 $self->set($key => $value);
             } else {
-                warn qq|WARN: unknown config key (value): $key ($value)\n|;
+                warn qq(WARN: unknown config line found in )
+                    . $self->get(q(config)) . qq(\n);
+                warn qq(WARN: unknown config line key/value: $key/$value\n);
+                $config_errors++;
             } # if ( grep($key, @_valid_shout_args) > 0 )
         } # foreach my $line ( @config_lines )
+        if ( defined $self->get(q(check-config)) ) {
+            warn qq|Found $config_errors total config error(s)\n|;
+            warn qq(Exiting script...\n);
+            exit 0;
+        } # if ( defined $self->get(q(check-config)) )
     } # if ( exists $args{config} && -r $args{config} )
 
     # check to see if a source password was set in the environment
