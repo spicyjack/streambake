@@ -108,7 +108,7 @@ sub prove_all {
     my $test_dir = __FILE__;
     $test_dir =~ s/Setup.pm$/Tests/;
     # go over each test file found and eval it
-    foreach my $file ( $rule->in($test_dir) ) {
+    foreach my $file ( sort($rule->in($test_dir)) ) {
         #print qq(Running test $file\n);
         my $filename = (split(q(/), $file))[-1];
         open (TEST, "< " . $file);
@@ -130,7 +130,7 @@ sub prove_all {
                 print qq(  required?    ) 
                     . $test_reply{mod_required} . qq(\n);
             } else {
-                print qq(   ) . $test_reply{mod_name} . q( available;)
+                print qq(   ) . $test_reply{mod_name} . q( module available;)
                     . q| (required: | . $test_reply{mod_required} 
                     . q|, version: | . $test_reply{mod_version}. qq|)\n|; 
             } # if ( defined $self->{_verbose} )
@@ -150,7 +150,8 @@ sub prove_all {
                 if ( ! defined $test_reply{mod_name} ) {
                     print qq(   $filename testfile failed to run;\n)
                 } else {
-                    print qq(   ) . $test_reply{mod_name} . q( not available;)
+                    print qq(   ) . $test_reply{mod_name} 
+                        . q( module not available;)
                         . q| (required: | . $test_reply{mod_required} . qq|)\n|;
                 } #  if ( ! defined $test_reply{mod_name} )
             } # if ( $self->is_verbose() )
