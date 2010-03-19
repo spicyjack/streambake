@@ -815,7 +815,7 @@ sub load_playlist {
             die q( ERR: could not open ) . $config->get(q(filelist)) 
                 unless ( defined $plfd );
             # apply UTF-8-ness to the filehandle 
-            $plfd->binmode(qq|:encoding(utf8)|);
+            #$plfd->binmode(qq|:encoding(utf8)|);
             # same as @_playlist = <FH>;
             @_playlist = $plfd->getlines();
             $plfd->close();
