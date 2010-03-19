@@ -2,14 +2,15 @@
 
 # set up some defaults for the data to be returned to the Setup module
 my %return_hash = (
-    mod_name        => q(DBI),
-    mod_required    => q(no), 
-    mod_description => q(database independent interface to SQL databases),
+    mod_name        => q(Log::Log4perl),
+    mod_required    => q(yes), 
+    mod_description => q(A Perl port of log4j, a logging system),
     mod_available   => 0,
     mod_version     => q(),
+    mod_purpose     => q(core),
 );
 # this protects the test if the module is not installed/available
-eval q(use DBI);
+eval q( use Log::Log4perl; );
 
 # if there's no error from the eval, then the module is available
 if ( $@ ) {
@@ -17,7 +18,7 @@ if ( $@ ) {
     $return_hash{mod_test_failure} = $@;
 } else {
     $return_hash{mod_available} = 1;
-    $return_hash{mod_version} = $DBI::VERSION;
+    $return_hash{mod_version} = $Log::Log4perl::VERSION;
 } # if ( $@ )
 
 return %return_hash;

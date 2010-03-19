@@ -7,6 +7,7 @@ my %return_hash = (
     mod_description => q(Perl ithreads),
     mod_available   => 0,
     mod_version     => q(),
+    mod_purpose     => q(core),
 );
 if ( $Config{usethreads} ) {
     # threads available

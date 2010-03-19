@@ -18,11 +18,11 @@ software/hardware requirements are in place to run an instance of Streambake.
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 
 =head1 SYNOPSIS
@@ -102,13 +102,14 @@ Run the C<prove()> methods in all of the test modules that are found.
 sub prove_all {
     my $self = shift;
 
+    my ($avail, $unavail);
     # set the find rule to look for only files
     my $rule = File::Find::Rule->file()->name('*.t');
     # the test directory should be below where this physical file is located
     my $test_dir = __FILE__;
     $test_dir =~ s/Setup.pm$/Tests/;
     # go over each test file found and eval it
-    foreach my $file ( $rule->in($test_dir) ) {
+    foreach my $file ( sort($rule->in($test_dir)) ) {
         #print qq(Running test $file\n);
         my $filename = (split(q(/), $file))[-1];
         open (TEST, "< " . $file);
@@ -121,41 +122,49 @@ sub prove_all {
         my %test_reply = eval $test_text;
         if ( $test_reply{mod_available} ) {
             if ( $self->is_verbose() )  { 
-                print qq(Test file '$filename'\n);
-                print qq(  module name: ) . $test_reply{mod_name} . qq(\n);
-                print qq(  description: ) 
+                $avail .= qq(Test file '$filename'\n);
+                $avail .= qq(  module name: ) . $test_reply{mod_name} . qq(\n);
+                $avail .= qq(  description: ) 
                     . $test_reply{mod_description} . qq(\n);
-                print qq(  version:     ) 
+                $avail .= qq(   purpose:    ) 
+                    . $test_reply{mod_purpose} . qq(\n);
+                $avail .= qq(  version:     ) 
                     . $test_reply{mod_version} . qq(\n);
-                print qq(  required?    ) 
+                $avail .= qq(  required?    ) 
                     . $test_reply{mod_required} . qq(\n);
             } else {
-                print qq(   ) . $test_reply{mod_name} . q( available;)
+                $avail .= qq( ) . $test_reply{mod_name} 
                     . q| (required: | . $test_reply{mod_required} 
+                    . q|, purpose: | . $test_reply{mod_purpose} 
                     . q|, version: | . $test_reply{mod_version}. qq|)\n|; 
             } # if ( defined $self->{_verbose} )
         } else {
             if ( $self->is_verbose() ) {
-                print qq(Test file '$filename'\n);
-                print qq(  module name: ) . $test_reply{mod_name} . qq(\n);
-                print qq(  Test returned an error; module )
-                    . $test_reply{mod_name} . qq( not available!\n);
-                print qq(=== Begin test error output ===\n);
+                $unavail .= qq(Test file '$filename'\n);
+                $unavail .= qq(  module name: ) 
+                    . $test_reply{mod_name} . qq(\n);
+                $unavail .= qq(   purpose:    ) 
+                    . $test_reply{mod_purpose} . qq(\n);
+                $unavail .= qq(=== Begin test error output ===\n);
                 # we need to chomp the test failure output as a separate step
                 my $test_failure = $test_reply{mod_test_failure};
                 chomp($test_failure);
-                print $test_failure . qq(\n);
-                print qq(=== End test error output ===\n);
+                $unavail .= $test_failure . qq(\n);
+                $unavail .= qq(=== End test error output ===\n);
             } else {
                 if ( ! defined $test_reply{mod_name} ) {
-                    print qq(   $filename testfile failed to run;\n)
+                    $unavail .= qq(   $filename testfile failed to run;\n)
                 } else {
-                    print qq(   ) . $test_reply{mod_name} . q( not available;)
-                        . q| (required: | . $test_reply{mod_required} . qq|)\n|;
+                    $unavail .= qq( ) . $test_reply{mod_name} 
+                        . q| (required: | . $test_reply{mod_required} 
+                        . q|, purpose: | . $test_reply{mod_purpose} 
+                        . qq|)\n|;
                 } #  if ( ! defined $test_reply{mod_name} )
             } # if ( $self->is_verbose() )
         } # if ( $test_reply{available} )
     } # foreach my $file ( $rule->in($test_dir) )
+    print qq(==== AVAILABLE MODULES ====\n$avail\n);
+    print qq(==== UNAVAILABLE MODULES ====\n$unavail\n);
 } # sub prove_all
 
 =head2 is_verbose()
