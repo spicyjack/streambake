@@ -46,7 +46,8 @@ our $VERSION = '0.07';
  --check-config     Check the config file given by C<--config> and exit
 
  Shout module options used by this script:
- -o|--host          Server hostname or IP address to connect to
+ --ogg              Set the stream type to streaming files in Ogg format
+ --host             Server hostname or IP address to connect to
  -p|--port          Server port to connect to
  -m|--mount         Mountpoint, where clients connect to on the server
  -b|--nonblocking   Set server connection to be non-blocking
@@ -137,10 +138,10 @@ L<Getopt::Long>.
 
 # a list of valid arguments that would be used with the Shout module
 my @_valid_shout_args 
-    = qw(host port mount password user name url genre description public);
+    = qw(host port password mount user name url genre description public);
 # a list of valid arguments to this script
 my @_valid_script_args = ( 
-    @_valid_shout_args, qw(verbose config logfile filelist daemon),
+    @_valid_shout_args, qw(verbose config logfile filelist daemon ogg),
     qw(throttle sequential)
 ); # my @_valid_script_args 
 
@@ -175,7 +176,8 @@ sub new {
         q(gen-config|j),
         q(check-config),
         # Shout options
-        q(host|o=s),
+        q(ogg|o),
+        q(host=s),
         q(port|p=s),
         q(mount|m=s),
         q(nonblocking|b),
@@ -226,7 +228,11 @@ sub new {
         # cheat a bit and add these last config settings
         # here document syntax
         print <<EOC;
+# the path to the list of files to stream
 filelist = /path/to/filelist.txt;
+# what is the format of the files we're streaming? 
+# "ogg = 0" == mp3, "ogg = 1" == ogg/vorbis or ogg/flac
+ogg = 0
 # commenting the logfile will log to STDOUT instead
 logfile = /path/to/output.log
 # 0 = don't fork, 1 = fork and run in background
@@ -313,6 +319,8 @@ sub _apply_defaults {
     $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
 
     # script defaults
+    $self->set( q(ogg) => 0 ) 
+        unless ( defined $self->get(q(ogg)) );
     $self->set( q(daemon) => 0 ) 
         unless ( defined $self->get(q(daemon)) );
     $self->set( q(sequential) => 0 ) 
@@ -479,7 +487,11 @@ sub new {
     # set some other misc settings
     # see note above about the definition/copying of the constants from
     # shout.h
-    #$conn->format(SB_FORMAT_MP3); 
+    if ( $config->get(q(ogg)) == 1 ) { 
+        $conn->format(SB_FORMAT_OGG); 
+    } else {
+        $conn->format(SB_FORMAT_MP3); 
+    } # if ( $config->get(q(ogg)) == 1 )
     $conn->protocol(SB_PROTOCOL_HTTP);
     $conn->set_audio_info(
         SHOUT_AI_BITRATE => 256, 
@@ -539,34 +551,6 @@ sub close {
 
     return 1;
 } # sub close
-
-=item set_stream_format( $format )
-
-Tells the Icecast server what the audio format (MP3 or Ogg) of the file being
-streamed will be.  Use the C<get_file_format()> method of the
-L<Simplebake::File> object to get the correct value for C<$format> above.
-Returns C<true> if the call succeeds, or C<undef> if the call fails.
-
-=cut
-
-sub set_stream_format {
-    my $self = shift;
-    my $arg = shift;
-    my $conn = $self->{_conn};
-    my $stream_format;
-
-    # set the format constant
-    if ( $arg eq q(MP3) ) {
-        $stream_format = SB_FORMAT_MP3;
-    } elsif ( $arg eq q(OGG) ) {
-        $stream_format = SB_FORMAT_OGG;
-    } else {
-        die qq(Could not set stream format; set_stream_format arg: $arg);
-    } # if ( $arg eq q(MP3) )
-    return 1 if ( $conn->format($stream_format) );
-    # return failure if something went wrong
-    return undef;
-} # sub set_stream_format
 
 =item set_metadata( song => $metadata )
 
@@ -1065,28 +1049,6 @@ sub new {
     return $self
 } # sub new
 
-=item get_file_format()
-
-Returns a string that represents the format of the file (currently C<MP3> or
-C<OGG>).  Returns C<undef> if the file format is unknown.
-
-=cut
-
-sub get_file_format {
-    my $self = shift;
-    my $logger = $self->{_logger};
-    my $config = $self->{_config};
-
-    my $streamfile = $self->get_filename();
-    if ( $streamfile =~ /ogg$/i ) {
-        return q(OGG);
-    } elsif ( $streamfile =~ /mp3$/i ) {
-        return q(MP3);
-    } # if ( $streamfile =~ /ogg$/i )
-    # return undef if nothing matched above
-    return undef;
-} # get_file_format
-
 =item get_filename()
 
 Returns the full filename of the file to be streamed.
@@ -1271,13 +1233,7 @@ use warnings;
                 . q( : '$!');
 			# treat STREAMFILE as binary data
 			binmode(STREAMFILE);
-            # set the file format on the server
 
-            if ( defined $song->get_file_format() ) {
-                $logger->log(qq(- Updating stream format on server to ')
-                    . $song->get_file_format() . q('));
-                $conn->set_stream_format($song->get_file_format());
-            } # if ( defined $song->get_file_format() )
             # update the metadata
             $logger->log(qq(- Updating metadata on server));
             $conn->set_metadata( song => 
