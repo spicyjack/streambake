@@ -22,11 +22,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -164,7 +164,7 @@ sub new {
     $parser->getoptions(
         \%args,
         # script options
-        q(verbose|v),
+        q(verbose|v+),
         q(sequential|q),
         q(help|h),
         q(config|c=s),
@@ -402,7 +402,7 @@ sub get_shout_args {
     my %return_args;
     foreach my $key ( @_valid_shout_args ) {
         warn qq(DEBG: key/value = '$key'/') . $self->get($key) . qq('\n)
-            if ( defined $self->get(q(verbose)) );
+            if ( defined $self->get(q(verbose)) && $self->get(q(verbose)) > 1 );
         $return_args{$key} = $self->get($key);
     } # foreach my $key ( keys(%args) )
     return %return_args;
@@ -479,7 +479,7 @@ sub new {
     # set some other misc settings
     # see note above about the definition/copying of the constants from
     # shout.h
-    $conn->format(SB_FORMAT_MP3);
+    #$conn->format(SB_FORMAT_MP3); 
     $conn->protocol(SB_PROTOCOL_HTTP);
     $conn->set_audio_info(
         SHOUT_AI_BITRATE => 256, 
@@ -540,7 +540,35 @@ sub close {
     return 1;
 } # sub close
 
-=item set_metadata( $metadata )
+=item set_stream_format( $format )
+
+Tells the Icecast server what the audio format (MP3 or Ogg) of the file being
+streamed will be.  Use the C<get_file_format()> method of the
+L<Simplebake::File> object to get the correct value for C<$format> above.
+Returns C<true> if the call succeeds, or C<undef> if the call fails.
+
+=cut
+
+sub set_stream_format {
+    my $self = shift;
+    my $arg = shift;
+    my $conn = $self->{_conn};
+    my $stream_format;
+
+    # set the format constant
+    if ( $arg eq q(MP3) ) {
+        $stream_format = SB_FORMAT_MP3;
+    } elsif ( $arg eq q(OGG) ) {
+        $stream_format = SB_FORMAT_OGG;
+    } else {
+        die qq(Could not set stream format; set_stream_format arg: $arg);
+    } # if ( $arg eq q(MP3) )
+    return 1 if ( $conn->format($stream_format) );
+    # return failure if something went wrong
+    return undef;
+} # sub set_stream_format
+
+=item set_metadata( song => $metadata )
 
 Sets the stream metadata on the Icecast server to C<$metadata>.  Returns
 C<true> if the call succeeds, or C<undef> if the call fails.
@@ -553,7 +581,7 @@ sub set_metadata {
     my $conn = $self->{_conn};
 
     # return success if we can set the metadata
-    return 1 if ( $conn->set_metadata(@_) );
+    return 1 if ( $conn->set_metadata(@args) );
     # return failure if something went wrong
     return undef;
 } # sub set_metadata
@@ -890,6 +918,7 @@ sub get_song {
     my $song_obj = Simplebake::File->new( 
         streamfile => $next_song,
         logger => $logger,
+        config => $config,
     ); # my $song_obj = Simplebake::File->new
     
     # check to see if the song_q is empty
@@ -952,7 +981,7 @@ use warnings;
 
 =over 
 
-=item new(streamfile => $file, logger => $logger)
+=item new(streamfile => $file, logger => $logger, config => $config)
 
 Creates an object that wraps the file to be streamed, so that requests for
 file metadata can be answered.
@@ -963,24 +992,28 @@ sub new {
     my $class = shift;
     my %args = @_;
 
-    my ($streamfile, $logger);
-    if ( exists $args{streamfile} ) { 
-        $streamfile = $args{streamfile};
-    } else {
-        die qq( ERR: Missing file to be streamed as 'streamfile =>');
-    } # if ( exists $args{config} )
+    my ($streamfile, $logger, $config);
+    die qq( ERR: Missing file to be streamed as 'streamfile =>')
+        unless ( exists $args{streamfile} );
+    $streamfile = $args{streamfile};
 
-    if ( exists $args{logger} ) { 
-        $logger = $args{logger};
-    } else {
-        die qq( ERR: Simplebake::Logger object required as 'logger =>');
-    } # if ( exists $args{logger} )
+    die qq( ERR: Simplebake::Logger object required as 'logger =>')
+        unless ( exists $args{logger} );
+    $logger = $args{logger};
+        
+    die qq( ERR: Simplebake::Logger object required as 'logger =>')
+        unless ( exists $args{config} );
+    $config = $args{config};
 
     my $self = bless ({
         # save the config and logger objects so that this object's methods can
         # use them
         _logger => $logger,
+        _config => $config,
         _streamfile => $streamfile,
+        _track_name => q(),
+        _album_name => q(),
+        _artist_name => q(),
     }, $class);
 
     # some tests of the actual file on the filesystem
@@ -1008,22 +1041,51 @@ sub new {
         # just get the name of the file for metadata
         my @song_metadata = split(q(/), $self->get_filename() );
         # generate the metadata items using the song's filename
-        $self->{_track_name} = $song_metadata[-1];
-        $self->{_track_name} =~ s/\.mp3$//;
-        # remove leading numbers with dashes from the track name
-        if ( $self->{_track_name} =~ /^\d+-/ ) { 
-            $self->{_track_name} =~ s/^\d+-//; 
-        }
-        # remove leading numbers with spaces from the trackname
-        if ( $self->{_track_name} =~ /^\d+ / ) { 
-            $self->{_track_name} =~ s/^\d+ //; 
-        }
-        $self->{_album_name} = $song_metadata[-2];
-        $self->{_artist_name} = $song_metadata[-3];
+        if ( defined $song_metadata[-1] ) {
+            $self->{_track_name} = $song_metadata[-1];
+            # remove the file extension from the track name
+            $self->{_track_name} =~ s/\.[mp3|ogg]$//;
+            # remove leading numbers with dashes from the track name
+            if ( $self->{_track_name} =~ /^\d+-/ ) { 
+                $self->{_track_name} =~ s/^\d+-//; 
+            }
+            # remove leading numbers with spaces from the trackname
+            if ( $self->{_track_name} =~ /^\d+ / ) { 
+                $self->{_track_name} =~ s/^\d+ //; 
+            }
+        } # if ( defined $self->{_track_name} )
+        if ( defined $song_metadata[-2] ) {
+            $self->{_album_name} = $song_metadata[-2];
+        } # if ( defined $song_metadata[-2] )
+        if ( defined $song_metadata[-3] ) { 
+            $self->{_artist_name} = $song_metadata[-3];
+        } # if ( defined $song_metadata[-3] )
     } # if ( defined $self )
 
     return $self
 } # sub new
+
+=item get_file_format()
+
+Returns a string that represents the format of the file (currently C<MP3> or
+C<OGG>).  Returns C<undef> if the file format is unknown.
+
+=cut
+
+sub get_file_format {
+    my $self = shift;
+    my $logger = $self->{_logger};
+    my $config = $self->{_config};
+
+    my $streamfile = $self->get_filename();
+    if ( $streamfile =~ /ogg$/i ) {
+        return q(OGG);
+    } elsif ( $streamfile =~ /mp3$/i ) {
+        return q(MP3);
+    } # if ( $streamfile =~ /ogg$/i )
+    # return undef if nothing matched above
+    return undef;
+} # get_file_format
 
 =item get_filename()
 
@@ -1199,7 +1261,8 @@ use warnings;
             my $buff;
             # open the file
             $logger->log(qq(- Opening file for streaming));
-            # external re-encoding
+            
+            # XXX external re-encoding
             #open(STREAMFILE, q(/bin/cat ") . $song->get_filename()
             #    . q(" | lame --quiet -V 4 --mp3input - - |) )
             #    || die qq(Can't open ) . $song->get_filename() . qq( : '$!');
@@ -1208,16 +1271,24 @@ use warnings;
                 . q( : '$!');
 			# treat STREAMFILE as binary data
 			binmode(STREAMFILE);
+            # set the file format on the server
+
+            if ( defined $song->get_file_format() ) {
+                $logger->log(qq(- Updating stream format on server to ')
+                    . $song->get_file_format() . q('));
+                $conn->set_stream_format($song->get_file_format());
+            } # if ( defined $song->get_file_format() )
             # update the metadata
-            $logger->log(qq(- Updating metadata on server ));
+            $logger->log(qq(- Updating metadata on server));
             $conn->set_metadata( song => 
                 $song->get_artist_name() . q( - )
                 . $song->get_album_name() . q( - ) 
                 . $song->get_track_name() );
-            $logger->log(qq(- Streaming file to server )); 
+            $logger->log(qq(- Streaming file to server)); 
             while (sysread(STREAMFILE, $buff, 4096) > 0) {
                 $logger->log(qq(- Read a block of data...))
-                    if ( defined $config->get(q(verbose)) );
+                    if ( defined $config->get(q(verbose)) &&
+                        $config->get(q(verbose)) > 1);
                 # the user veto'ed this song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
@@ -1227,7 +1298,8 @@ use warnings;
                 } # if ( defined $skip_current_song )
                 # send a block of data, and error out if it fails
                 $logger->log(qq(- Sending block of data...)) 
-                    if ( defined $config->get(q(verbose)) );
+                    if ( defined $config->get(q(verbose)) &&
+                        $config->get(q(verbose)) > 1);
                 unless ( $conn->send(data => $buff, length => length($buff)) ) {
                     $logger->timelog(q( ERR: while sending buffer to server:));
                     $logger->timelog(q( ERR:) . $conn->get_error);
