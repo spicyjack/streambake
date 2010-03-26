@@ -1028,7 +1028,7 @@ sub new {
         if ( defined $song_metadata[-1] ) {
             $self->{_track_name} = $song_metadata[-1];
             # remove the file extension from the track name
-            $self->{_track_name} =~ s/\.[mp3|ogg]$//;
+            $self->{_track_name} =~ s/\.mp3$|\.ogg$//;
             # remove leading numbers with dashes from the track name
             if ( $self->{_track_name} =~ /^\d+-/ ) { 
                 $self->{_track_name} =~ s/^\d+-//; 
