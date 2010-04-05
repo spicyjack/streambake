@@ -46,7 +46,7 @@ our $VERSION = '0.07';
  --check-config     Check the config file given by C<--config> and exit
 
  Shout module options used by this script:
- --ogg              Set the stream type to streaming files in Ogg format
+ -o|--ogg           Set the stream type on the server to Ogg format
  --host             Server hostname or IP address to connect to
  -p|--port          Server port to connect to
  -m|--mount         Mountpoint, where clients connect to on the server
@@ -72,8 +72,14 @@ our $VERSION = '0.07';
     --mount somemount --filelist /path/to/mp3-ogg.txt \
     --throttle 1
  
-     # Generate a filelist with this on *NIX platforms
+ # Generate a filelist with this on *NIX platforms
  find /path/to/files -name "*.mp3" > /path/to/output/filelist.txt
+
+Note that the default file type to be streamed with this script is MP3.  If
+you want to stream Ogg Vorbis files (*.ogg files), you need to use the
+C<--ogg> switch.  You can't mix Ogg and MP3 files in the same stream, as the
+server has no way of telling clients that the type of files being streamed has
+switched during streaming.  
 
 You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
 password to the Icecast server, and the script will use that instead of the
@@ -87,6 +93,9 @@ source password set elsewhere.
  For example, to skip to the next song in the filelist with:
   kill -HUP <PID of Perl process executing simplebake.pl>
 
+You can view the full C<POD> documentation of this file by calling C<perldoc
+simplebake.pl>.
+
 =head1 DESCRIPTION
 
 B<simplebake.pl> is meant to be used as a quick testing script to verify that
@@ -95,8 +104,10 @@ Icecast server are installed, and that all of the Icecast login information
 provided to the script is valid.  The script can also be used for as a simple
 script for streaming a list of files on a local filesystem.  The script aims
 to use as few non-core Perl modules as possible, so that it will run with any
-modern (5.8-ish and newer) Perl installation with no extra libraries beyond
-L<Shout> installed.
+modern (5.8-ish and newer) Perl installation with no extra Perl modules beyond
+the L<Shout> module being installed.  L<Shout> requires C<libshout> and
+friends to be installed on the system, but most Linux distributions usually
+have this packaged.
 
 If throttling is enabled (C<throttle> set to a positive integer),
 when the script encounters a file in the filelist that's missing on the
@@ -1205,6 +1216,11 @@ use warnings;
         $logger->timelog(q(INFO: Connected to server));
         $logger->log(q(- server URL: ) . $config->get_server_connect_string() );
         $logger->log(q(- source user: ') . $config->get(q(user)) . q('));
+        if ( $config->get(q(ogg)) == 1 ) { 
+            $logger->log(q(- setting stream format on server to: OGG));
+        } else {
+            $logger->log(q(- setting stream format on server to: MP3));
+        } # if ( if ( $config->get(q(ogg)) == 1 )
 
         # endless loop
         ENDLESS: while ( 1 ) {
