@@ -32,6 +32,17 @@ our $VERSION = '0.01';
  -s|--summary       Summarize information for each directory, don't show
                     individual file information  
 
+ Reporting options:
+ -o|--ogg           Include Ogg files in searches and reports
+ -m|--mp3           Include MP3 files in searches and reports
+ -f|--flac          Include FLAC files in searches and reports
+ -1|-id3v1          Include files with ID3v1 tags
+ -2|-id3v2          Include files with ID3v2 tags
+
+ Note: the script default is to report all of the above information.  Using
+ the above switches will limit reporting to *ONLY* the information asked for
+ with the reporting options switches.
+
  Example usage:
 
  # Generate a list of files that don't have album art
