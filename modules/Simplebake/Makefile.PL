@@ -6,11 +6,10 @@ WriteMakefile(
     NAME                => 'Simplebake',
     AUTHOR              => 'Brian Manning <elspicyjack@gmail.com>',
     VERSION_FROM        => 'bin/simplebake.pl',
-    ABSTRACT_FROM       => 'bin/simplebake.pl',
+    ABSTRACT            => 'Stream MP3/OGG from a list of files to an Icecast server',
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
-    PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,
     },
