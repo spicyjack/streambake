@@ -5,8 +5,8 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME                => 'Simplebake',
     AUTHOR              => 'Brian Manning <elspicyjack@gmail.com>',
-    VERSION_FROM        => 'lib/Simplebake.pm',
-    ABSTRACT_FROM       => 'lib/Simplebake.pm',
+    VERSION_FROM        => 'bin/simplebake.pl',
+    ABSTRACT_FROM       => 'bin/simplebake.pl',
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
