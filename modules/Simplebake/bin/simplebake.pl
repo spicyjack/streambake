@@ -240,7 +240,7 @@ sub new {
         # here document syntax
         print <<EOC;
 # the path to the list of files to stream
-filelist = /path/to/filelist.txt;
+filelist = /path/to/filelist.txt
 # what is the format of the files we're streaming? 
 # "ogg = 0" == mp3, "ogg = 1" == ogg/vorbis or ogg/flac
 ogg = 0
