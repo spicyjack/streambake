@@ -28,6 +28,23 @@ Version 0.07
 
 our $VERSION = '0.07';
 
+# a check to verify the shout module is available
+# it's put here so some warning is given if --help was called
+BEGIN {
+    eval q( use Shout; );
+    if ( $@ ) {
+        if ( defined grep(/-h|--help|-j|--gen-config/, @ARGV) ) {
+            warn qq(\nWARNING: Shout Perl module is not installed!\n\n);
+        } else {
+            warn qq( ERR: Shout module not installed\n);
+            warn qq( ERR: === Begin error output ===\n\n);
+            warn qq($@\n);
+            warn qq( ERR: === End error output ===\n);
+            die qq(Missing 'Shout' Perl module; exiting...);
+        } # if ( $self->get(q(help)) )
+    } # if ( $@ )
+} # BEGIN
+
 =head1 SYNOPSIS
 
  perl simplebake.pl [OPTIONS]
@@ -203,23 +220,6 @@ sub new {
 
     # assign the args hash to this object so it can be reused later on
     $self->{_args} = \%args;
-
-    # a check to verify the shout module is available
-    # it's put here so some warning is given if --help was called
-    BEGIN {
-        eval q( use Shout; );
-        if ( $@ ) {
-            if ( defined grep(/-h|--help|-j|--gen-config/, @ARGV) ) {
-                warn qq(\nWARNING: Shout Perl module is not installed!\n\n);
-            } else {
-                warn qq( ERR: Shout module not installed\n);
-                warn qq( ERR: === Begin error output ===\n\n);
-                warn qq($@\n);
-                warn qq( ERR: === End error output ===\n);
-                die qq(Missing 'Shout' Perl module; exiting...);
-            } # if ( $self->get(q(help)) )
-        } # if ( $@ )
-    } # BEGIN
 
     # dump and bail if we get called with --help
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
