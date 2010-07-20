@@ -7,7 +7,7 @@ use warnings;
 use Getopt::Long;
 
 # project modules
-use Streambake::Setup;
+use Streambake::Test;
 
 =head1 NAME
 
@@ -72,7 +72,7 @@ would be used when reporting bugs/problems with L<Streambake>.
         q(v|verbose) => \$verbose_info,
     );
 
-    my $setup = Streambake::Setup->new( verbose => $verbose_info );
+    my $setup = Streambake::Test->new( verbose => $verbose_info );
     $setup->prove_all();
     
 ### end script

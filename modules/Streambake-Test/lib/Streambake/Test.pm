@@ -7,7 +7,9 @@ use warnings;
 BEGIN {
     eval q(use File::Find::Rule; );
     if ( $@ ) {
-        die qq(ERROR: Module 'File::Find::Rule' is not available);
+        die qq(ERROR: Module 'File::Find::Rule' is not available;\n)
+          . qq(ERROR: Please install the File::Find::Rule package/module\n)
+          . qq(ERROR: prior to trying to use this script\n);
     }
 } # BEGIN
 
@@ -163,8 +165,8 @@ sub prove_all {
             } # if ( $self->is_verbose() )
         } # if ( $test_reply{available} )
     } # foreach my $file ( $rule->in($test_dir) )
-    print qq(==== AVAILABLE MODULES ====\n$avail\n);
-    print qq(==== UNAVAILABLE MODULES ====\n$unavail\n);
+    print qq(==== AVAILABLE MODULES/BINARIES ====\n$avail\n);
+    print qq(==== UNAVAILABLE MODULES/BINARIES ====\n$unavail\n);
 } # sub prove_all
 
 =head2 is_verbose()
