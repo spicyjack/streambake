@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Icecast Status</string>
+    <string name="app_name">Icecast Status 2010.4</string>
     <string name="fetching_status_page">Fetching Status Page...</string>
     <string name="please_wait">Please wait...</string>
     <string name="fetching_from_url">Fetching from URL:\n</string>

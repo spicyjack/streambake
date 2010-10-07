@@ -102,10 +102,12 @@ public class IcecastStatus extends Activity {
      * onCreateDialog - set up the dialog for URL fetching
      */
     protected Dialog onCreateDialog(int dialogID) {
-    	Log.d(LOGTAG, "Creating dialog object");
+    	Log.d(LOGTAG, "Creating dialog object" + dialogID);
     	ProgressDialog dialog = new ProgressDialog(this);
     	dialog.setTitle(R.string.fetching_status_page);
-    	dialog.setMessage(R.string.fetching_from_url + statURL);
+    	// FIXME figure out why this breaks when you put the 
+    	// fetching_from_url resource string in here instead
+    	dialog.setMessage("Fetching from URL...\n" + statURL);
     	dialog.setIndeterminate(true);
     	dialog.setCancelable(true);
     	return dialog;
@@ -117,6 +119,7 @@ public class IcecastStatus extends Activity {
         Log.d(LOGTAG, "displaying URL fetch dialog");
         this.showDialog(URL_DIALOG_KEY);
     
+        // FIXME put the status download and parsing into it's own thread
         // create the fetching object
         HTTPStatusDownload hsd = new HTTPStatusDownload();
         // try and fetch the status URL
@@ -139,7 +142,7 @@ public class IcecastStatus extends Activity {
         sv = new ScrollView(this);
         sv.addView(tv);
         setContentView(sv);
-        this.dismissDialog(URL_DIALOG_KEY);
+        //this.dismissDialog(URL_DIALOG_KEY);
     } // private void doFetch ()
 } // public class IcecastStatus extends Activity
 
