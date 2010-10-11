@@ -57,26 +57,29 @@ my $sleep_time = 5;
 
     # create the socket that accepts new requests (the server)
     my $server = IO::Socket::INET->new(
+        Listen      => 5,
         Timeout     => 500,
         Proto       => q(tcp),
         LocalPort   => 6666,
         ReuseAddr   => 1,
     );
     foreach my $curr_thread ( @thread_stack ) {
-        #print qq($$: joining thread ) . $curr_thread->tid() . qq(\n);
+        print qq($$:  detaching thread ) . $curr_thread->get_tid() . qq(\n);
         #$curr_thread->join();
         $curr_thread->detach();
     } # foreach my $curr_thread ( @thread_stack )
 
     while (1) {
         my $client;
+        warn qq(calling server->accept);
         do {
             $client = $server->accept();
         } until ( defined($client) );
         my $peerhost = $client->peerhost();
-        print qq(Accepted client $client, $peerhost\n);
+        my $peerport = $client->peerport();
+        print qq(Accepted client $client, $peerhost, $peerport\n);
         my $thr = threads->new( \&process, $client, $peerhost);
-        $thr->detatch();
+        $thr->detach();
     } # while (1)
 
     exit 0;
@@ -130,11 +133,19 @@ sub join {
 
 } # sub join
 
-sub detatch {
+sub detach {
 	my $self = shift;
 
 	my $thread_obj = $self->{_thread_obj};
-	$thread_obj->detatch();
+	$thread_obj->detach();
+
+} # sub join
+
+sub get_tid {
+	my $self = shift;
+
+	my $thread_obj = $self->{_thread_obj};
+	return $thread_obj->tid();
 
 } # sub join
 
@@ -145,13 +156,14 @@ sub _do_work {
 	my $run_time = 0;
     my $_host = qq(localhost);
     my $_port = qq(6666);
+    sleep 5;
     my $socket = IO::Socket::INET->new(
         PeerAddr    => $_host,
         PeerPort    => $_port,
         Proto       => q(tcp),
     ); # my $socket = IO::Socket::INET->new
     
-    if ( ! defined $socket ) {
+    if ( defined $socket ) {
         print qq(ERROR: can't connect to port $_port on host $_host: $!\n);
         while ( $run_time < $total_time ) {
             print $socket q(Unga! ) . $self->{_thread_name} 
@@ -161,6 +173,8 @@ sub _do_work {
             $run_time += $self->{_thread_sleep};
             sleep $self->{_thread_sleep};
         } # while ( $run_time < $total_time )
+    } else {
+        warn qq(Can't open socket to $_host:$_port: $!);
     } # if ( ! defined $socket )
     #exit 0;
 } # sub _do_work
