@@ -43,6 +43,8 @@ my @threads = qw( worker1:1 worker2:3 worker3:5 worker4:7 );
 my @thread_stack;
 my $sleep_time = 5;
 
+
+    # loop and create client sockets
     foreach my $this_thread ( @threads ) {
         my ($thread_name, $thread_sleep) = split(/:/, $this_thread);
         my $thread_obj = Thread::Creator->new(
@@ -53,12 +55,41 @@ my $sleep_time = 5;
         push(@thread_stack, $thread_obj);
     } # foreach my $this_thread ( @threads )
 
+    # create the socket that accepts new requests (the server)
+    my $server = IO::Socket::INET->new(
+        Timeout     => 500,
+        Proto       => q(tcp),
+        LocalPort   => 6666,
+        ReuseAddr   => 1,
+    );
     foreach my $curr_thread ( @thread_stack ) {
         #print qq($$: joining thread ) . $curr_thread->tid() . qq(\n);
-        $curr_thread->join();
-        #$curr_thread->detach();
+        #$curr_thread->join();
+        $curr_thread->detach();
     } # foreach my $curr_thread ( @thread_stack )
+
+    while (1) {
+        my $client;
+        do {
+            $client = $server->accept();
+        } until ( defined($client) );
+        my $peerhost = $client->peerhost();
+        print qq(Accepted client $client, $peerhost\n);
+        my $thr = threads->new( \&process, $client, $peerhost);
+        $thr->detatch();
+    } # while (1)
+
     exit 0;
+
+sub process {
+    # local client info
+    my ($lclient, $lpeer) = @_;
+    if ( $lclient->connected() ) {
+        print $lclient qq($lpeer: Welcome to server\n);
+        while (<$lclient>) { print $lclient qq($lpeer said: $_\n); }
+    } # if ( $client->connected() )
+    close ($lclient);
+} # sub process
 
 package Thread::Creator;
 use strict;
@@ -99,19 +130,38 @@ sub join {
 
 } # sub join
 
+sub detatch {
+	my $self = shift;
+
+	my $thread_obj = $self->{_thread_obj};
+	$thread_obj->detatch();
+
+} # sub join
+
 sub _do_work {
 	my $self = shift;
 
 	my $total_time = 50;
 	my $run_time = 0;
-
-    while ( $run_time < $total_time ) {
-        print q(Unga! ) . $self->{_thread_name} . q(/) . threads->tid() 
-            . qq(, current time: ) . sprintf( q(%02d), $run_time )
-			. q(; sleeps for ) . $self->{_thread_sleep} . qq(\n);
-        $run_time += $self->{_thread_sleep};
-        sleep $self->{_thread_sleep};
-    } # while ( $run_time < $total_time )
+    my $_host = qq(localhost);
+    my $_port = qq(6666);
+    my $socket = IO::Socket::INET->new(
+        PeerAddr    => $_host,
+        PeerPort    => $_port,
+        Proto       => q(tcp),
+    ); # my $socket = IO::Socket::INET->new
+    
+    if ( ! defined $socket ) {
+        print qq(ERROR: can't connect to port $_port on host $_host: $!\n);
+        while ( $run_time < $total_time ) {
+            print $socket q(Unga! ) . $self->{_thread_name} 
+                . q(/) . threads->tid() 
+                . qq(, current time: ) . sprintf( q(%02d), $run_time )
+                . q(; sleeps for ) . $self->{_thread_sleep} . qq(\n);
+            $run_time += $self->{_thread_sleep};
+            sleep $self->{_thread_sleep};
+        } # while ( $run_time < $total_time )
+    } # if ( ! defined $socket )
     #exit 0;
 } # sub _do_work
 
