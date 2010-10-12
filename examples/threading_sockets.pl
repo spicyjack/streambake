@@ -39,10 +39,10 @@ use strict;
 use warnings;
 use IO::Socket::INET;
 
-my @threads = qw( worker1:1 worker2:3 worker3:5 worker4:7 );
+my @threads = qw( logger:1 cataloger:3 worker3:5 worker4:7 );
+#my @threads = qw( logger:1 cataloger:3 );
 my @thread_stack;
 my $sleep_time = 5;
-
 
     # loop and create client sockets
     foreach my $this_thread ( @threads ) {
@@ -63,6 +63,7 @@ my $sleep_time = 5;
         LocalPort   => 6666,
         ReuseAddr   => 1,
     );
+
     foreach my $curr_thread ( @thread_stack ) {
         print qq($$:  detaching thread ) . $curr_thread->get_tid() . qq(\n);
         #$curr_thread->join();
@@ -71,7 +72,7 @@ my $sleep_time = 5;
 
     while (1) {
         my $client;
-        warn qq(calling server->accept);
+        warn qq(parent PID $$: calling server->accept);
         do {
             $client = $server->accept();
         } until ( defined($client) );
@@ -89,9 +90,20 @@ sub process {
     my ($lclient, $lpeer) = @_;
     if ( $lclient->connected() ) {
         print $lclient qq($lpeer: Welcome to server\n);
-        while (<$lclient>) { print $lclient qq($lpeer said: $_\n); }
+        READSOCK:
+            while (<$lclient>) { 
+                my $received = $_;
+                chomp($received);
+                print qq(RECV -> $lpeer: $received\n);
+                print $lclient qq($lpeer said: $received\n);
+                if ( $received eq q(EXIT) ) {
+                    close ($lclient);
+                    last READSOCK;
+                } # if ( $received eq q(EXIT) )
+            } # while (<$lclient>)
+        # FIXME add a shared counter here that counts how many threads are
+        # active; if there's only one thread left, exit the program
     } # if ( $client->connected() )
-    close ($lclient);
 } # sub process
 
 package Thread::Creator;
@@ -152,11 +164,11 @@ sub get_tid {
 sub _do_work {
 	my $self = shift;
 
-	my $total_time = 50;
+	my $total_time = 20;
 	my $run_time = 0;
     my $_host = qq(localhost);
     my $_port = qq(6666);
-    sleep 5;
+    sleep 1;
     my $socket = IO::Socket::INET->new(
         PeerAddr    => $_host,
         PeerPort    => $_port,
@@ -164,7 +176,6 @@ sub _do_work {
     ); # my $socket = IO::Socket::INET->new
     
     if ( defined $socket ) {
-        print qq(ERROR: can't connect to port $_port on host $_host: $!\n);
         while ( $run_time < $total_time ) {
             print $socket q(Unga! ) . $self->{_thread_name} 
                 . q(/) . threads->tid() 
@@ -173,10 +184,12 @@ sub _do_work {
             $run_time += $self->{_thread_sleep};
             sleep $self->{_thread_sleep};
         } # while ( $run_time < $total_time )
+        print $socket qq(EXIT\n);
     } else {
         warn qq(Can't open socket to $_host:$_port: $!);
     } # if ( ! defined $socket )
     #exit 0;
+    return;
 } # sub _do_work
 
 
