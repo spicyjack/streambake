@@ -185,11 +185,13 @@ sub _do_work {
             sleep $self->{_thread_sleep};
         } # while ( $run_time < $total_time )
         print $socket qq(EXIT\n);
+        $socket->close();
     } else {
         warn qq(Can't open socket to $_host:$_port: $!);
     } # if ( ! defined $socket )
     #exit 0;
-    return;
+    #return;
+    threads->exit();
 } # sub _do_work
 
 
