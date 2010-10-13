@@ -76,10 +76,12 @@ my $sleep_time = 5;
         do {
             $client = $server->accept();
         } until ( defined($client) );
-        my $peerhost = $client->peerhost();
-        my $peerport = $client->peerport();
-        print qq(Accepted client $client, $peerhost, $peerport\n);
-        my $thr = threads->new( \&process, $client, $peerhost);
+        print qq(accepted connection: ) 
+            . $client->peerhost() 
+            . q(, )
+            . $client->peerport()
+            . qq(\n);
+        my $thr = threads->new( \&process, $client, $client->peerhost() );
         $thr->detach();
     } # while (1)
 
@@ -90,17 +92,16 @@ sub process {
     my ($lclient, $lpeer) = @_;
     if ( $lclient->connected() ) {
         print $lclient qq($lpeer: Welcome to server\n);
-        READSOCK:
-            while (<$lclient>) { 
-                my $received = $_;
-                chomp($received);
-                print qq(RECV -> $lpeer: $received\n);
-                print $lclient qq($lpeer said: $received\n);
-                if ( $received eq q(EXIT) ) {
-                    close ($lclient);
-                    last READSOCK;
-                } # if ( $received eq q(EXIT) )
-            } # while (<$lclient>)
+        while (<$lclient>) { 
+            my $received = $_;
+            chomp($received);
+            print qq(RECV -> $lpeer: $received\n);
+            print $lclient qq($lpeer said: $received\n);
+            if ( $received eq q(EXIT) ) {
+                close ($lclient);
+                threads->exit();
+            } # if ( $received eq q(EXIT) )
+        } # while (<$lclient>)
         # FIXME add a shared counter here that counts how many threads are
         # active; if there's only one thread left, exit the program
     } # if ( $client->connected() )
