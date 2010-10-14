@@ -48,7 +48,7 @@ my $sleep_time = 5;
     foreach my $this_thread ( @threads ) {
         my ($thread_name, $thread_sleep) = split(/:/, $this_thread);
         my $thread_obj = Thread::Creator->new(
-            thread_name		=> $thread_name, 
+            thread_name		=> $thread_name,
             thread_sleep	=> $thread_sleep,
 			base_sleep		=> $sleep_time,
         );
@@ -76,8 +76,8 @@ my $sleep_time = 5;
         do {
             $client = $server->accept();
         } until ( defined($client) );
-        print qq(accepted connection: ) 
-            . $client->peerhost() 
+        print qq(accepted connection: )
+            . $client->peerhost()
             . q(, )
             . $client->peerport()
             . qq(\n);
@@ -92,7 +92,7 @@ sub process {
     my ($lclient, $lpeer) = @_;
     if ( $lclient->connected() ) {
         print $lclient qq($lpeer: Welcome to server\n);
-        while (<$lclient>) { 
+        while (<$lclient>) {
             my $received = $_;
             chomp($received);
             print qq(RECV -> $lpeer: $received\n);
@@ -120,10 +120,10 @@ sub new {
 	#use Data::Dumper;
 	#print Dumper %args;
 
-	if ( ! exists $args{thread_name} ) { 
+	if ( ! exists $args{thread_name} ) {
 		die qq(ERROR: Thread::Creator called without 'thread_name' argument);
 	}
-	if ( ! exists $args{thread_sleep} ) { 
+	if ( ! exists $args{thread_sleep} ) {
 		die qq(ERROR: Thread::Creator called without 'sleep_time' argument);
 	}
 
@@ -175,11 +175,11 @@ sub _do_work {
         PeerPort    => $_port,
         Proto       => q(tcp),
     ); # my $socket = IO::Socket::INET->new
-    
+
     if ( defined $socket ) {
         while ( $run_time < $total_time ) {
-            print $socket q(Unga! ) . $self->{_thread_name} 
-                . q(/) . threads->tid() 
+            print $socket q(Unga! ) . $self->{_thread_name}
+                . q(/) . threads->tid()
                 . qq(, current time: ) . sprintf( q(%02d), $run_time )
                 . q(; sleeps for ) . $self->{_thread_sleep} . qq(\n);
             $run_time += $self->{_thread_sleep};
