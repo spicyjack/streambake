@@ -37,8 +37,11 @@ package main;
 $main::VERSION = (q$Revision: 1.7 $ =~ /(\d+)/g)[0];
 use strict;
 use warnings;
+use threads;
+use threads::shared;
 use IO::Socket::INET;
 
+my $num_threads :shared;
 my @threads = qw( logger:1 cataloger:3 worker3:5 worker4:7 );
 #my @threads = qw( logger:1 cataloger:3 );
 my @thread_stack;
@@ -82,6 +85,13 @@ my $sleep_time = 5;
             . $client->peerport()
             . qq(\n);
         my $thr = threads->new( \&process, $client, $client->peerhost() );
+        my $check_num_of_threads;
+        {
+            lock($num_threads);
+            $num_threads++; 
+            $check_num_of_threads = $num_threads;
+        }
+        warn qq(current threadcount: $check_num_of_threads);
         $thr->detach();
     } # while (1)
 
@@ -98,12 +108,18 @@ sub process {
             print qq(RECV -> $lpeer: $received\n);
             print $lclient qq($lpeer said: $received\n);
             if ( $received eq q(EXIT) ) {
-                close ($lclient);
-                threads->exit();
+                my $check_num_of_threads;
+                {
+                    lock($num_threads);
+                    $num_threads--;
+                    $check_num_of_threads = $num_threads;
+                } # lock
+                warn qq(current threadcount: $check_num_of_threads);
+                if ( $check_num_of_threads == 0 ) {
+                    exit(0);
+                } # if ( $check_num_of_threads == 0 )
             } # if ( $received eq q(EXIT) )
         } # while (<$lclient>)
-        # FIXME add a shared counter here that counts how many threads are
-        # active; if there's only one thread left, exit the program
     } # if ( $client->connected() )
 } # sub process
 
