@@ -51,9 +51,9 @@ my $sleep_time = 5;
     foreach my $this_thread ( @threads ) {
         my ($thread_name, $thread_sleep) = split(/:/, $this_thread);
         my $thread_obj = Thread::Creator->new(
-            thread_name		=> $thread_name,
-            thread_sleep	=> $thread_sleep,
-			base_sleep		=> $sleep_time,
+            thread_name     => $thread_name,
+            thread_sleep    => $thread_sleep,
+            base_sleep      => $sleep_time,
         );
         push(@thread_stack, $thread_obj);
     } # foreach my $this_thread ( @threads )
@@ -88,7 +88,7 @@ my $sleep_time = 5;
         my $check_num_of_threads;
         {
             lock($num_threads);
-            $num_threads++; 
+            $num_threads++;
             $check_num_of_threads = $num_threads;
         }
         warn qq(current threadcount: $check_num_of_threads);
@@ -133,21 +133,21 @@ sub new {
     my $class = shift;
     my %args = @_;
 
-	#use Data::Dumper;
-	#print Dumper %args;
+    #use Data::Dumper;
+    #print Dumper %args;
 
-	if ( ! exists $args{thread_name} ) {
-		die qq(ERROR: Thread::Creator called without 'thread_name' argument);
-	}
-	if ( ! exists $args{thread_sleep} ) {
-		die qq(ERROR: Thread::Creator called without 'sleep_time' argument);
-	}
+    if ( ! exists $args{thread_name} ) {
+        die qq(ERROR: Thread::Creator called without 'thread_name' argument);
+    }
+    if ( ! exists $args{thread_sleep} ) {
+        die qq(ERROR: Thread::Creator called without 'sleep_time' argument);
+    }
 
     my $self = bless ({
-        _thread_obj 	=> undef,
-		_thread_name 	=> $args{thread_name},
-		_thread_sleep	=> $args{thread_sleep},
-		_base_sleep 	=> $args{base_sleep},
+        _thread_obj     => undef,
+        _thread_name     => $args{thread_name},
+        _thread_sleep    => $args{thread_sleep},
+        _base_sleep     => $args{base_sleep},
     }, $class);
 
     $self->{_thread_obj} = threads->create( sub { $self->_do_work() });
@@ -155,34 +155,34 @@ sub new {
 } # sub new
 
 sub join {
-	my $self = shift;
+    my $self = shift;
 
-	my $thread_obj = $self->{_thread_obj};
-	$thread_obj->join();
+    my $thread_obj = $self->{_thread_obj};
+    $thread_obj->join();
 
 } # sub join
 
 sub detach {
-	my $self = shift;
+    my $self = shift;
 
-	my $thread_obj = $self->{_thread_obj};
-	$thread_obj->detach();
+    my $thread_obj = $self->{_thread_obj};
+    $thread_obj->detach();
 
 } # sub join
 
 sub get_tid {
-	my $self = shift;
+    my $self = shift;
 
-	my $thread_obj = $self->{_thread_obj};
-	return $thread_obj->tid();
+    my $thread_obj = $self->{_thread_obj};
+    return $thread_obj->tid();
 
 } # sub join
 
 sub _do_work {
-	my $self = shift;
+    my $self = shift;
 
-	my $total_time = 20;
-	my $run_time = 0;
+    my $total_time = 20;
+    my $run_time = 0;
     my $_host = qq(localhost);
     my $_port = qq(6666);
     sleep 1;
