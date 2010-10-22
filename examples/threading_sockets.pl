@@ -80,142 +80,31 @@ my $sleep_time = 5;
     while (1) {
         my $client;
         warn qq(INFO: parent PID $$: calling server->accept\n);
-        do {
-            $client = $server->accept();
-        } until ( defined($client) );
-        warn qq(INFO: accepted connection: )
-            . $client->peerhost()
-            . q(, )
-            . $client->peerport()
-            . qq(\n);
-        my $thr = threads->new( \&process, $client, $client->peerhost() );
-        my $check_num_of_threads;
-        {
-            lock($num_threads);
-            $num_threads++;
-            $check_num_of_threads = $num_threads;
-        }
-        warn qq(INFO: current threadcount: $check_num_of_threads\n);
-        $thr->detach();
+        while ( $client = $server->accept() ) {
+            warn qq(INFO: accepted connection: )
+                . $client->peerhost()
+                . q(, )
+                . $client->peerport()
+                . qq(\n);
+            $client->autoflush(1);
+            # create a server thread
+            my $thr = Thread::Server->new(client => $client);
+            my $check_num_of_threads;
+            {
+                lock($num_threads);
+                $num_threads++;
+                $check_num_of_threads = $num_threads;
+            }
+            warn qq(INFO: current threadcount: $check_num_of_threads\n);
+            $thr->detach();
+        } # while ( $client = $server->accept() )
     } # while (1)
 
     exit 0;
 
-sub process {
-    # local client info
-    my ($lclient, $lpeer) = @_;
-    if ( $lclient->connected() ) {
-        print $lclient qq($lpeer: Welcome to server\n);
-        while (<$lclient>) {
-            my $received = $_;
-            chomp($received);
-            print qq(RECV -> $lpeer: $received\n);
-            print $lclient qq($lpeer said: $received\n);
-            if ( $received eq q(EXIT) ) {
-                my $check_num_of_threads;
-                {
-                    lock($num_threads);
-                    $num_threads--;
-                    $check_num_of_threads = $num_threads;
-                } # lock
-                warn qq(INFO: current threadcount: $check_num_of_threads\n);
-                if ( $check_num_of_threads == 0 ) {
-                    exit(0);
-                } # if ( $check_num_of_threads == 0 )
-            } # if ( $received eq q(EXIT) )
-        } # while (<$lclient>)
-    } # if ( $client->connected() )
-} # sub process
-
-package Thread::Client;
-use strict;
-use warnings;
-use threads;
-use IO::Socket::INET;
-
-sub new {
-    my $class = shift;
-    my %args = @_;
-
-    #use Data::Dumper;
-    #print Dumper %args;
-
-    if ( ! exists $args{thread_name} ) {
-        die qq(ERROR: Thread::Client called without 'thread_name' argument);
-    }
-    if ( ! exists $args{thread_sleep} ) {
-        die qq(ERROR: Thread::Client called without 'sleep_time' argument);
-    }
-
-    my $self = bless ({
-        _thread_obj     => undef,
-        _thread_name     => $args{thread_name},
-        _thread_sleep    => $args{thread_sleep},
-        _base_sleep     => $args{base_sleep},
-    }, $class);
-
-    $self->{_thread_obj} = threads->create( sub { $self->_do_work() });
-    return $self;
-} # sub new
-
-sub join {
-    my $self = shift;
-
-    my $thread_obj = $self->{_thread_obj};
-    $thread_obj->join();
-
-} # sub join
-
-sub detach {
-    my $self = shift;
-
-    my $thread_obj = $self->{_thread_obj};
-    $thread_obj->detach();
-
-} # sub join
-
-sub get_tid {
-    my $self = shift;
-
-    my $thread_obj = $self->{_thread_obj};
-    return $thread_obj->tid();
-
-} # sub join
-
-sub _do_work {
-    my $self = shift;
-
-    my $total_time = 20;
-    my $run_time = 0;
-    my $_host = qq(localhost);
-    my $_port = qq(6666);
-    #sleep 1;
-    my $socket = IO::Socket::INET->new(
-        PeerAddr    => $_host,
-        PeerPort    => $_port,
-        Proto       => q(tcp),
-    ); # my $socket = IO::Socket::INET->new
-
-    if ( defined $socket ) {
-        while ( $run_time < $total_time ) {
-            print $socket q(Unga! ) . $self->{_thread_name}
-                . q(/) . threads->tid()
-                . qq(, current time: ) . sprintf( q(%02d), $run_time )
-                . q(; sleeps for ) . $self->{_thread_sleep} . qq(\n);
-            $run_time += $self->{_thread_sleep};
-            sleep $self->{_thread_sleep};
-        } # while ( $run_time < $total_time )
-        print $socket qq(EXIT\n);
-        $socket->close();
-    } else {
-        warn qq(Can't open socket to $_host:$_port: $!);
-    } # if ( ! defined $socket )
-    #exit 0;
-    #return;
-    threads->exit();
-} # sub _do_work
-
+######################
 ### Thread::Common ###
+######################
 package Thread::Common;
 use strict;
 use warnings;
@@ -241,6 +130,135 @@ sub get_tid {
     my $thread_obj = $self->{_thread_obj};
     return $thread_obj->tid();
 } # sub join
+
+
+######################
+### Thread::Server ###
+######################
+package Thread::Server;
+use strict;
+use warnings;
+use threads;
+use IO::Socket::INET;
+use base qw(Thread::Common);
+
+sub new {
+    my $class = shift;
+    my %args = @_;
+
+    #use Data::Dumper;
+    #print Dumper %args;
+
+    if ( ! exists $args{client} ) {
+        die qq(ERROR: Thread::Server called without 'client' argument);
+    }
+
+    my $self = bless ({
+        _thread_obj     => undef,
+        _client     => $args{client},
+    }, $class);
+
+    $self->{_thread_obj} = threads->create( sub { $self->_process() });
+    return $self;
+} # sub new
+
+sub _process {
+    my $self = shift;
+    my $client = $self->{_client};
+    my $peer = $client->peerhost();
+
+    # local client info
+    if ( $client->connected() ) {
+        print $client qq($peer : Welcome to server\n);
+        while (<$client>) {
+            my $received = $_;
+            chomp($received);
+            print qq(RECV -> $peer : $received\n);
+            print $client qq($peer said: $received\n);
+            my $check_num_of_threads;
+            if ( $received eq q(EXIT) ) {
+                {
+                    lock($num_threads);
+                    $num_threads--;
+                    $check_num_of_threads = $num_threads;
+                } # lock
+                warn qq(INFO: current threadcount: $check_num_of_threads\n);
+                if ( $check_num_of_threads == 0 ) {
+                    exit(0);
+                } # if ( $check_num_of_threads == 0 )
+            } # if ( $received eq q(EXIT) )
+        } # while (<$lclient>)
+    } # if ( $client->connected() )
+} # sub process
+
+######################
+### Thread::Client ###
+######################
+package Thread::Client;
+use strict;
+use warnings;
+use threads;
+use IO::Socket::INET;
+use base qw(Thread::Common);
+
+sub new {
+    my $class = shift;
+    my %args = @_;
+
+    #use Data::Dumper;
+    #print Dumper %args;
+
+    if ( ! exists $args{thread_name} ) {
+        die qq(ERROR: Thread::Client called without 'thread_name' argument);
+    }
+    if ( ! exists $args{thread_sleep} ) {
+        die qq(ERROR: Thread::Client called without 'sleep_time' argument);
+    }
+
+    my $self = bless ({
+        _thread_obj     => undef,
+        _thread_name     => $args{thread_name},
+        _thread_sleep    => $args{thread_sleep},
+        _base_sleep     => $args{base_sleep},
+    }, $class);
+
+    $self->{_thread_obj} = threads->create( sub { $self->_process() });
+    return $self;
+} # sub new
+
+sub _process {
+    my $self = shift;
+
+    my $total_time = 20;
+    my $run_time = 0;
+    my $_host = qq(localhost);
+    my $_port = qq(6666);
+    #sleep 1;
+    my $socket = IO::Socket::INET->new(
+        PeerAddr    => $_host,
+        PeerPort    => $_port,
+        Proto       => q(tcp),
+    ); # my $socket = IO::Socket::INET->new
+
+    if ( defined $socket ) {
+        while ( $run_time < $total_time ) {
+            print $socket q(Unga! ) . $self->{_thread_name}
+                . q(/) . threads->tid()
+                . qq(, current time: ) . sprintf( q(%02d), $run_time )
+                . q(; sleeps for ) . $self->{_thread_sleep} . qq(\n);
+            $run_time += $self->{_thread_sleep};
+            sleep $self->{_thread_sleep};
+        } # while ( $run_time < $total_time )
+        print $socket qq(EXIT\n);
+        $socket->close();
+        threads->exit();
+    } else {
+        warn qq(Can't open socket to $_host:$_port: $!);
+    } # if ( ! defined $socket )
+    #exit 0;
+    #return;
+
+} # sub process
 
 
 =head1 AUTHOR
