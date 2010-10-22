@@ -23,6 +23,10 @@
 
 threading_sockets.pl - a demo of threading and reading/writing to sockets
 
+=head1 VERSION
+
+Revision 2010.1
+
 =head1 DESCRIPTION
 
 B<threading_sockets.pl> demonstrates writing to and reading from sockets after
@@ -34,7 +38,7 @@ L<http://hell.jedicoder.net/?p=82>.
 =cut
 
 package main;
-$main::VERSION = (q$Revision: 1.7 $ =~ /(\d+)/g)[0];
+our $VERSION = q(2010.1);
 use strict;
 use warnings;
 use threads;
@@ -211,11 +215,33 @@ sub _do_work {
     threads->exit();
 } # sub _do_work
 
+### Thread::Common ###
+package Thread::Common;
+use strict;
+use warnings;
+use threads;
 
-=head1 VERSION
+sub join {
+    my $self = shift;
 
-The CVS version of this file is $Revision: 1.7 $. See the top of this file for
-the author's version number.
+    my $thread_obj = $self->{_thread_obj};
+    $thread_obj->join();
+} # sub join
+
+sub detach {
+    my $self = shift;
+
+    my $thread_obj = $self->{_thread_obj};
+    $thread_obj->detach();
+} # sub join
+
+sub get_tid {
+    my $self = shift;
+
+    my $thread_obj = $self->{_thread_obj};
+    return $thread_obj->tid();
+} # sub join
+
 
 =head1 AUTHOR
 
