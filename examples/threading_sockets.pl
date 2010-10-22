@@ -47,17 +47,6 @@ my @threads = qw( logger:1 cataloger:3 worker3:5 worker4:7 );
 my @thread_stack;
 my $sleep_time = 5;
 
-    # loop and create client sockets
-    foreach my $this_thread ( @threads ) {
-        my ($thread_name, $thread_sleep) = split(/:/, $this_thread);
-        my $thread_obj = Thread::Creator->new(
-            thread_name     => $thread_name,
-            thread_sleep    => $thread_sleep,
-            base_sleep      => $sleep_time,
-        );
-        push(@thread_stack, $thread_obj);
-    } # foreach my $this_thread ( @threads )
-
     # create the socket that accepts new requests (the server)
     my $server = IO::Socket::INET->new(
         Listen      => 5,
@@ -67,6 +56,17 @@ my $sleep_time = 5;
         ReuseAddr   => 1,
     );
 
+    # loop and create clients
+    foreach my $client_thread ( @threads ) {
+        my ($thread_name, $thread_sleep) = split(/:/, $client_thread);
+        my $thread_obj = Thread::Client->new(
+            thread_name     => $thread_name,
+            thread_sleep    => $thread_sleep,
+            base_sleep      => $sleep_time,
+        );
+        push(@thread_stack, $thread_obj);
+    } # foreach my $client_thread ( @threads )
+
     foreach my $curr_thread ( @thread_stack ) {
         print qq($$:  detaching thread ) . $curr_thread->get_tid() . qq(\n);
         #$curr_thread->join();
@@ -75,11 +75,11 @@ my $sleep_time = 5;
 
     while (1) {
         my $client;
-        warn qq(parent PID $$: calling server->accept);
+        warn qq(INFO: parent PID $$: calling server->accept\n);
         do {
             $client = $server->accept();
         } until ( defined($client) );
-        print qq(accepted connection: )
+        warn qq(INFO: accepted connection: )
             . $client->peerhost()
             . q(, )
             . $client->peerport()
@@ -91,7 +91,7 @@ my $sleep_time = 5;
             $num_threads++;
             $check_num_of_threads = $num_threads;
         }
-        warn qq(current threadcount: $check_num_of_threads);
+        warn qq(INFO: current threadcount: $check_num_of_threads\n);
         $thr->detach();
     } # while (1)
 
@@ -114,7 +114,7 @@ sub process {
                     $num_threads--;
                     $check_num_of_threads = $num_threads;
                 } # lock
-                warn qq(current threadcount: $check_num_of_threads);
+                warn qq(INFO: current threadcount: $check_num_of_threads\n);
                 if ( $check_num_of_threads == 0 ) {
                     exit(0);
                 } # if ( $check_num_of_threads == 0 )
@@ -123,7 +123,7 @@ sub process {
     } # if ( $client->connected() )
 } # sub process
 
-package Thread::Creator;
+package Thread::Client;
 use strict;
 use warnings;
 use threads;
@@ -137,10 +137,10 @@ sub new {
     #print Dumper %args;
 
     if ( ! exists $args{thread_name} ) {
-        die qq(ERROR: Thread::Creator called without 'thread_name' argument);
+        die qq(ERROR: Thread::Client called without 'thread_name' argument);
     }
     if ( ! exists $args{thread_sleep} ) {
-        die qq(ERROR: Thread::Creator called without 'sleep_time' argument);
+        die qq(ERROR: Thread::Client called without 'sleep_time' argument);
     }
 
     my $self = bless ({
@@ -185,7 +185,7 @@ sub _do_work {
     my $run_time = 0;
     my $_host = qq(localhost);
     my $_port = qq(6666);
-    sleep 1;
+    #sleep 1;
     my $socket = IO::Socket::INET->new(
         PeerAddr    => $_host,
         PeerPort    => $_port,
