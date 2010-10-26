@@ -9,7 +9,7 @@
 # more links that may help get this working:
 # http://perlmonks.org/?node_id=21054 - reading from more than one socket at
 # once
-# http://perlmonks.org/?node_id=371720 - using 'select' and IO::Select
+# http://perlmonks.org/?node_id=371763 - using 'select' and IO::Select
 # http://perlmonks.org/?node_id=662931 - simple threaded chat server
 # http://perlmonks.org/?node_id=539419 - threaded tcp server problem
 # http://perlmonks.org/?node_id=766171 - multithreaded server with shared
