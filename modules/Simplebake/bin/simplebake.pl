@@ -7,6 +7,7 @@
 # streambake@googlegroups.com / http://groups.google.com/group/streambake
 
 # TODO
+# - allow for lines in the playlist with comment characters
 # tests
 # - incorrect filenames/directories for config files and logfiles
 # - missing config file
