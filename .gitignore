@@ -1,7 +1,5 @@
-syntax: regexp
-\.swp$
+*.swp
 .DS_Store
-tags
 android/IcecastStatus/bin
 android/IcecastStatus/gen
 android/JavaTestCode/bin
