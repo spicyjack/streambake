@@ -1258,6 +1258,9 @@ use warnings;
                 . $song->get_album_name() . q( - )
                 . $song->get_track_name() );
             $logger->log(qq(- Streaming file to server));
+            # FIXME getting a warning here when trying to read files:
+            # "Use of uninitialized value in numeric gt (>) at simplebake.pl
+            # line 1261."
             while (sysread(STREAMFILE, $buff, 4096) > 0) {
                 $logger->log(qq(- Read a block of data...))
                     if ( defined $config->get(q(verbose)) &&
