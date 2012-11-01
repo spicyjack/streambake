@@ -89,7 +89,7 @@ BEGIN {
  simplebake.pl --name stream.example.com --port 8000 \
     --mount somemount --filelist /path/to/mp3-ogg.txt \
     --throttle 1
- 
+
  # Generate a filelist with this on *NIX platforms
  find /path/to/files -name "*.mp3" > /path/to/output/filelist.txt
 
@@ -97,7 +97,7 @@ Note that the default file type to be streamed with this script is MP3.  If
 you want to stream Ogg Vorbis files (*.ogg files), you need to use the
 C<--ogg> switch.  You can't mix Ogg and MP3 files in the same stream, as the
 server has no way of telling clients that the type of files being streamed has
-switched during streaming.  
+switched during streaming.
 
 You can set the environment variable C<ICECAST_SOURCE_PASS> with the source
 password to the Icecast server, and the script will use that instead of the
@@ -144,7 +144,7 @@ An object used for storing configuration data.
 
 =head3 Object Methods
 
-=cut 
+=cut
 
 ######################
 # Simplebake::Config #
@@ -166,13 +166,13 @@ L<Getopt::Long>.
 =cut
 
 # a list of valid arguments that would be used with the Shout module
-my @_valid_shout_args 
+my @_valid_shout_args
     = qw(host port password mount user name url genre description public);
 # a list of valid arguments to this script
-my @_valid_script_args = ( 
+my @_valid_script_args = (
     @_valid_shout_args, qw(verbose config logfile filelist daemon ogg),
     qw(throttle sequential)
-); # my @_valid_script_args 
+); # my @_valid_script_args
 
 # a list of arguments that won't cause the script to barf if Shout is not
 # installed
@@ -182,11 +182,11 @@ sub new {
 
     my $self = bless ({}, $class);
 
-    # script arguments 
-    my %args; 
+    # script arguments
+    my %args;
     # is the shout module available
     my $shout_available;
-    
+
     # parse the command line arguments (if any)
     my $parser = Getopt::Long::Parser->new();
 
@@ -232,7 +232,7 @@ sub new {
         # now print out the sample config file
         print qq(# sample simplebake config file\n);
         print qq(# any line that starts with '#' is a comment\n);
-        print qq(# sample config generated on ) 
+        print qq(# sample config generated on )
             . POSIX::strftime( q(%c), localtime() ) . qq(\n);
         foreach my $arg ( @_valid_shout_args ) {
             print $arg . q( = ) . $self->get($arg) . qq(\n);
@@ -242,7 +242,7 @@ sub new {
         print <<EOC;
 # the path to the list of files to stream
 filelist = /path/to/filelist.txt
-# what is the format of the files we're streaming? 
+# what is the format of the files we're streaming?
 # "ogg = 0" == mp3, "ogg = 1" == ogg/vorbis or ogg/flac
 ogg = 0
 # commenting the logfile will log to STDOUT instead
@@ -264,11 +264,11 @@ EOC
         my $config_errors = 0;
         foreach my $line ( @config_lines ) {
             chomp $line;
-            warn qq(VERB: parsing line '$line'\n) 
+            warn qq(VERB: parsing line '$line'\n)
                 if ( defined $self->get(q(verbose)));
             next if ( $line =~ /^#/ );
             my ($key, $value) = split(/\s*=\s*/, $line);
-            warn qq(VERB: key/value for line is '$key'/'$value'\n) 
+            warn qq(VERB: key/value for line is '$key'/'$value'\n)
                 if ( defined $self->get(q(verbose)));
             if ( grep(/$key/, @_valid_script_args) > 0 ) {
                 $self->set($key => $value);
@@ -296,7 +296,7 @@ EOC
             } # if ( exists $args{verbose} )
             $self->set(key => q(password), value => $ENV{ICECAST_SOURCE_PASS});
         } # if ( exists $args{password} )
-    } # if ( exists $ENV{ICECAST_SOURCE_PASS} ) 
+    } # if ( exists $ENV{ICECAST_SOURCE_PASS} )
 
     # some checks to make sure we have needed arguments
     die qq( ERR: script called without --config or --filelist arguments;\n)
@@ -323,22 +323,22 @@ sub _apply_defaults {
         unless ( defined $self->get(q(name)) );
     $self->set( url => q(http://code.google.com/p/streambake/) )
         unless ( defined $self->get(q(url)) );
-    $self->set( genre => q(mish-mash) ) 
+    $self->set( genre => q(mish-mash) )
         unless ( defined $self->get(q(genre)) );
-    $self->set( 
+    $self->set(
         description => q(I'm too lazy to set a simplebake description) )
         unless ( defined $self->get(q(description)) );
     $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
 
     # script defaults
-    $self->set( q(ogg) => 0 ) 
+    $self->set( q(ogg) => 0 )
         unless ( defined $self->get(q(ogg)) );
-    $self->set( q(daemon) => 0 ) 
+    $self->set( q(daemon) => 0 )
         unless ( defined $self->get(q(daemon)) );
-    $self->set( q(sequential) => 0 ) 
-        unless ( defined $self->get(q(sequential)) );    
-    $self->set( q(throttle) => 1 ) 
-        unless ( defined $self->get(q(throttle)) );    
+    $self->set( q(sequential) => 0 )
+        unless ( defined $self->get(q(sequential)) );
+    $self->set( q(throttle) => 1 )
+        unless ( defined $self->get(q(throttle)) );
 
     # generate a big fat error message unless we're generating a config file
     if ( ! defined $self->get(q(password)) ) {
@@ -348,7 +348,7 @@ sub _apply_defaults {
             warn qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,\n);
             warn qq(WARN: use --password on the command line,\n);
             warn qq(WARN: or set the password in a configuration file\n);
-        } # if ( ! defined $self->get(q(gen-config)) )     
+        } # if ( ! defined $self->get(q(gen-config)) )
         $self->set( password => q(hackme) );
     } # if ( defined $self->get(q(password)) )
 } # sub _apply_defaults
@@ -385,7 +385,7 @@ sub set {
     # turn the args reference back into a hash with a copy
     my %args = %{$self->{_args}};
 
-    if ( exists $args{$key} ) { 
+    if ( exists $args{$key} ) {
         my $oldvalue = $args{$key};
         $args{$key} = $value;
         $self->{_args} = \%args;
@@ -437,8 +437,8 @@ readable form (includes the C<http://> prefix).
 
 sub get_server_connect_string {
     my $self = shift;
-    
-    return q(http://) . $self->get(q(host)) . q(:) . $self->get(q(port)) 
+
+    return q(http://) . $self->get(q(host)) . q(:) . $self->get(q(port))
         . q(/) . $self->get(q(mount))
 } # sub get_server_connect_string
 
@@ -459,7 +459,7 @@ Actually, the "defaults" most likely won't work.
 package Simplebake::Server;
 use strict;
 use warnings;
-   
+
 # constants swiped from shout.h; yes, hardcoding them is bad, but this lets
 # the below eval() test work instead of the script dying because of the SHOUT
 # barewords that were being used by this object
@@ -471,7 +471,7 @@ use constant {
     SB_PROTOCOL_ICY => 2,
 }; # use constant
 
-=over 
+=over
 
 =item new(config => $config, logger => $logger)
 
@@ -499,14 +499,14 @@ sub new {
     # set some other misc settings
     # see note above about the definition/copying of the constants from
     # shout.h
-    if ( $config->get(q(ogg)) == 1 ) { 
-        $conn->format(SB_FORMAT_OGG); 
+    if ( $config->get(q(ogg)) == 1 ) {
+        $conn->format(SB_FORMAT_OGG);
     } else {
-        $conn->format(SB_FORMAT_MP3); 
+        $conn->format(SB_FORMAT_MP3);
     } # if ( $config->get(q(ogg)) == 1 )
     $conn->protocol(SB_PROTOCOL_HTTP);
     $conn->set_audio_info(
-        SHOUT_AI_BITRATE => 256, 
+        SHOUT_AI_BITRATE => 256,
         SHOUT_AI_SAMPLERATE => 44100,
     ); # $self->{_conn}->set_audio_info
 
@@ -534,7 +534,7 @@ sub open {
     my $logger =  $self->{_logger};
 
     unless ( $conn->open() ) {;
-        $logger->timelog(q( ERR: Failed to open connection: ) 
+        $logger->timelog(q( ERR: Failed to open connection: )
             . $conn->get_error());
         exit 1;
     } # unless ( $conn->open() )
@@ -552,7 +552,7 @@ success, or dies and returns the error message if the C<close()> call fails.
 sub close {
     my $self = shift;
     my $conn = $self->{_conn};
-        
+
     my $logger =  $self->{_logger};
 
     unless ( $conn->close() ) {;
@@ -607,16 +607,16 @@ sub send {
     # die if something went wrong
     if ( exists $args{length} ) {
         unless ( $conn->send($args{data}, $args{length}) ) {
-            $logger->timelog(q( ERR: Failed to send data: ) 
+            $logger->timelog(q( ERR: Failed to send data: )
                 . $conn->get_error());
             exit 1;
-        } # unless ( $conn->send($args{data}, $args{length}) ) 
+        } # unless ( $conn->send($args{data}, $args{length}) )
     } else {
         unless ( $conn->send($args{data}) ) {
-            $logger->timelog(q( ERR: Failed to send data: ) 
+            $logger->timelog(q( ERR: Failed to send data: )
                 . $conn->get_error());
             exit 1;
-        } # unless ( $conn->send($args{data}, $args{length}) ) 
+        } # unless ( $conn->send($args{data}, $args{length}) )
     } # if ( exists $args{length} )
     return 1;
 } # sub set_metadata
@@ -669,7 +669,7 @@ use POSIX qw(strftime);
 use IO::File;
 use IO::Handle;
 
-=over 
+=over
 
 =item new($config)
 
@@ -690,13 +690,13 @@ sub new {
         $logfd = IO::File->new(q( >> ) . $config->get(q(logfile)));
         die q( ERR: Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
             unless ( defined $logfd );
-        # apply UTF-8-ness to the filehandle 
+        # apply UTF-8-ness to the filehandle
         $logfd->binmode(qq|:encoding(utf8)|);
     } else {
         # set :utf8 on STDOUT before wrapping it in IO::Handle
         binmode(STDOUT, qq|:encoding(utf8)|);
         $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
-        die qq( ERR: could not wrap STDOUT in IO::Handle object: $!) 
+        die qq( ERR: could not wrap STDOUT in IO::Handle object: $!)
             unless ( defined $logfd );
     } # if ( exists $args{logfile} )
     $logfd->autoflush(1);
@@ -769,7 +769,7 @@ my (@_playlist, @_song_q);
 my $_last_request_time = 0;
 my $_throttle_counter = 0;
 
-=over 
+=over
 
 =item new(config => $config, logger => $logger)
 
@@ -783,13 +783,13 @@ sub new {
     my %args = @_;
 
     my ($config, $logger);
-    if ( exists $args{config} ) { 
+    if ( exists $args{config} ) {
         $config = $args{config};
     } else {
         die qq( ERR: Simplebake::Config object required as 'config =>');
     } # if ( exists $args{config} )
 
-    if ( exists $args{logger} ) { 
+    if ( exists $args{logger} ) {
         $logger = $args{logger};
     } else {
         die qq( ERR: Simplebake::Logger object required as 'logger =>');
@@ -814,11 +814,11 @@ read.  This method then reloads the song queue from the playlist.
 =cut
 
 sub load_playlist {
-	my $self = shift;
+    my $self = shift;
 
-	# copy the playlist object to a local name
-	my $config = $self->{_config};
-	my $logger = $self->{_logger};
+    # copy the playlist object to a local name
+    my $config = $self->{_config};
+    my $logger = $self->{_logger};
 
     # verify the playlist file can be opened and then read it
     if ( defined $config->get(q(filelist)) ) {
@@ -827,22 +827,22 @@ sub load_playlist {
             # read files from STDIN
             if (scalar(@_playlist) == 0) {
                 # set UTF-8 encoding on STDIN before you read it
-#                binmode(STDIN, qq|:encoding(utf8)|);
+                # binmode(STDIN, qq|:encoding(utf8)|);
                 # nothing in the playlist yet, do the actual read
                 @_playlist = <STDIN>;
             } else {
                 # we've already read from STDIN, don't do it again; give
                 # a nice warning to the user though
-            	$logger->timelog(qq(WARN: Can't reload playlist from STDIN));
+                $logger->timelog(qq(WARN: Can't reload playlist from STDIN));
                 return undef;
             } # if (scalar(@_playlist) == 0)
         # read from a filelist somewhere?
         } elsif ( -r $config->get(q(filelist)) ) {
             # open the filelist using an IO::File object
             my $plfd = IO::File->new(q( < ) . $config->get(q(filelist)));
-            die q( ERR: could not open ) . $config->get(q(filelist)) 
+            die q( ERR: could not open ) . $config->get(q(filelist))
                 unless ( defined $plfd );
-            # apply UTF-8-ness to the filehandle 
+            # apply UTF-8-ness to the filehandle
             #$plfd->binmode(qq|:encoding(utf8)|);
             # same as @_playlist = <FH>;
             @_playlist = $plfd->getlines();
@@ -850,18 +850,18 @@ sub load_playlist {
             undef $plfd;
         # nope; bail!
         } else {
-            die q( ERR: File ) . $config->get(q(filelist)) 
+            die q( ERR: File ) . $config->get(q(filelist))
                 . q( does not exist or is not readable);
         } # if ( -r $config->get(q(filelist)) )
     } else {
         die q( ERR: no --filelist argument specified; See --help for options);
-    } # if ( defined $config->get(q(filelist)) ) 
+    } # if ( defined $config->get(q(filelist)) )
 
     # make a copy of the playlist before we start munging it
-	$logger->timelog(qq(INFO: Playlist contains ) 
-		. scalar(@_playlist) .  q( songs));
+    $logger->timelog(qq(INFO: Playlist contains )
+        . scalar(@_playlist) .  q( songs));
 
-	# copy the contents of the playlist to the song_q
+    # copy the contents of the playlist to the song_q
     @_song_q = @_playlist;
     return 1;
 } # sub load_playlist
@@ -875,13 +875,13 @@ empty.
 =cut
 
 sub get_song {
-	my $self = shift;
+    my $self = shift;
 
-	# grab a copy of the logger and config objects
-	my $logger = $self->{_logger};
-	my $config = $self->{_config};
+    # grab a copy of the logger and config objects
+    my $logger = $self->{_logger};
+    my $config = $self->{_config};
     my $current_time = time();
-    
+
     # check whether or not we need to throttle
     if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
         $_throttle_counter++;
@@ -896,7 +896,7 @@ sub get_song {
 
     # housekeeping for --throttle mode
     $_last_request_time = $current_time;
-	# figure out what the next song will be
+    # figure out what the next song will be
     my $next_song;
     # play songs in the same sequence as they appear in the filelist, or play
     # them in sequence from the top of the file to the bottom?
@@ -904,32 +904,32 @@ sub get_song {
         $next_song = shift(@_song_q);
     } else {
         my $random_song = int( rand($self->get_song_q_count()) );
-    	# splice it out of the song_q array
+        # splice it out of the song_q array
         $next_song = splice(@_song_q, $random_song, 1);
     } # if ( $config->get(q(sequential) )
     # remove the newline
     chomp($next_song);
 
     # create a Simplebake::File object
-    my $song_obj = Simplebake::File->new( 
+    my $song_obj = Simplebake::File->new(
         streamfile => $next_song,
         logger => $logger,
         config => $config,
     ); # my $song_obj = Simplebake::File->new
-    
+
     # check to see if the song_q is empty
     if ( scalar(@_song_q) == 0 ) {
         $logger->timelog(qq(INFO: Reloading song queue));
         @_song_q = @_playlist;
-    } # if ( scalar(@song_q) == 0 )  
+    } # if ( scalar(@song_q) == 0 )
 
     if ( defined $song_obj ) {
-    	$logger->timelog(qq(INFO: Returning new song ) 
+        $logger->timelog(qq(INFO: Returning new song )
             . $song_obj->get_filename() )
             if ( defined $config->get(q(verbose)));
     } # if ( defined $song_obj )
 
-	# return the current song (filename) to the caller
+    # return the current song (filename) to the caller
     return $song_obj;
 } # sub get_song
 
@@ -940,19 +940,19 @@ Returns the number of songs left in the song queue.
 =cut
 
 sub get_song_q_count {
-	my $self = shift;
+    my $self = shift;
 
-	# grab the logger object
-	my $logger = $self->{_logger};
+    # grab the logger object
+    my $logger = $self->{_logger};
 
-	$logger->timelog(q(INFO: song_q status));
-	my $song_q_count = scalar(@_song_q);
-	if ( $song_q_count == 1 ) {
-    	$logger->log(q(- 1 song currently in the song_q));
-	} else {
-    	$logger->log(qq(- $song_q_count songs currently in the song_q));
-    } # if ( $song_q_length == 1 )	
-	return $song_q_count;
+    $logger->timelog(q(INFO: song_q status));
+    my $song_q_count = scalar(@_song_q);
+    if ( $song_q_count == 1 ) {
+        $logger->log(q(- 1 song currently in the song_q));
+    } else {
+        $logger->log(qq(- $song_q_count songs currently in the song_q));
+    } # if ( $song_q_length == 1 )
+    return $song_q_count;
 } # sub get_song_q_count
 
 =back
@@ -975,7 +975,7 @@ package Simplebake::File;
 use strict;
 use warnings;
 
-=over 
+=over
 
 =item new(streamfile => $file, logger => $logger, config => $config)
 
@@ -996,7 +996,7 @@ sub new {
     die qq( ERR: Simplebake::Logger object required as 'logger =>')
         unless ( exists $args{logger} );
     $logger = $args{logger};
-        
+
     die qq( ERR: Simplebake::Logger object required as 'logger =>')
         unless ( exists $args{config} );
     $config = $args{config};
@@ -1014,7 +1014,7 @@ sub new {
 
     # some tests of the actual file on the filesystem
     # does it exist?
-    unless ( -e $self->get_filename() ) { 
+    unless ( -e $self->get_filename() ) {
         $logger->timelog( qq(WARN: Missing file on filesystem!) );
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
@@ -1024,7 +1024,7 @@ sub new {
     # previous step may have set $self to undef
     if ( defined $self ) {
         # can we read the file?
-        unless ( -r $self->get_filename() ) { 
+        unless ( -r $self->get_filename() ) {
             $logger->timelog( qq(WARN: Can't read file on filesystem!) );
             $logger->log(qq(- ) . $self->get_display_name() );
             # return an undefined object so that callers know something's wrong
@@ -1042,18 +1042,18 @@ sub new {
             # remove the file extension from the track name
             $self->{_track_name} =~ s/\.mp3$|\.ogg$//;
             # remove leading numbers with dashes from the track name
-            if ( $self->{_track_name} =~ /^\d+-/ ) { 
-                $self->{_track_name} =~ s/^\d+-//; 
+            if ( $self->{_track_name} =~ /^\d+-/ ) {
+                $self->{_track_name} =~ s/^\d+-//;
             }
             # remove leading numbers with spaces from the trackname
-            if ( $self->{_track_name} =~ /^\d+ / ) { 
-                $self->{_track_name} =~ s/^\d+ //; 
+            if ( $self->{_track_name} =~ /^\d+ / ) {
+                $self->{_track_name} =~ s/^\d+ //;
             }
         } # if ( defined $self->{_track_name} )
         if ( defined $song_metadata[-2] ) {
             $self->{_album_name} = $song_metadata[-2];
         } # if ( defined $song_metadata[-2] )
-        if ( defined $song_metadata[-3] ) { 
+        if ( defined $song_metadata[-3] ) {
             $self->{_artist_name} = $song_metadata[-3];
         } # if ( defined $song_metadata[-3] )
     } # if ( defined $self )
@@ -1075,7 +1075,7 @@ sub get_filename {
 =item get_track_name()
 
 Returns the track name as determined by the filename of the file that is being
-streamed. 
+streamed.
 
 =cut
 
@@ -1087,7 +1087,7 @@ sub get_track_name {
 =item get_album_name()
 
 Returns the album name as determined by the filename of the file that is being
-streamed. 
+streamed.
 
 =cut
 
@@ -1099,7 +1099,7 @@ sub get_album_name {
 =item get_artist_name()
 
 Returns the artist name as determined by the filename of the file that is
-being streamed. 
+being streamed.
 
 =cut
 
@@ -1154,13 +1154,13 @@ use warnings;
         # a logfile
         if ( defined $config->get(q(logfile)) ) {
             my $pid = fork();
-            if ( defined $pid ) { 
+            if ( defined $pid ) {
                 # parent, which exits
                 if ( $pid > 0 ) {
                     warn qq(INFO: Fork; parent PID $$ is exiting...\n);
                     exit 0;
                 # child, which continues
-                } else { 
+                } else {
                     warn qq(INFO: Fork; child PID is $$\n);
                 } # if ( $pid > 0 )
             } else {
@@ -1180,8 +1180,8 @@ use warnings;
         config  => $config,
         logger  => $logger,
     ); # my $conn = Simplebake::Playlist->new
-	# initialize the playlist and song_q
-	$playlist->load_playlist();
+    # initialize the playlist and song_q
+    $playlist->load_playlist();
 
     my $conn = Simplebake::Server->new(
         config  => $config,
@@ -1193,7 +1193,7 @@ use warnings;
 
     # reroute some signals to our handlers
     # exiting the script
-    $SIG{INT} = $SIG{TERM} = sub { 
+    $SIG{INT} = $SIG{TERM} = sub {
         my $signal = shift;
         $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
         # close the connection to the icecast server
@@ -1201,15 +1201,15 @@ use warnings;
     }; # $SIG{INT}
 
     # skipping songs
-    $SIG{HUP} = sub { 
+    $SIG{HUP} = sub {
         $skip_current_song = 1;
         $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
     }; # $SIG{HUP}
 
     # reloading the playlist when an actual file is used (as opposed to STDIN)
-    $SIG{USR1} = sub { 
+    $SIG{USR1} = sub {
         $logger->timelog(qq(INFO: Received SIGUSR1; reloading playlist));
-		$playlist->load_playlist();
+        $playlist->load_playlist();
     }; # $SIG{USR1}
 
     # try to connect to the icecast server
@@ -1217,7 +1217,7 @@ use warnings;
         $logger->timelog(q(INFO: Connected to server));
         $logger->log(q(- server URL: ) . $config->get_server_connect_string() );
         $logger->log(q(- source user: ') . $config->get(q(user)) . q('));
-        if ( $config->get(q(ogg)) == 1 ) { 
+        if ( $config->get(q(ogg)) == 1 ) {
             $logger->log(q(- setting stream format on server to: OGG));
         } else {
             $logger->log(q(- setting stream format on server to: MP3));
@@ -1233,31 +1233,31 @@ use warnings;
 
             $logger->timelog(q(INFO: Begin streaming new file));
             $logger->log(qq(- Filename: ) . $song->get_display_name() );
-            $logger->log(q(- Server URL: ) 
+            $logger->log(q(- Server URL: )
                 . $config->get_server_connect_string() );
 
             # buffer for holding data read from the file
             my $buff;
             # open the file
             $logger->log(qq(- Opening file for streaming));
-            
+
             # XXX external re-encoding
             #open(STREAMFILE, q(/bin/cat ") . $song->get_filename()
             #    . q(" | lame --quiet -V 4 --mp3input - - |) )
             #    || die qq(Can't open ) . $song->get_filename() . qq( : '$!');
-            open(STREAMFILE, q(<) .  $song->get_filename() ) 
-                || die qq(Can't open ) . $song->get_filename() 
+            open(STREAMFILE, q(<) .  $song->get_filename() )
+                || die qq(Can't open ) . $song->get_filename()
                 . q( : '$!');
-			# treat STREAMFILE as binary data
-			binmode(STREAMFILE);
+            # treat STREAMFILE as binary data
+            binmode(STREAMFILE);
 
             # update the metadata
             $logger->log(qq(- Updating metadata on server));
-            $conn->set_metadata( song => 
+            $conn->set_metadata( song =>
                 $song->get_artist_name() . q( - )
-                . $song->get_album_name() . q( - ) 
+                . $song->get_album_name() . q( - )
                 . $song->get_track_name() );
-            $logger->log(qq(- Streaming file to server)); 
+            $logger->log(qq(- Streaming file to server));
             while (sysread(STREAMFILE, $buff, 4096) > 0) {
                 $logger->log(qq(- Read a block of data...))
                     if ( defined $config->get(q(verbose)) &&
@@ -1270,7 +1270,7 @@ use warnings;
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
                 # send a block of data, and error out if it fails
-                $logger->log(qq(- Sending block of data...)) 
+                $logger->log(qq(- Sending block of data...))
                     if ( defined $config->get(q(verbose)) &&
                         $config->get(q(verbose)) > 1);
                 unless ( $conn->send(data => $buff, length => length($buff)) ) {
@@ -1278,7 +1278,7 @@ use warnings;
                     $logger->timelog(q( ERR:) . $conn->get_error);
                     $conn->sync;
                     last ENDLESS;
-                } # unless ($conn->send($buff)) 
+                } # unless ($conn->send($buff))
                 # must be careful not to send the data too fast :)
                 $conn->sync;
             } # while (sysread(STREAMFILE, $buff, 4096) > 0)
@@ -1302,13 +1302,13 @@ You can generate filelists with something like this on *NIX:
 
  find /path/to/your/media -name "*.mp3" > output_filelist.txt
 
-=head2 Configuration File Syntax 
+=head2 Configuration File Syntax
 
 The configuration file consists of key/value pairs, one per line.  Any line
 that starts with the pound sign/comment character is ignored.  The options
 that can be used in the configuration file are the same as the long options
 (B<--host>, B<--port>, etc) shown in the SYNOPSIS section above, minus the
-leading dashes.  
+leading dashes.
 
 You can use the B<--gen-config> command line switch to generate a
 configuration file that can be used with the B<--config> switch.
@@ -1337,7 +1337,7 @@ is running in the foreground (C<daemon = 0>).
 Sending a C<SIGHUP> to the Perl process running this script will cause the
 script to skip the currently playing song.
 
-=item SIGUSR1    
+=item SIGUSR1
 
 Sending a C<SIGUSR1> will cause the script to reload the playlist from disk if
 the C<--filelist> option was used on the command line or C<filelist =
@@ -1352,7 +1352,7 @@ Brian Manning, C<< <elspicyjack at gmail dot com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to 
+Please report any bugs or feature requests to
 C<< <streambake at googlegroups dot com> >>.
 
 =head1 SUPPORT
@@ -1363,7 +1363,7 @@ You can find documentation for this script with the perldoc command.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (c) 2008,2010 Brian Manning, all rights reserved.
+Copyright (c) 2008,2010,2012 Brian Manning, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
