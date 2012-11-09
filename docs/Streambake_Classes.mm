@@ -1,9 +1,17 @@
-<map version="0.8.1">
+<map version="1.0.0">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
-<node CREATED="1233304395904" ID="Freemind_Link_1654792231" MODIFIED="1241810947332" TEXT="Streambake Classes">
-<hook NAME="accessories/plugins/NodeNote.properties">
-<text>- Rip test CD&apos;s, tag with metadata and images &#xa;  - You could also use the pre-ripped WAV files with the discid&#xa;- Write test classes&#xa;- Write Streambake::Media classes that work with the tests&#xa;- Write a &apos;setup.pl&apos; script that verifies Perl modules and external binaries &#xa;  (tests for versions on external binaries)</text>
-</hook>
+<node CREATED="1233304395904" ID="Freemind_Link_1654792231" MODIFIED="1352420443320" TEXT="Streambake Classes">
+<richcontent TYPE="NOTE"><html>
+  <head>
+    
+  </head>
+  <body>
+    <p>
+      - Rip test CD's, tag with metadata and images<br />&#160;&#160;- You could also use the pre-ripped WAV files with the discid<br />- Write test classes<br />- Write Streambake::Media classes that work with the tests<br />- Write a 'setup.pl' script that verifies Perl modules and external binaries<br />&#160;&#160;(tests for versions on external binaries)
+    </p>
+  </body>
+</html>
+</richcontent>
 <node CREATED="1233304631794" ID="_" MODIFIED="1233305050060" POSITION="right" TEXT="Streambake::Gaffer (Master)">
 <node CREATED="1233305190788" ID="Freemind_Link_1474575991" MODIFIED="1233305206423" TEXT="Gets files to play from all of the different sources"/>
 <node CREATED="1233305250942" ID="Freemind_Link_1570967488" MODIFIED="1233305261689" TEXT="Forks into the backround if requested"/>

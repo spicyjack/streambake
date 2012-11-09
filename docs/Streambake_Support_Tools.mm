@@ -1,6 +1,6 @@
-<map version="0.8.1">
+<map version="1.0.0">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
-<node CREATED="1234341553598" ID="Freemind_Link_972825324" MODIFIED="1234341563935" TEXT="Streambake Support Tools">
+<node CREATED="1234341553598" ID="Freemind_Link_972825324" MODIFIED="1352420301595" TEXT="Streambake Support Tools">
 <node CREATED="1234341605963" ID="_" MODIFIED="1234341609054" POSITION="right" TEXT="ripit.pl">
 <node CREATED="1234341412221" ID="Freemind_Link_954964550" MODIFIED="1234341417312" TEXT="Ripping">
 <node CREATED="1234341427861" ID="Freemind_Link_1723492499" MODIFIED="1234341434656" TEXT="Audio::CDDB">

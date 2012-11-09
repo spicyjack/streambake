@@ -1,6 +1,6 @@
-<map version="0.8.1">
+<map version="1.0.0">
 <!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->
-<node CREATED="1189627837281" ID="Freemind_Link_785289733" MODIFIED="1233304440673" TEXT="Streambake Functionality">
+<node CREATED="1189627837281" ID="Freemind_Link_785289733" MODIFIED="1352420293037" TEXT="Streambake Functionality">
 <node CREATED="1189634420116" ID="Freemind_Link_1667604547" MODIFIED="1234405189802" POSITION="left" TEXT="Front ends">
 <icon BUILTIN="licq"/>
 <node CREATED="1189634495767" ID="Freemind_Link_1324026793" MODIFIED="1189634543408" TEXT="GTKPerl local"/>
