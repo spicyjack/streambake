@@ -9,4 +9,4 @@
 
 
 
-# vim: filetype=markdown tabstop=2
+<span color="white">vim: filetype=markdown tabstop=2</span>
