@@ -1,5 +1,11 @@
 # Streambake #
 
+## Todo ##
+- Make a list of "actions" that modules can add/register "hooks" to/for,
+  similar to how Dancer handles different URLs
+- Will there be a priority between the same hook that is implemented in two
+  different modules?
+
 ## Features ##
 - Link the databases between Streambake and Album Collection, so only one copy
   of the same data is stored
