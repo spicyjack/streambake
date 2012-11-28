@@ -12,7 +12,9 @@
 - Store album art in the same folder as the music files, use the suffixes
   -front/.front and -back/.back if more than one image is in the folder so you
   can tell which image to display during song/album playback
-
-
+- Automagically search for album art
+  - Look in the same directory as the file that is streaming
+  - Look in a common directory, using Artist_Name-Album_Name as the template
+    for filenames
 
 vim: filetype=markdown tabstop=2
