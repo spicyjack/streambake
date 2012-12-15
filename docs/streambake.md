@@ -7,6 +7,10 @@
   different modules?
 
 ## Features ##
+- Build Perl libraries of distro metadata
+  - Libraries or binaries that are missing from the system can be output to
+    the user in a message, along with suggestions on which packages should be
+    installed in order to satisfy dependencies
 - Link the databases between Streambake and Album Collection, so only one copy
   of the same data is stored
 - Store album art in the same folder as the music files, use the suffixes
