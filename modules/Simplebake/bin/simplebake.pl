@@ -2,7 +2,7 @@
 
 # Copyright (c) 2010 by Brian Manning <elspicyjack at gmail dot com>
 # PLEASE DO NOT E-MAIL THE AUTHOR ABOUT THIS SCRIPT!
-# For help with script errors and feature requests, 
+# For help with script errors and feature requests,
 # please contact the Streambake mailing list:
 # streambake@googlegroups.com / http://groups.google.com/group/streambake
 
@@ -23,11 +23,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 # a check to verify the shout module is available
 # it's put here so some warning is given if --help was called
