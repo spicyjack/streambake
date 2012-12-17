@@ -1248,6 +1248,8 @@ use warnings;
             open(STREAMFILE, q(<) .  $song->get_filename() )
                 || die qq(Can't open ) . $song->get_filename()
                 . q( : '$!');
+            # used for the while loop below
+            my $file_open_flag = 1;
             # treat STREAMFILE as binary data
             binmode(STREAMFILE);
 
@@ -1261,17 +1263,29 @@ use warnings;
             # FIXME getting a warning here when trying to read files:
             # "Use of uninitialized value in numeric gt (>) at simplebake.pl
             # line 1261."
-            while (sysread(STREAMFILE, $buff, 4096) > 0) {
-                $logger->log(qq(- Read a block of data...))
-                    if ( defined $config->get(q(verbose)) &&
-                        $config->get(q(verbose)) > 1);
-                # the user veto'ed this song
+
+            while ( $file_open_flag ) {
+            #while (defined(sysread(STREAMFILE, $buff, 4096) > 0)) {
+                # check before each sysread() to see if the user veto'ed this
+                # song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
                     $skip_current_song = undef;
                     close(STREAMFILE);
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
+                # sysread returns undef if there's an error; capture and log
+                # it
+                my $bytes_read = sysread(STREAMFILE, $buff, 4096);
+                if ( ! defined $bytes_read ) {
+                    $logger->timelog(qq|- WARN: sysread() returned 'undef'|);
+                    $logger->log(qq|- sysread() error: $!|);
+                } else {
+                    $logger->log(qq(- Read a block of data...))
+                        if ( defined $config->get(q(verbose)) &&
+                            $config->get(q(verbose)) > 1);
+                }
+
                 # send a block of data, and error out if it fails
                 $logger->log(qq(- Sending block of data...))
                     if ( defined $config->get(q(verbose)) &&
