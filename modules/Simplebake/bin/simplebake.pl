@@ -1260,9 +1260,6 @@ use warnings;
                 . $song->get_album_name() . q( - )
                 . $song->get_track_name() );
             $logger->log(qq(- Streaming file to server));
-            # FIXME getting a warning here when trying to read files:
-            # "Use of uninitialized value in numeric gt (>) at simplebake.pl
-            # line 1261."
 
             while ( $file_open_flag ) {
             #while (defined(sysread(STREAMFILE, $buff, 4096) > 0)) {
@@ -1271,6 +1268,7 @@ use warnings;
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
                     $skip_current_song = undef;
+                    $logger->timelog(qq|- Skipping current song...|);
                     close(STREAMFILE);
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
@@ -1280,6 +1278,12 @@ use warnings;
                 if ( ! defined $bytes_read ) {
                     $logger->timelog(qq|- WARN: sysread() returned 'undef'|);
                     $logger->log(qq|- sysread() error: $!|);
+                    # skip to the next song
+                    next ENDLESS;
+                } elsif ( $bytes_read == 0 ) {
+                    $logger->timelog(qq|- End of file|);
+                    # skip to the next song
+                    next ENDLESS;
                 } else {
                     $logger->log(qq(- Read a block of data...))
                         if ( defined $config->get(q(verbose)) &&
