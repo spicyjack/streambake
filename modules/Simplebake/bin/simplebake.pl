@@ -1137,6 +1137,7 @@ sub get_display_name {
 package main;
 use strict;
 use warnings;
+use English;
 
 #use bytes; # I think this is used for the sysread call when reading MP3 files
 
@@ -1175,6 +1176,9 @@ use warnings;
     my $logger = Simplebake::Logger->new($config);
     $logger->timelog(qq(INFO: Starting simplebake.pl, version $VERSION));
     $logger->timelog(qq(INFO: my PID is $$));
+    # assign to $PROGRAM_NAME, which should change the program string
+    # displayed in [top|ps|etc.]
+    $PROGRAM_NAME = q(perl: simplebake.pl -c ) . $config->get(q(config));
 
     my $playlist = Simplebake::Playlist->new(
         config  => $config,
