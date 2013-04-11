@@ -20,5 +20,6 @@
   - Look in the same directory as the file that is streaming
   - Look in a common directory, using Artist_Name-Album_Name as the template
     for filenames
+- Use HTML5 <audio> tags for adding streaming MP3's to a webpage?
 
 vim: filetype=markdown tabstop=2

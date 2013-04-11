@@ -2,7 +2,7 @@
 
 # Copyright (c) 2010 by Brian Manning <elspicyjack at gmail dot com>
 # PLEASE DO NOT E-MAIL THE AUTHOR ABOUT THIS SCRIPT!
-# For help with script errors and feature requests, 
+# For help with script errors and feature requests,
 # please contact the Streambake mailing list:
 # streambake@googlegroups.com / http://groups.google.com/group/streambake
 
@@ -23,11 +23,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.07
+Version 0.08
 
 =cut
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 # a check to verify the shout module is available
 # it's put here so some warning is given if --help was called
@@ -1137,6 +1137,7 @@ sub get_display_name {
 package main;
 use strict;
 use warnings;
+use English;
 
 #use bytes; # I think this is used for the sysread call when reading MP3 files
 
@@ -1175,6 +1176,9 @@ use warnings;
     my $logger = Simplebake::Logger->new($config);
     $logger->timelog(qq(INFO: Starting simplebake.pl, version $VERSION));
     $logger->timelog(qq(INFO: my PID is $$));
+    # assign to $PROGRAM_NAME, which should change the program string
+    # displayed in [top|ps|etc.]
+    $PROGRAM_NAME = q(perl: simplebake.pl -c ) . $config->get(q(config));
 
     my $playlist = Simplebake::Playlist->new(
         config  => $config,
@@ -1248,6 +1252,8 @@ use warnings;
             open(STREAMFILE, q(<) .  $song->get_filename() )
                 || die qq(Can't open ) . $song->get_filename()
                 . q( : '$!');
+            # used for the while loop below
+            my $file_open_flag = 1;
             # treat STREAMFILE as binary data
             binmode(STREAMFILE);
 
@@ -1258,20 +1264,36 @@ use warnings;
                 . $song->get_album_name() . q( - )
                 . $song->get_track_name() );
             $logger->log(qq(- Streaming file to server));
-            # FIXME getting a warning here when trying to read files:
-            # "Use of uninitialized value in numeric gt (>) at simplebake.pl
-            # line 1261."
-            while (sysread(STREAMFILE, $buff, 4096) > 0) {
-                $logger->log(qq(- Read a block of data...))
-                    if ( defined $config->get(q(verbose)) &&
-                        $config->get(q(verbose)) > 1);
-                # the user veto'ed this song
+
+            while ( $file_open_flag ) {
+            #while (defined(sysread(STREAMFILE, $buff, 4096) > 0)) {
+                # check before each sysread() to see if the user veto'ed this
+                # song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
                     $skip_current_song = undef;
+                    $logger->timelog(qq|- Skipping current song...|);
                     close(STREAMFILE);
                     next ENDLESS;
                 } # if ( defined $skip_current_song )
+                # sysread returns undef if there's an error; capture and log
+                # it
+                my $bytes_read = sysread(STREAMFILE, $buff, 4096);
+                if ( ! defined $bytes_read ) {
+                    $logger->timelog(qq|- WARN: sysread() returned 'undef'|);
+                    $logger->log(qq|- sysread() error: $!|);
+                    # skip to the next song
+                    next ENDLESS;
+                } elsif ( $bytes_read == 0 ) {
+                    $logger->timelog(qq|- End of file|);
+                    # skip to the next song
+                    next ENDLESS;
+                } else {
+                    $logger->log(qq(- Read a block of data...))
+                        if ( defined $config->get(q(verbose)) &&
+                            $config->get(q(verbose)) > 1);
+                }
+
                 # send a block of data, and error out if it fails
                 $logger->log(qq(- Sending block of data...))
                     if ( defined $config->get(q(verbose)) &&
