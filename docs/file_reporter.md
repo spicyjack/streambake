@@ -1,6 +1,10 @@
 # Streambake::Util::FileReporter #
 
 ## Todo ##
+- MP3 files
+  - Check for valid MP3 blocks
+  - Check for ID3 tags, what kind of tags the tags are, and where they are in
+    the file
 
 ## Features ##
 - Build a report showing `ID3` tags, what versions the tags are, how long each
