@@ -20,4 +20,7 @@
   - Look in a common directory, using Artist_Name-Album_Name as the template
     for filenames
 
+## MP3 File Structure ##
+
+
 vim: filetype=markdown shiftwidth=2 tabstop=2
