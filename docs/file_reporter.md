@@ -9,6 +9,7 @@
     close to
     - Account for track numbers at the beginning of the file, and the `.mp3`
       extension at the end of the file
+- Pure Perl and XS versions
 
 ## Features ##
 - Build a report showing `ID3` tags, what versions the tags are, how long each
@@ -23,4 +24,6 @@
 ## MP3 File Structure ##
 
 
+## Example Files with artifacts ##
+- UK Subs - Kicks
 vim: filetype=markdown shiftwidth=2 tabstop=2
