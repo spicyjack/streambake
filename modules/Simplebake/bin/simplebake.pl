@@ -850,7 +850,7 @@ sub load_playlist {
             undef $plfd;
         # nope; bail!
         } else {
-            die q( ERR: File ) . $config->get(q(filelist))
+            die q( ERR: Filelist ) . $config->get(q(filelist))
                 . q( does not exist or is not readable);
         } # if ( -r $config->get(q(filelist)) )
     } else {
@@ -882,33 +882,49 @@ sub get_song {
     my $config = $self->{_config};
     my $current_time = time();
 
-    # check whether or not we need to throttle
-    if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
-        $_throttle_counter++;
-        if ( $_throttle_counter > THROTTLE_MAX_COUNT ) {
-            $logger->timelog(qq(WARN: Throttling triggered; playlist error?));
-            sleep( $config->get(q(throttle)) );
-        } # if ( $_throttle_counter > $config->get(q(throttle_count)) )
-    } else {
-        # decrement the counter if we're good on time now
-        if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
-    } # if ( ( $_last_request_time + $config->get(q(throttle_time)) )
-
-    # housekeeping for --throttle mode
-    $_last_request_time = $current_time;
-    # figure out what the next song will be
     my $next_song;
-    # play songs in the same sequence as they appear in the filelist, or play
-    # them in sequence from the top of the file to the bottom?
-    if ( $config->get(q(sequential)) ) {
-        $next_song = shift(@_song_q);
-    } else {
-        my $random_song = int( rand($self->get_song_q_count()) );
-        # splice it out of the song_q array
-        $next_song = splice(@_song_q, $random_song, 1);
-    } # if ( $config->get(q(sequential) )
-    # remove the newline
-    chomp($next_song);
+    while ( ! defined $next_song ) {
+        # check whether or not we need to throttle
+        if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
+            $_throttle_counter++;
+            if ( $_throttle_counter > THROTTLE_MAX_COUNT ) {
+                $logger->timelog(qq(WARN: Throttling triggered!));
+                $logger->timelog(qq(WARN: Is the playlist valid/readable?));
+                sleep( $config->get(q(throttle)) );
+            } # if ( $_throttle_counter > $config->get(q(throttle_count)) )
+        } else {
+            # decrement the counter if we're good on time now
+            if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
+        } # if ( ( $_last_request_time + $config->get(q(throttle_time)) )
+
+        # housekeeping for --throttle mode
+        $_last_request_time = $current_time;
+        # figure out what the next song will be
+
+        # play songs in the same sequence as they appear in the filelist, or
+        # play them in sequence from the top of the file to the bottom?
+        if ( $config->get(q(sequential)) ) {
+            $next_song = shift(@_song_q);
+        } else {
+            my $random_song = int( rand($self->get_song_q_count()) );
+            # splice it out of the song_q array
+            $next_song = splice(@_song_q, $random_song, 1);
+        } # if ( $config->get(q(sequential) )
+        # remove the newline
+        chomp($next_song);
+        # verify we can read the song before returning it
+        if ( ! -r $next_song ) {
+            $logger->timelog(qq(WARN: File $next_song is not readable!));
+            undef $next_song;
+        }
+        # check to see if $next_song is a file; if not, set it to undef so
+        # this loop gets run again; either a file will eventually be found, or
+        # the throttle will kick in
+        if ( ! -f $next_song ) {
+            $logger->timelog(qq(WARN: $next_song is not a file!));
+            undef $next_song;
+        }
+    }
 
     # create a Simplebake::File object
     my $song_obj = Simplebake::File->new(
