@@ -865,7 +865,7 @@ sub load_playlist {
     # remove trailing newlines
     chomp(@_playlist);
     $logger->timelog(qq(INFO: Read ) . scalar(@_playlist)
-        . q( from playlist file));
+        . q( items from playlist file));
 
     # check the files in the playlist before trying to play them
     if ( $config->get(q(check-songs)) ) {
