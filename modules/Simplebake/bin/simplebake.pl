@@ -1060,45 +1060,40 @@ sub new {
         $logger->timelog( qq(WARN: Missing file on filesystem!) );
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
-        undef $self;
+        return undef;
     } # unless ( -e $self->get_filename() )
 
-    # previous step may have set $self to undef
-    if ( defined $self ) {
-        # can we read the file?
-        unless ( -r $self->get_filename() ) {
-            $logger->timelog( qq(WARN: Can't read file on filesystem!) );
-            $logger->log(qq(- ) . $self->get_display_name() );
-            # return an undefined object so that callers know something's wrong
-            undef $self;
-        } # unless ( -r $self->get_filename() )
-    } # if ( defined $self )
+    # can we read the file?
+    unless ( -r $self->get_filename() ) {
+        $logger->timelog( qq(WARN: Can't read file on filesystem!) );
+        $logger->log(qq(- ) . $self->get_display_name() );
+        # return an undefined object so that callers know something's wrong
+        return undef;
+    } # unless ( -r $self->get_filename() )
 
-    # do some of the cutty-up bits here if we have a valid file
-    if ( defined $self ) {
-        # just get the name of the file for metadata
-        my @song_metadata = split(q(/), $self->get_filename() );
-        # generate the metadata items using the song's filename
-        if ( defined $song_metadata[-1] ) {
-            $self->{_track_name} = $song_metadata[-1];
-            # remove the file extension from the track name
-            $self->{_track_name} =~ s/\.mp3$|\.ogg$//;
-            # remove leading numbers with dashes from the track name
-            if ( $self->{_track_name} =~ /^\d+-/ ) {
-                $self->{_track_name} =~ s/^\d+-//;
-            }
-            # remove leading numbers with spaces from the trackname
-            if ( $self->{_track_name} =~ /^\d+ / ) {
-                $self->{_track_name} =~ s/^\d+ //;
-            }
-        } # if ( defined $self->{_track_name} )
-        if ( defined $song_metadata[-2] ) {
-            $self->{_album_name} = $song_metadata[-2];
-        } # if ( defined $song_metadata[-2] )
-        if ( defined $song_metadata[-3] ) {
-            $self->{_artist_name} = $song_metadata[-3];
-        } # if ( defined $song_metadata[-3] )
-    } # if ( defined $self )
+    # do some of the cutty-up bits here
+    # get the name of the file for metadata
+    my @song_metadata = split(q(/), $self->get_filename() );
+    # generate the metadata items using the song's filename
+    if ( defined $song_metadata[-1] ) {
+        $self->{_track_name} = $song_metadata[-1];
+        # remove the file extension from the track name
+        $self->{_track_name} =~ s/\.mp3$|\.ogg$//;
+        # remove leading numbers with dashes from the track name
+        if ( $self->{_track_name} =~ /^\d+-/ ) {
+            $self->{_track_name} =~ s/^\d+-//;
+        }
+        # remove leading numbers with spaces from the trackname
+        if ( $self->{_track_name} =~ /^\d+ / ) {
+            $self->{_track_name} =~ s/^\d+ //;
+        }
+    } # if ( defined $self->{_track_name} )
+    if ( defined $song_metadata[-2] ) {
+        $self->{_album_name} = $song_metadata[-2];
+    } # if ( defined $song_metadata[-2] )
+    if ( defined $song_metadata[-3] ) {
+        $self->{_artist_name} = $song_metadata[-3];
+    } # if ( defined $song_metadata[-3] )
 
     return $self
 } # sub new
