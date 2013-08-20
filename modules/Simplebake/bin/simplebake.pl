@@ -60,6 +60,10 @@ BEGIN {
  -q|--sequential    Play files in sequence instead of randomly
  -t|--throttle      Throttle script this many seconds when missing files
  -q|--sequential    Play songs sequentially (default: shuffle songs)
+ --check-songs      Check playlist songs to make sure they can be read
+                    Songs are checked when playlist is loaded/reloaded
+
+ Options that generate or check the config:
  -j|--gen-config    Generate a config file containing script defaults
  --check-config     Check the config file given by C<--config> and exit
 
@@ -134,7 +138,7 @@ another file.  This is to help prevent the script from running away and
 causing a denial of service to other processes on the same machine.  The
 default value for throttling is C<throttle = 1> or C<--throttle=1>).  If
 C<throttle = 0> is set in the config file or C<--throttle=0> is set on the
-command line, the script will B<exit> when a file is missing on the fileystem. 
+command line, the script will B<exit> when a file is missing on the fileystem.
 
 =head1 OBJECTS
 
@@ -204,6 +208,7 @@ sub new {
         q(throttle|t=i),
         q(gen-config|j),
         q(check-config),
+        q(check-songs),
         # Shout options
         q(ogg|o),
         q(host=s),
@@ -875,16 +880,38 @@ sub load_playlist {
             undef $plfd;
         # nope; bail!
         } else {
-            die q( ERR: File ) . $config->get(q(filelist))
+            die q( ERR: Filelist ) . $config->get(q(filelist))
                 . q( does not exist or is not readable);
         }
     } else {
         die q( ERR: no --filelist argument specified; See --help for options);
     }
 
+    # remove trailing newlines
+    chomp(@_playlist);
+    $logger->timelog(qq(INFO: Read ) . scalar(@_playlist)
+        . q( items from playlist file));
+
+    # check the files in the playlist before trying to play them
+    if ( $config->get(q(check-songs)) ) {
+        my @checked_playlist;
+        foreach my $song (@_playlist) {
+            if ( -r $song  ) {
+                if ( -f $song ) {
+                    push(@checked_playlist, $song);
+                } else {
+                    $logger->timelog(qq(WARN: File $song is not a file));
+                }
+            } else {
+                $logger->timelog(qq(WARN: File $song is not readable));
+            }
+        }
+        @_playlist = @checked_playlist;
+    }
+
     # make a copy of the playlist before we start munging it
-    $logger->timelog(qq(INFO: Playlist contains )
-        . scalar(@_playlist) .  q( songs));
+    $logger->timelog(qq(INFO: Playlist contains ) . scalar(@_playlist)
+        . q( songs));
 
     # copy the contents of the playlist to the song_q
     @_song_q = @_playlist;
@@ -907,33 +934,48 @@ sub get_song {
     my $config = $self->{_config};
     my $current_time = time();
 
-    # check whether or not we need to throttle
-    if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
-        $_throttle_counter++;
-        if ( $_throttle_counter > THROTTLE_MAX_COUNT ) {
-            $logger->timelog(qq(WARN: Throttling triggered; playlist error?));
-            sleep( $config->get(q(throttle)) );
-        } # if ( $_throttle_counter > $config->get(q(throttle_count)) )
-    } else {
-        # decrement the counter if we're good on time now
-        if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
-    }
-
-    # housekeeping for --throttle mode
-    $_last_request_time = $current_time;
-    # figure out what the next song will be
     my $next_song;
-    # play songs in the same sequence as they appear in the filelist, or play
-    # them in sequence from the top of the file to the bottom?
-    if ( $config->get(q(sequential)) ) {
-        $next_song = shift(@_song_q);
-    } else {
-        my $random_song = int( rand($self->get_song_q_count()) );
-        # splice it out of the song_q array
-        $next_song = splice(@_song_q, $random_song, 1);
+    while ( ! defined $next_song ) {
+        # check whether or not we need to throttle
+        if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
+            $_throttle_counter++;
+            if ( $_throttle_counter > THROTTLE_MAX_COUNT ) {
+                $logger->timelog(qq(WARN: Throttling triggered!));
+                $logger->timelog(qq(WARN: Is the playlist valid/readable?));
+                sleep( $config->get(q(throttle)) );
+            }
+        } else {
+            # decrement the counter if we're good on time now
+            if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
+        } # if ( ( $_last_request_time + $config->get(q(throttle_time)) )
+
+        # housekeeping for --throttle mode
+        $_last_request_time = $current_time;
+        # figure out what the next song will be
+
+        # play songs in the same sequence as they appear in the filelist, or
+        # play them in sequence from the top of the file to the bottom?
+        if ( $config->get(q(sequential)) ) {
+            $next_song = shift(@_song_q);
+        } else {
+            my $random_song = int( rand($self->get_song_q_count()) );
+            # splice it out of the song_q array
+            $next_song = splice(@_song_q, $random_song, 1);
+        }
+
+        # verify we can read the song before returning it
+        if ( ! -r $next_song ) {
+            $logger->timelog(qq(WARN: File $next_song is not readable!));
+            undef $next_song;
+        }
+        # check to see if $next_song is a file; if not, set it to undef so
+        # this loop gets run again; either a file will eventually be found, or
+        # the throttle will kick in
+        if ( ! -f $next_song ) {
+            $logger->timelog(qq(WARN: $next_song is not a file!));
+            undef $next_song;
+        }
     }
-    # remove the newline
-    chomp($next_song);
 
     # create a Simplebake::File object
     my $song_obj = Simplebake::File->new(
@@ -1043,44 +1085,39 @@ sub new {
         $logger->timelog( qq(WARN: Missing file on filesystem!) );
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
-        undef $self;
+        return undef;
     }
 
-    # previous step may have set $self to undef
-    if ( defined $self ) {
-        # can we read the file?
-        unless ( -r $self->get_filename() ) {
-            $logger->timelog( qq(WARN: Can't read file on filesystem!) );
-            $logger->log(qq(- ) . $self->get_display_name() );
-            # return an undefined object so that callers know something's wrong
-            undef $self;
-        }
+    # can we read the file?
+    unless ( -r $self->get_filename() ) {
+        $logger->timelog( qq(WARN: Can't read file on filesystem!) );
+        $logger->log(qq(- ) . $self->get_display_name() );
+        # return an undefined object so that callers know something's wrong
+        return undef;
     }
 
-    # do some of the cutty-up bits here if we have a valid file
-    if ( defined $self ) {
-        # just get the name of the file for metadata
-        my @song_metadata = split(q(/), $self->get_filename() );
-        # generate the metadata items using the song's filename
-        if ( defined $song_metadata[-1] ) {
-            $self->{_track_name} = $song_metadata[-1];
-            # remove the file extension from the track name
-            $self->{_track_name} =~ s/\.mp3$|\.ogg$//;
-            # remove leading numbers with dashes from the track name
-            if ( $self->{_track_name} =~ /^\d+-/ ) {
-                $self->{_track_name} =~ s/^\d+-//;
-            }
-            # remove leading numbers with spaces from the trackname
-            if ( $self->{_track_name} =~ /^\d+ / ) {
-                $self->{_track_name} =~ s/^\d+ //;
-            }
+    # do some of the cutty-up bits here
+    # get the name of the file for metadata
+    my @song_metadata = split(q(/), $self->get_filename() );
+    # generate the metadata items using the song's filename
+    if ( defined $song_metadata[-1] ) {
+        $self->{_track_name} = $song_metadata[-1];
+        # remove the file extension from the track name
+        $self->{_track_name} =~ s/\.mp3$|\.ogg$//;
+        # remove leading numbers with dashes from the track name
+        if ( $self->{_track_name} =~ /^\d+-/ ) {
+            $self->{_track_name} =~ s/^\d+-//;
         }
-        if ( defined $song_metadata[-2] ) {
-            $self->{_album_name} = $song_metadata[-2];
+        # remove leading numbers with spaces from the trackname
+        if ( $self->{_track_name} =~ /^\d+ / ) {
+            $self->{_track_name} =~ s/^\d+ //;
         }
-        if ( defined $song_metadata[-3] ) {
-            $self->{_artist_name} = $song_metadata[-3];
-        }
+    }
+    if ( defined $song_metadata[-2] ) {
+        $self->{_album_name} = $song_metadata[-2];
+    }
+    if ( defined $song_metadata[-3] ) {
+        $self->{_artist_name} = $song_metadata[-3];
     }
 
     return $self
