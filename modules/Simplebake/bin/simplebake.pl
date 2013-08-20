@@ -226,7 +226,7 @@ sub new {
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
 
     # generate a config file and exit?
-    if ( defined $self->get(q(gen-config)) ) {
+    if ( $self->defined(q(gen-config)) ) {
         # apply the default configuration options to the Config object
         $self->_apply_defaults();
         # now print out the sample config file
@@ -258,18 +258,18 @@ EOC
     } # if ( exists $args{gen-config} )
 
     # read a config file if that's specified
-    if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
+    if ( $self->defined(q(config)) && -r $self->get(q(config)) ) {
         open( CFG, q(<) . $self->get(q(config)) );
         my @config_lines = <CFG>;
         my $config_errors = 0;
         foreach my $line ( @config_lines ) {
             chomp $line;
             warn qq(VERB: parsing line '$line'\n)
-                if ( defined $self->get(q(verbose)));
+                if ( $self->defined(q(verbose)));
             next if ( $line =~ /^#/ );
             my ($key, $value) = split(/\s*=\s*/, $line);
             warn qq(VERB: key/value for line is '$key'/'$value'\n)
-                if ( defined $self->get(q(verbose)));
+                if ( $self->defined(q(verbose)));
             if ( grep(/$key/, @_valid_script_args) > 0 ) {
                 $self->set($key => $value);
             } else {
@@ -279,17 +279,17 @@ EOC
                 $config_errors++;
             } # if ( grep($key, @_valid_shout_args) > 0 )
         } # foreach my $line ( @config_lines )
-        if ( defined $self->get(q(check-config)) ) {
+        if ( $self->defined(q(check-config)) ) {
             warn qq|Found $config_errors total config error(s)\n|;
             warn qq(Exiting script...\n);
             exit 0;
-        } # if ( defined $self->get(q(check-config)) )
+        } # if ( $self->defined(q(check-config)) )
     } # if ( exists $args{config} && -r $args{config} )
 
     # check to see if a source password was set in the environment
     if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
-        if ( defined $self->get(q(password)) ) {
-            if ( defined $self->get(q(verbose)) ) {
+        if ( $self->defined(q(password)) ) {
+            if ( $self->defined(q(verbose)) ) {
                 warn qq(WARN: password set on command line )
                     . qq(and in environment\n);
                 warn qq(WARN: using password from environment\n);
@@ -301,7 +301,7 @@ EOC
     # some checks to make sure we have needed arguments
     die qq( ERR: script called without --config or --filelist arguments;\n)
         . qq( ERR: run script with --help switch for usage examples\n)
-        unless ( defined $self->get(q(filelist)) );
+        unless ( $self->defined(q(filelist)) );
 
     # apply script defaults to whatver remaining key/value pairs don't have
     # anything set
@@ -315,42 +315,42 @@ EOC
 sub _apply_defaults {
     my $self = shift;
     # icecast defaults
-    $self->set( host => q(localhost) )  unless ( defined $self->get(q(host) ) );
-    $self->set( port => q(8000) ) unless ( defined $self->get(q(port)) );
-    $self->set( user => q(source) ) unless ( defined $self->get(q(user)) );
-    $self->set( mount => q(default) ) unless ( defined $self->get(q(mount)) );
+    $self->set( host => q(localhost) )  unless ( $self->defined(q(host) ) );
+    $self->set( port => q(8000) ) unless ( $self->defined(q(port)) );
+    $self->set( user => q(source) ) unless ( $self->defined(q(user)) );
+    $self->set( mount => q(default) ) unless ( $self->defined(q(mount)) );
     $self->set( name => q(Streambake - simplebake.pl) )
-        unless ( defined $self->get(q(name)) );
+        unless ( $self->defined(q(name)) );
     $self->set( url => q(http://code.google.com/p/streambake/) )
-        unless ( defined $self->get(q(url)) );
+        unless ( $self->defined(q(url)) );
     $self->set( genre => q(mish-mash) )
-        unless ( defined $self->get(q(genre)) );
+        unless ( $self->defined(q(genre)) );
     $self->set(
         description => q(I'm too lazy to set a simplebake description) )
-        unless ( defined $self->get(q(description)) );
-    $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
+        unless ( $self->defined(q(description)) );
+    $self->set( public => 0 ) unless ( $self->defined(q(public)) );
 
     # script defaults
     $self->set( q(ogg) => 0 )
-        unless ( defined $self->get(q(ogg)) );
+        unless ( $self->defined(q(ogg)) );
     $self->set( q(daemon) => 0 )
-        unless ( defined $self->get(q(daemon)) );
+        unless ( $self->defined(q(daemon)) );
     $self->set( q(sequential) => 0 )
-        unless ( defined $self->get(q(sequential)) );
+        unless ( $self->defined(q(sequential)) );
     $self->set( q(throttle) => 1 )
-        unless ( defined $self->get(q(throttle)) );
+        unless ( $self->defined(q(throttle)) );
 
     # generate a big fat error message unless we're generating a config file
-    if ( ! defined $self->get(q(password)) ) {
-        if ( ! defined $self->get(q(gen-config)) ) {
+    if ( ! $self->defined(q(password)) ) {
+        if ( ! $self->defined(q(gen-config)) ) {
             warn qq(WARN: using default source password of 'hackme';\n);
             warn qq(WARN: this is probably not what you want;\n);
             warn qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,\n);
             warn qq(WARN: use --password on the command line,\n);
             warn qq(WARN: or set the password in a configuration file\n);
-        } # if ( ! defined $self->get(q(gen-config)) )
+        } # if ( ! $self->defined(q(gen-config)) )
         $self->set( password => q(hackme) );
-    } # if ( defined $self->get(q(password)) )
+    } # if ( $self->defined(q(password)) )
 } # sub _apply_defaults
 
 =item get($key)
@@ -397,6 +397,31 @@ sub set {
     return undef;
 } # sub get
 
+=item defined($key)
+
+Returns "true" (C<1>) if the value for the key passed in as C<key> is
+C<defined>, and "false" (C<0>) if the value is undefined, or the key doesn't
+exist.
+
+=cut
+
+sub defined {
+    my $self = shift;
+    my $key = shift;
+    # turn the args reference back into a hash with a copy
+    my %args = %{$self->{_args}};
+
+    # Can't use Log4perl here, since it hasn't been set up yet
+    if ( exists $args{$key} ) {
+        #warn qq(exists: $key\n);
+        if ( defined $args{$key} ) {
+            #warn qq(defined: $key; ) . $args{$key} . qq(\n);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 =item get_args( )
 
 Returns a hash containing the parsed script arguments.
@@ -422,7 +447,7 @@ sub get_shout_args {
     my %return_args;
     foreach my $key ( @_valid_shout_args ) {
         warn qq(DEBG: key/value = '$key'/') . $self->get($key) . qq('\n)
-            if ( defined $self->get(q(verbose)) && $self->get(q(verbose)) > 1 );
+            if ( $self->defined(q(verbose)) && $self->get(q(verbose)) > 1 );
         $return_args{$key} = $self->get($key);
     } # foreach my $key ( keys(%args) )
     return %return_args;
