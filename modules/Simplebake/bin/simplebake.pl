@@ -926,8 +926,14 @@ sub get_song {
 
         # housekeeping for --throttle mode
         $_last_request_time = $current_time;
-        # figure out what the next song will be
 
+        # check to see if the song_q is empty
+        if ( scalar(@_song_q) == 0 ) {
+            $logger->timelog(qq(INFO: Reloading song queue));
+            @_song_q = @_playlist;
+        } # if ( scalar(@song_q) == 0 )
+
+        # figure out what the next song will be;
         # play songs in the same sequence as they appear in the filelist, or
         # play them in sequence from the top of the file to the bottom?
         if ( $config->get(q(sequential)) ) {
@@ -958,12 +964,6 @@ sub get_song {
         logger => $logger,
         config => $config,
     ); # my $song_obj = Simplebake::File->new
-
-    # check to see if the song_q is empty
-    if ( scalar(@_song_q) == 0 ) {
-        $logger->timelog(qq(INFO: Reloading song queue));
-        @_song_q = @_playlist;
-    } # if ( scalar(@song_q) == 0 )
 
     if ( defined $song_obj ) {
         $logger->timelog(qq(INFO: Returning new song )
