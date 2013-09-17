@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# Copyright (c) 2010 by Brian Manning <elspicyjack at gmail dot com>
+# Copyright (c) 2010, 2013 by Brian Manning <brian at xaoc dot org>
 # PLEASE DO NOT E-MAIL THE AUTHOR ABOUT THIS SCRIPT!
 # For help with script errors and feature requests,
 # please contact the Streambake mailing list:
@@ -42,9 +42,9 @@ BEGIN {
             warn qq($@\n);
             warn qq( ERR: === End error output ===\n);
             die qq(Missing 'Shout' Perl module; exiting...);
-        } # if ( $self->get(q(help)) )
-    } # if ( $@ )
-} # BEGIN
+        }
+    }
+}
 
 =head1 SYNOPSIS
 
@@ -176,7 +176,7 @@ my @_valid_shout_args
 my @_valid_script_args = (
     @_valid_shout_args, qw(verbose config logfile filelist daemon ogg),
     qw(throttle sequential)
-); # my @_valid_script_args
+);
 
 # a list of arguments that won't cause the script to barf if Shout is not
 # installed
@@ -222,7 +222,7 @@ sub new {
         q(genre|g=s),
         q(description|s=s),
         q(public|x),
-    ); # $parser->getoptions
+    );
 
     # assign the args hash to this object so it can be reused later on
     $self->{_args} = \%args;
@@ -231,7 +231,7 @@ sub new {
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
 
     # generate a config file and exit?
-    if ( defined $self->get(q(gen-config)) ) {
+    if ( $self->defined(q(gen-config)) ) {
         # apply the default configuration options to the Config object
         $self->_apply_defaults();
         # now print out the sample config file
@@ -260,21 +260,21 @@ sequential = 0
 throttle = 1
 EOC
         exit 0;
-    } # if ( exists $args{gen-config} )
+    }
 
     # read a config file if that's specified
-    if ( defined $self->get(q(config)) && -r $self->get(q(config)) ) {
+    if ( $self->defined(q(config)) && -r $self->get(q(config)) ) {
         open( CFG, q(<) . $self->get(q(config)) );
         my @config_lines = <CFG>;
         my $config_errors = 0;
         foreach my $line ( @config_lines ) {
             chomp $line;
             warn qq(VERB: parsing line '$line'\n)
-                if ( defined $self->get(q(verbose)));
+                if ( $self->defined(q(verbose)));
             next if ( $line =~ /^#/ );
             my ($key, $value) = split(/\s*=\s*/, $line);
             warn qq(VERB: key/value for line is '$key'/'$value'\n)
-                if ( defined $self->get(q(verbose)));
+                if ( $self->defined(q(verbose)));
             if ( grep(/$key/, @_valid_script_args) > 0 ) {
                 $self->set($key => $value);
             } else {
@@ -282,31 +282,31 @@ EOC
                     . $self->get(q(config)) . qq(\n);
                 warn qq(WARN: unknown config line key/value: $key/$value\n);
                 $config_errors++;
-            } # if ( grep($key, @_valid_shout_args) > 0 )
-        } # foreach my $line ( @config_lines )
-        if ( defined $self->get(q(check-config)) ) {
+            }
+        }
+        if ( $self->defined(q(check-config)) ) {
             warn qq|Found $config_errors total config error(s)\n|;
             warn qq(Exiting script...\n);
             exit 0;
-        } # if ( defined $self->get(q(check-config)) )
-    } # if ( exists $args{config} && -r $args{config} )
+        }
+    }
 
     # check to see if a source password was set in the environment
     if ( exists $ENV{ICECAST_SOURCE_PASS} ) {
-        if ( defined $self->get(q(password)) ) {
-            if ( defined $self->get(q(verbose)) ) {
+        if ( $self->defined(q(password)) ) {
+            if ( $self->defined(q(verbose)) ) {
                 warn qq(WARN: password set on command line )
                     . qq(and in environment\n);
                 warn qq(WARN: using password from environment\n);
-            } # if ( exists $args{verbose} )
+            }
             $self->set(key => q(password), value => $ENV{ICECAST_SOURCE_PASS});
-        } # if ( exists $args{password} )
-    } # if ( exists $ENV{ICECAST_SOURCE_PASS} )
+        }
+    }
 
     # some checks to make sure we have needed arguments
     die qq( ERR: script called without --config or --filelist arguments;\n)
         . qq( ERR: run script with --help switch for usage examples\n)
-        unless ( defined $self->get(q(filelist)) );
+        unless ( $self->defined(q(filelist)) );
 
     # apply script defaults to whatver remaining key/value pairs don't have
     # anything set
@@ -314,49 +314,49 @@ EOC
 
     # return this object to the caller
     return $self;
-} # sub new
+}
 
 # set defaults here for any missing arugments
 sub _apply_defaults {
     my $self = shift;
     # icecast defaults
-    $self->set( host => q(localhost) )  unless ( defined $self->get(q(host) ) );
-    $self->set( port => q(8000) ) unless ( defined $self->get(q(port)) );
-    $self->set( user => q(source) ) unless ( defined $self->get(q(user)) );
-    $self->set( mount => q(default) ) unless ( defined $self->get(q(mount)) );
+    $self->set( host => q(localhost) )  unless ( $self->defined(q(host) ) );
+    $self->set( port => q(8000) ) unless ( $self->defined(q(port)) );
+    $self->set( user => q(source) ) unless ( $self->defined(q(user)) );
+    $self->set( mount => q(default) ) unless ( $self->defined(q(mount)) );
     $self->set( name => q(Streambake - simplebake.pl) )
-        unless ( defined $self->get(q(name)) );
+        unless ( $self->defined(q(name)) );
     $self->set( url => q(http://code.google.com/p/streambake/) )
-        unless ( defined $self->get(q(url)) );
+        unless ( $self->defined(q(url)) );
     $self->set( genre => q(mish-mash) )
-        unless ( defined $self->get(q(genre)) );
+        unless ( $self->defined(q(genre)) );
     $self->set(
         description => q(I'm too lazy to set a simplebake description) )
-        unless ( defined $self->get(q(description)) );
-    $self->set( public => 0 ) unless ( defined $self->get(q(public)) );
+        unless ( $self->defined(q(description)) );
+    $self->set( public => 0 ) unless ( $self->defined(q(public)) );
 
     # script defaults
     $self->set( q(ogg) => 0 )
-        unless ( defined $self->get(q(ogg)) );
+        unless ( $self->defined(q(ogg)) );
     $self->set( q(daemon) => 0 )
-        unless ( defined $self->get(q(daemon)) );
+        unless ( $self->defined(q(daemon)) );
     $self->set( q(sequential) => 0 )
-        unless ( defined $self->get(q(sequential)) );
+        unless ( $self->defined(q(sequential)) );
     $self->set( q(throttle) => 1 )
-        unless ( defined $self->get(q(throttle)) );
+        unless ( $self->defined(q(throttle)) );
 
     # generate a big fat error message unless we're generating a config file
-    if ( ! defined $self->get(q(password)) ) {
-        if ( ! defined $self->get(q(gen-config)) ) {
+    if ( ! $self->defined(q(password)) ) {
+        if ( ! $self->defined(q(gen-config)) ) {
             warn qq(WARN: using default source password of 'hackme';\n);
             warn qq(WARN: this is probably not what you want;\n);
             warn qq(WARN: set 'ICECAST_SOURCE_PASS' in environment,\n);
             warn qq(WARN: use --password on the command line,\n);
             warn qq(WARN: or set the password in a configuration file\n);
-        } # if ( ! defined $self->get(q(gen-config)) )
+        }
         $self->set( password => q(hackme) );
-    } # if ( defined $self->get(q(password)) )
-} # sub _apply_defaults
+    }
+}
 
 =item get($key)
 
@@ -373,7 +373,7 @@ sub get {
 
     if ( exists $args{$key} ) { return $args{$key}; }
     return undef;
-} # sub get
+}
 
 =item set( key => $value )
 
@@ -398,9 +398,34 @@ sub set {
     } else {
         $args{$key} = $value;
         $self->{_args} = \%args;
-    } # if ( exists $args{$key} )
+    }
     return undef;
-} # sub get
+}
+
+=item defined($key)
+
+Returns "true" (C<1>) if the value for the key passed in as C<key> is
+C<defined>, and "false" (C<0>) if the value is undefined, or the key doesn't
+exist.
+
+=cut
+
+sub defined {
+    my $self = shift;
+    my $key = shift;
+    # turn the args reference back into a hash with a copy
+    my %args = %{$self->{_args}};
+
+    # Can't use Log4perl here, since it hasn't been set up yet
+    if ( exists $args{$key} ) {
+        #warn qq(exists: $key\n);
+        if ( defined $args{$key} ) {
+            #warn qq(defined: $key; ) . $args{$key} . qq(\n);
+            return 1;
+        }
+    }
+    return 0;
+}
 
 =item get_args( )
 
@@ -412,7 +437,7 @@ sub get_args {
     my $self = shift;
     # hash-ify the return arguments
     return %{$self->{_args}};
-} # get_args
+}
 
 =item get_shout_args( )
 
@@ -427,11 +452,11 @@ sub get_shout_args {
     my %return_args;
     foreach my $key ( @_valid_shout_args ) {
         warn qq(DEBG: key/value = '$key'/') . $self->get($key) . qq('\n)
-            if ( defined $self->get(q(verbose)) && $self->get(q(verbose)) > 1 );
+            if ( $self->defined(q(verbose)) && $self->get(q(verbose)) > 1 );
         $return_args{$key} = $self->get($key);
-    } # foreach my $key ( keys(%args) )
+    }
     return %return_args;
-} # sub get_shout_args
+}
 
 =item get_server_connect_string( )
 
@@ -445,7 +470,7 @@ sub get_server_connect_string {
 
     return q(http://) . $self->get(q(host)) . q(:) . $self->get(q(port))
         . q(/) . $self->get(q(mount))
-} # sub get_server_connect_string
+}
 
 =back
 
@@ -474,7 +499,7 @@ use constant {
     SB_PROTOCOL_HTTP => 0,
     SB_PROTOCOL_XAUDIOCAST => 1,
     SB_PROTOCOL_ICY => 2,
-}; # use constant
+};
 
 =over
 
@@ -508,12 +533,12 @@ sub new {
         $conn->format(SB_FORMAT_OGG);
     } else {
         $conn->format(SB_FORMAT_MP3);
-    } # if ( $config->get(q(ogg)) == 1 )
+    }
     $conn->protocol(SB_PROTOCOL_HTTP);
     $conn->set_audio_info(
         SHOUT_AI_BITRATE => 256,
         SHOUT_AI_SAMPLERATE => 44100,
-    ); # $self->{_conn}->set_audio_info
+    );
 
     # add the connection object to the attributes of this object
     # bless this class into an object
@@ -524,7 +549,7 @@ sub new {
     }, $class);
     # return this object to the caller
     return $self;
-} # sub new
+}
 
 =item open( )
 
@@ -542,10 +567,10 @@ sub open {
         $logger->timelog(q( ERR: Failed to open connection: )
             . $conn->get_error());
         exit 1;
-    } # unless ( $conn->open() )
+    }
 
     return 1;
-} # sub open
+}
 
 =item close( )
 
@@ -564,10 +589,10 @@ sub close {
         $logger->timelog(q( ERR: Failed to close connection: )
             . $conn->get_error());
         exit 1;
-    } # unless ( $conn->close() )
+    }
 
     return 1;
-} # sub close
+}
 
 =item set_metadata( song => $metadata )
 
@@ -585,7 +610,7 @@ sub set_metadata {
     return 1 if ( $conn->set_metadata(@args) );
     # return failure if something went wrong
     return undef;
-} # sub set_metadata
+}
 
 =item send(data => $buffer, [ length => $length ])
 
@@ -607,7 +632,7 @@ sub send {
     # computes it if it's missing.
     if ( ! exists $args{data} ) {
         die q| ERR: send() called without 'data' argument|;
-    } # if ( ! exists $args{data} )
+    }
 
     # die if something went wrong
     if ( exists $args{length} ) {
@@ -615,16 +640,16 @@ sub send {
             $logger->timelog(q( ERR: Failed to send data: )
                 . $conn->get_error());
             exit 1;
-        } # unless ( $conn->send($args{data}, $args{length}) )
+        }
     } else {
         unless ( $conn->send($args{data}) ) {
             $logger->timelog(q( ERR: Failed to send data: )
                 . $conn->get_error());
             exit 1;
-        } # unless ( $conn->send($args{data}, $args{length}) )
-    } # if ( exists $args{length} )
+        }
+    }
     return 1;
-} # sub set_metadata
+}
 
 =item sync( )
 
@@ -639,7 +664,7 @@ sub sync {
 
     $conn->sync();
     return 1;
-} # sub sync
+}
 
 =item get_error( )
 
@@ -652,7 +677,7 @@ sub get_error {
     my $conn = $self->{_conn};
 
     return $conn->get_error();
-} # sub sync
+}
 
 =back
 
@@ -703,7 +728,7 @@ sub new {
         $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
         die qq( ERR: could not wrap STDOUT in IO::Handle object: $!)
             unless ( defined $logfd );
-    } # if ( exists $args{logfile} )
+    }
     $logfd->autoflush(1);
 
     my $self = bless ({
@@ -712,7 +737,7 @@ sub new {
 
     # return this object to the caller
     return $self;
-} # sub new
+}
 
 =item log($message)
 
@@ -727,7 +752,7 @@ sub log {
 
     my $FH = $self->{_OUTFH};
     print $FH $msg . qq(\n);
-} # sub log
+}
 
 =item timelog($message)
 
@@ -743,7 +768,7 @@ sub timelog {
 
     my $FH = $self->{_OUTFH};
     print $FH $timestamp . q(: ) . $msg . qq(\n);
-} # sub timelog
+}
 
 =back
 
@@ -768,7 +793,7 @@ use warnings;
 use constant {
     THROTTLE_MAX_COUNT => 3,
     THROTTLE_CHECK_TIME => 3,
-}; # use constant
+};
 
 my (@_playlist, @_song_q);
 my $_last_request_time = 0;
@@ -792,13 +817,13 @@ sub new {
         $config = $args{config};
     } else {
         die qq( ERR: Simplebake::Config object required as 'config =>');
-    } # if ( exists $args{config} )
+    }
 
     if ( exists $args{logger} ) {
         $logger = $args{logger};
     } else {
         die qq( ERR: Simplebake::Logger object required as 'logger =>');
-    } # if ( exists $args{logger} )
+    }
 
     my $self = bless ({
         # save the config and logger objects so that this object's methods can
@@ -808,7 +833,7 @@ sub new {
     }, $class);
 
     return $self
-} # sub new
+}
 
 =item load_playlist( )
 
@@ -840,7 +865,7 @@ sub load_playlist {
                 # a nice warning to the user though
                 $logger->timelog(qq(WARN: Can't reload playlist from STDIN));
                 return undef;
-            } # if (scalar(@_playlist) == 0)
+            }
         # read from a filelist somewhere?
         } elsif ( -r $config->get(q(filelist)) ) {
             # open the filelist using an IO::File object
@@ -857,10 +882,10 @@ sub load_playlist {
         } else {
             die q( ERR: Filelist ) . $config->get(q(filelist))
                 . q( does not exist or is not readable);
-        } # if ( -r $config->get(q(filelist)) )
+        }
     } else {
         die q( ERR: no --filelist argument specified; See --help for options);
-    } # if ( defined $config->get(q(filelist)) )
+    }
 
     # remove trailing newlines
     chomp(@_playlist);
@@ -891,7 +916,7 @@ sub load_playlist {
     # copy the contents of the playlist to the song_q
     @_song_q = @_playlist;
     return 1;
-} # sub load_playlist
+}
 
 =item get_song( )
 
@@ -918,7 +943,7 @@ sub get_song {
                 $logger->timelog(qq(WARN: Throttling triggered!));
                 $logger->timelog(qq(WARN: Is the playlist valid/readable?));
                 sleep( $config->get(q(throttle)) );
-            } # if ( $_throttle_counter > $config->get(q(throttle_count)) )
+            }
         } else {
             # decrement the counter if we're good on time now
             if ( $_throttle_counter > 0 ) { $_throttle_counter--; }
@@ -942,7 +967,7 @@ sub get_song {
             my $random_song = int( rand($self->get_song_q_count()) );
             # splice it out of the song_q array
             $next_song = splice(@_song_q, $random_song, 1);
-        } # if ( $config->get(q(sequential) )
+        }
 
         # verify we can read the song before returning it
         if ( ! -r $next_song ) {
@@ -963,17 +988,17 @@ sub get_song {
         streamfile => $next_song,
         logger => $logger,
         config => $config,
-    ); # my $song_obj = Simplebake::File->new
+    );
 
     if ( defined $song_obj ) {
         $logger->timelog(qq(INFO: Returning new song )
             . $song_obj->get_filename() )
             if ( defined $config->get(q(verbose)));
-    } # if ( defined $song_obj )
+    }
 
     # return the current song (filename) to the caller
     return $song_obj;
-} # sub get_song
+}
 
 =item get_song_q_count( )
 
@@ -993,9 +1018,9 @@ sub get_song_q_count {
         $logger->log(q(- 1 song currently in the song_q));
     } else {
         $logger->log(qq(- $song_q_count songs currently in the song_q));
-    } # if ( $song_q_length == 1 )
+    }
     return $song_q_count;
-} # sub get_song_q_count
+}
 
 =back
 
@@ -1061,7 +1086,7 @@ sub new {
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
         return undef;
-    } # unless ( -e $self->get_filename() )
+    }
 
     # can we read the file?
     unless ( -r $self->get_filename() ) {
@@ -1069,7 +1094,7 @@ sub new {
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
         return undef;
-    } # unless ( -r $self->get_filename() )
+    }
 
     # do some of the cutty-up bits here
     # get the name of the file for metadata
@@ -1087,16 +1112,16 @@ sub new {
         if ( $self->{_track_name} =~ /^\d+ / ) {
             $self->{_track_name} =~ s/^\d+ //;
         }
-    } # if ( defined $self->{_track_name} )
+    }
     if ( defined $song_metadata[-2] ) {
         $self->{_album_name} = $song_metadata[-2];
-    } # if ( defined $song_metadata[-2] )
+    }
     if ( defined $song_metadata[-3] ) {
         $self->{_artist_name} = $song_metadata[-3];
-    } # if ( defined $song_metadata[-3] )
+    }
 
     return $self
-} # sub new
+}
 
 =item get_filename()
 
@@ -1107,7 +1132,7 @@ Returns the full filename of the file to be streamed.
 sub get_filename {
     my $self = shift;
     return $self->{_streamfile};
-} # sub get_filename
+}
 
 =item get_track_name()
 
@@ -1119,7 +1144,7 @@ streamed.
 sub get_track_name {
     my $self = shift;
     return $self->{_track_name};
-} # sub get_track_name
+}
 
 =item get_album_name()
 
@@ -1131,7 +1156,7 @@ streamed.
 sub get_album_name {
     my $self = shift;
     return $self->{_album_name};
-} # sub get_album_name
+}
 
 =item get_artist_name()
 
@@ -1143,7 +1168,7 @@ being streamed.
 sub get_artist_name {
     my $self = shift;
     return $self->{_artist_name};
-} # sub get_artist_name
+}
 
 =item get_display_name()
 
@@ -1161,8 +1186,8 @@ sub get_display_name {
         $display_song = q(...) . substr($song, -60);
     } else {
         $display_song = $song;
-    } # if ( length($song) > 60 )
-} # sub get_display_name
+    }
+}
 
 =back
 
@@ -1200,14 +1225,14 @@ use English;
                 # child, which continues
                 } else {
                     warn qq(INFO: Fork; child PID is $$\n);
-                } # if ( $pid > 0 )
+                }
             } else {
                 die qq( ERR: Forking failed: $!\n);
-            } # if ( defined $pid )
+            }
         } else {
             die qq( ERR: --daemon requires --logfile; see --help\n);
-        } # if ( defined $config->get(q(logfile)) )
-    } # if ( defined $config->get(q(daemon)) )
+        }
+    }
 
     # create a logger object, and prime the logfile for this session
     my $logger = Simplebake::Logger->new($config);
@@ -1220,14 +1245,14 @@ use English;
     my $playlist = Simplebake::Playlist->new(
         config  => $config,
         logger  => $logger,
-    ); # my $conn = Simplebake::Playlist->new
+    );
     # initialize the playlist and song_q
     $playlist->load_playlist();
 
     my $conn = Simplebake::Server->new(
         config  => $config,
         logger  => $logger,
-    ); # my $conn = Simplebake::Server->new
+    );
 
     # hopefully this should catch when the Shout module is not installed
     die qq( ERR: Could not create Shout object\n) unless ( defined $conn );
@@ -1239,19 +1264,19 @@ use English;
         $logger->timelog(qq(CRIT: Received SIG$signal; exiting...));
         # close the connection to the icecast server
         $conn->close();
-    }; # $SIG{INT}
+    };
 
     # skipping songs
     $SIG{HUP} = sub {
         $skip_current_song = 1;
         $logger->timelog(qq(INFO: Received SIGHUP; skipping current song));
-    }; # $SIG{HUP}
+    };
 
     # reloading the playlist when an actual file is used (as opposed to STDIN)
     $SIG{USR1} = sub {
         $logger->timelog(qq(INFO: Received SIGUSR1; reloading playlist));
         $playlist->load_playlist();
-    }; # $SIG{USR1}
+    };
 
     # try to connect to the icecast server
     if ( $conn->open() ) {
@@ -1262,7 +1287,7 @@ use English;
             $logger->log(q(- setting stream format on server to: OGG));
         } else {
             $logger->log(q(- setting stream format on server to: MP3));
-        } # if ( if ( $config->get(q(ogg)) == 1 )
+        }
 
         # endless loop
         ENDLESS: while ( 1 ) {
@@ -1312,7 +1337,7 @@ use English;
                     $logger->timelog(qq|- Skipping current song...|);
                     close(STREAMFILE);
                     next ENDLESS;
-                } # if ( defined $skip_current_song )
+                }
                 # sysread returns undef if there's an error; capture and log
                 # it
                 my $bytes_read = sysread(STREAMFILE, $buff, 4096);
@@ -1340,21 +1365,21 @@ use English;
                     $logger->timelog(q( ERR:) . $conn->get_error);
                     $conn->sync;
                     last ENDLESS;
-                } # unless ($conn->send($buff))
+                }
                 # must be careful not to send the data too fast :)
                 $conn->sync;
-            } # while (sysread(STREAMFILE, $buff, 4096) > 0)
+            }
             # close the file now that we've read it
             $logger->timelog(qq(INFO: Closing file));
             #$logger->log(qq(- $display_song));
             close(STREAMFILE);
-        } # ENDLESS while ( 1 )
+        }
         $logger->timelog(qq(WARN: server closed connection; exiting...));
         die q(we died here :/);
     } else {
         $logger->timelog(qq(WARN: couldn't connect to server; ));
         $logger->timelog(q(WARN: ) . $conn->get_error());
-    } # if ($conn->open)
+    }
 
 =head1 MISCELLANIA
 
@@ -1410,7 +1435,7 @@ playlist is read from C<STDIN>.
 
 =head1 AUTHOR
 
-Brian Manning, C<< <elspicyjack at gmail dot com> >>
+Brian Manning, C<< <brian at xaoc dot org> >>
 
 =head1 BUGS
 
