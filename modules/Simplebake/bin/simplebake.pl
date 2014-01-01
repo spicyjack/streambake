@@ -970,16 +970,18 @@ sub get_song {
         }
 
         # verify we can read the song before returning it
-        if ( defined $next_song && ! -r $next_song ) {
-            $logger->timelog(qq(WARN: File $next_song is not readable!));
-            undef $next_song;
-        }
-        # check to see if $next_song is a file; if not, set it to undef so
-        # this loop gets run again; either a file will eventually be found, or
-        # the throttle will kick in
-        if ( defined $next_song && ! -f $next_song ) {
-            $logger->timelog(qq(WARN: $next_song is not a file!));
-            undef $next_song;
+        if ( defined $next_song ) {
+            if ( ! -r $next_song ) {
+                $logger->timelog(qq(WARN: File $next_song is not readable!));
+                undef $next_song;
+            }
+            # check to see if $next_song is a file; if not, set it to undef so
+            # this loop gets run again; either a file will eventually be
+            # found, or the throttle will kick in
+            if ( ! -f $next_song ) {
+                $logger->timelog(qq(WARN: $next_song is not a file!));
+                undef $next_song;
+            }
         }
     }
 
