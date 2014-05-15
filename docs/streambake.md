@@ -20,6 +20,12 @@
   - Look in the same directory as the file that is streaming
   - Look in a common directory, using Artist_Name-Album_Name as the template
     for filenames
+- iOS/Android clients
+  - Use Dancer/Dancer2 for the server side, and JSON for sending commands from
+    clients
+  - Authenticate like Amazon does for AWS commands, checksum the command plus
+    the credentials, and the server can also check checksum and credentials to
+    verify the command from the client
 - Use HTML5 <audio> tags for adding streaming MP3's to a webpage?
 
 vim: filetype=markdown tabstop=2
