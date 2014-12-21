@@ -935,7 +935,7 @@ sub get_song {
     my $current_time = time();
 
     my $next_song;
-    while ( ! defined $next_song ) {
+    SONG_LOOP: while ( ! defined $next_song ) {
         # check whether or not we need to throttle
         if ( ( $_last_request_time + THROTTLE_CHECK_TIME ) >= $current_time ) {
             $_throttle_counter++;
@@ -974,6 +974,7 @@ sub get_song {
             if ( ! -r $next_song ) {
                 $logger->timelog(qq(WARN: File $next_song is not readable!));
                 undef $next_song;
+                next SONG_LOOP;
             }
             # check to see if $next_song is a file; if not, set it to undef so
             # this loop gets run again; either a file will eventually be
