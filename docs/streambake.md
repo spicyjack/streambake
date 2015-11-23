@@ -34,6 +34,11 @@
   - Update `Icecast` server metadata
   - Finds/keeps track of album art images, so clients can request them for
     viewing on the client
+  - Will dynamically build the _Shout_ module as needed, as long as `libshout`
+    is installed on the host, and there's a compiler available
+    - Will rebuild the _Shout_ module during any upgrades of the server
+      backend
+    - Will work on Windows
 - CLI client
   - Makes requests against HTTP API using localhost socket, or proxied across
     a web server
