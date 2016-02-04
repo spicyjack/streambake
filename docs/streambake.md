@@ -18,15 +18,16 @@
 
 ## Project Features ##
 - HTTP front end
-  - Accepts API requests, relays them to the server via a local socket
+  - Accepts API requests from clients (iOS/watchOS/tvOS/Android), relays them
+    to the server via a local socket
   - Authenticates clients, either through a user database, or SSL certs
     - How to use multiple SSL certs with different webservers?
     - SSL client cert + password?
     - How to get the SSL cert to clients (iOS/Android/CLI)?
-  - Use Dancer/Dancer2 for the server side, and JSON for sending commands from
+  - Use Mojolicious for the server side, and JSON for API requests from
     clients
-  - Authenticate each request like Amazon does for AWS commands, checksum the
-    command plus the credentials, and the server can also check checksum and
+  - Authenticate each API request like Amazon does for AWS commands, checksum
+    the command plus the credentials, and the server can also check checksum and
     credentials to verify the command from the client
 - Dedicated "server" backend
   - Read files from the local filesystem and push them to `Icecast/Shoutcast`
