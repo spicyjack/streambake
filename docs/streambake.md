@@ -42,6 +42,13 @@
 - CLI client
   - Makes requests against HTTP API using localhost socket, or proxied across
     a web server
+- iOS/watchOS/tvOS Clients
+  - Levarage the same "guts" across all clients, only changing the "View"
+    class that shows the interface
+    - What options would be supported on which clients?
+      - Album art
+      - Skipping songs
+      - Requesting songs
 
 ## Misc Notes ##
 - Preflight script/app
