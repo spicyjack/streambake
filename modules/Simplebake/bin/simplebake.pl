@@ -736,10 +736,10 @@ sub new {
       die q( ERR: Can't open logfile ) . $config->get(q(logfile)) . qq(: $!)
          unless ( defined $logfd );
       # apply UTF-8-ness to the filehandle
-      $logfd->binmode(qq|:encoding(utf8)|);
+      $logfd->binmode(qq|:encoding(UTF-8)|);
    } else {
       # set :utf8 on STDOUT before wrapping it in IO::Handle
-      binmode(STDOUT, qq|:encoding(utf8)|);
+      binmode(STDOUT, qq|:encoding(UTF-8)|);
       $logfd = IO::Handle->new_from_fd(fileno(STDOUT), q(w));
       die qq( ERR: could not wrap STDOUT in IO::Handle object: $!)
          unless ( defined $logfd );
@@ -872,7 +872,7 @@ sub load_playlist {
          # read files from STDIN
          if (scalar(@_playlist) == 0) {
             # set UTF-8 encoding on STDIN before you read it
-            # binmode(STDIN, qq|:encoding(utf8)|);
+            binmode(STDIN, qq|:encoding(UTF-8)|);
             # nothing in the playlist yet, do the actual read
             @_playlist = <STDIN>;
          } else {
@@ -888,7 +888,7 @@ sub load_playlist {
          die q( ERR: could not open ) . $config->get(q(filelist))
             unless ( defined $plfd );
          # apply UTF-8-ness to the filehandle
-         #$plfd->binmode(qq|:encoding(utf8)|);
+         $plfd->binmode(qq|:encoding(UTF-8)|);
          # same as @_playlist = <FH>;
          @_playlist = $plfd->getlines();
          $plfd->close();
@@ -932,7 +932,7 @@ sub load_playlist {
          die q( ERR: could not open ) . $config->get(q(blacklist))
             unless ( defined $blfd );
          # apply UTF-8-ness to the filehandle
-         #$blfd->binmode(qq|:encoding(utf8)|);
+         $blfd->binmode(qq|:encoding(UTF-8)|);
          # same as @_playlist = <FH>;
          @_blacklist = $blfd->getlines();
          $blfd->close();
