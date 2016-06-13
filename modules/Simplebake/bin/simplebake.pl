@@ -1,6 +1,9 @@
 #!/usr/bin/perl -w
 
-# Copyright (c) 2010, 2013 by Brian Manning <brian at xaoc dot org>
+use strict;
+use warnings;
+
+# Copyright (c) 2010, 2013, 2016 by Brian Manning <brian at xaoc dot org>
 # PLEASE DO NOT E-MAIL THE AUTHOR ABOUT THIS SCRIPT!
 # For help with script errors and feature requests,
 # please contact the Streambake mailing list:
@@ -32,7 +35,7 @@ our $VERSION = '0.08';
 # a check to verify the shout module is available
 # it's put here so some warning is given if --help was called
 BEGIN {
-    eval q( use Shout; );
+    eval {q( use Shout; )};
     if ( $@ ) {
         if ( defined grep(/-h|--help|-j|--gen-config/, @ARGV) ) {
             warn qq(\nWARNING: Shout Perl module is not installed!\n\n);
@@ -264,8 +267,8 @@ EOC
 
     # read a config file if that's specified
     if ( $self->defined(q(config)) && -r $self->get(q(config)) ) {
-        open( CFG, q(<) . $self->get(q(config)) );
-        my @config_lines = <CFG>;
+        open( my $CFG, q(<), $self->get(q(config)) );
+        my @config_lines = <$CFG>;
         my $config_errors = 0;
         foreach my $line ( @config_lines ) {
             chomp $line;
@@ -372,7 +375,7 @@ sub get {
     my %args = %{$self->{_args}};
 
     if ( exists $args{$key} ) { return $args{$key}; }
-    return undef;
+    return;
 }
 
 =item set( key => $value )
@@ -399,7 +402,7 @@ sub set {
         $args{$key} = $value;
         $self->{_args} = \%args;
     }
-    return undef;
+    return;
 }
 
 =item defined($key)
@@ -609,7 +612,7 @@ sub set_metadata {
     # return success if we can set the metadata
     return 1 if ( $conn->set_metadata(@args) );
     # return failure if something went wrong
-    return undef;
+    return;
 }
 
 =item send(data => $buffer, [ length => $length ])
@@ -864,7 +867,7 @@ sub load_playlist {
                 # we've already read from STDIN, don't do it again; give
                 # a nice warning to the user though
                 $logger->timelog(qq(WARN: Can't reload playlist from STDIN));
-                return undef;
+                return;
             }
         # read from a filelist somewhere?
         } elsif ( -r $config->get(q(filelist)) ) {
@@ -1088,7 +1091,7 @@ sub new {
         $logger->timelog( qq(WARN: Missing file on filesystem!) );
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
-        return undef;
+        return;
     }
 
     # can we read the file?
@@ -1096,7 +1099,7 @@ sub new {
         $logger->timelog( qq(WARN: Can't read file on filesystem!) );
         $logger->log(qq(- ) . $self->get_display_name() );
         # return an undefined object so that callers know something's wrong
-        return undef;
+        return;
     }
 
     # do some of the cutty-up bits here
@@ -1311,16 +1314,16 @@ use English;
             $logger->log(qq(- Opening file for streaming));
 
             # XXX external re-encoding
-            #open(STREAMFILE, q(/bin/cat ") . $song->get_filename()
+            #open($STREAMFILE, q(/bin/cat ") . $song->get_filename()
             #    . q(" | lame --quiet -V 4 --mp3input - - |) )
             #    || die qq(Can't open ) . $song->get_filename() . qq( : '$!');
-            open(STREAMFILE, q(<) .  $song->get_filename() )
+            open($STREAMFILE, q(<),  $song->get_filename() )
                 || die qq(Can't open ) . $song->get_filename()
                 . q( : '$!');
             # used for the while loop below
             my $file_open_flag = 1;
-            # treat STREAMFILE as binary data
-            binmode(STREAMFILE);
+            # treat $STREAMFILE as binary data
+            binmode($STREAMFILE);
 
             # update the metadata
             $logger->log(qq(- Updating metadata on server));
@@ -1331,19 +1334,19 @@ use English;
             $logger->log(qq(- Streaming file to server));
 
             while ( $file_open_flag ) {
-            #while (defined(sysread(STREAMFILE, $buff, 4096) > 0)) {
+            #while (defined(sysread($STREAMFILE, $buff, 4096) > 0)) {
                 # check before each sysread() to see if the user veto'ed this
                 # song
                 if ( defined $skip_current_song ) {
                     # this event is logged in the HUP handler
                     $skip_current_song = undef;
                     $logger->timelog(qq|- Skipping current song...|);
-                    close(STREAMFILE);
+                    close($STREAMFILE);
                     next ENDLESS;
                 }
                 # sysread returns undef if there's an error; capture and log
                 # it
-                my $bytes_read = sysread(STREAMFILE, $buff, 4096);
+                my $bytes_read = sysread($STREAMFILE, $buff, 4096);
                 if ( ! defined $bytes_read ) {
                     $logger->timelog(qq|- WARN: sysread() returned 'undef'|);
                     $logger->log(qq|- sysread() error: $!|);
@@ -1375,7 +1378,7 @@ use English;
             # close the file now that we've read it
             $logger->timelog(qq(INFO: Closing file));
             #$logger->log(qq(- $display_song));
-            close(STREAMFILE);
+            close($STREAMFILE);
         }
         $logger->timelog(qq(WARN: server closed connection; exiting...));
         die q(we died here :/);
