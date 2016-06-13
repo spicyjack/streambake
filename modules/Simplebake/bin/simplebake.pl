@@ -26,11 +26,11 @@ Icecast server.
 
 =head1 VERSION
 
-Version 0.08
+Version 0.09
 
 =cut
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 # a check to verify the shout module is available
 # it's put here so some warning is given if --help was called
@@ -60,6 +60,7 @@ BEGIN {
  -d|--daemon      Fork and run as a daemon; requires --logfile
  -l|--logfile     Logfile to use for script output; default is STDOUT
  -f|--filelist    File containing a list of MP3/OGG files to stream
+ -b|--blacklist   List of songs to never play; filters --filelist arg
  -q|--sequential  Play files in sequence instead of randomly
  -t|--throttle    Throttle script this many seconds when missing files
  -q|--sequential  Play songs sequentially (default: shuffle songs)
@@ -94,11 +95,18 @@ BEGIN {
 
  # Create a stream listenable at http://stream.example.com:8000/somemount
  simplebake.pl --name stream.example.com --port 8000 \
-   --mount somemount --filelist /path/to/mp3-ogg.txt \
+   --mount somemount --filelist /path/to/filelist.m3u \
+   --throttle 1
+
+ # Use a blacklist to filter files that won't be played
+ simplebake.pl --name stream.example.com --port 8000 \
+   --mount somemount --filelist /path/to/filelist.m3u \
+   --blacklist /path/to/blacklist.m3u \
    --throttle 1
 
  # Generate a filelist with this on *NIX platforms
- find /path/to/files -name "*.mp3" > /path/to/output/filelist.txt
+ find /path/to/files -type f -name "*.mp3" \
+   > /path/to/output/filelist.txt
 
 Note that the default file type to be streamed with this script is MP3.  If
 you want to stream Ogg Vorbis files (*.ogg files), you need to use the
@@ -177,7 +185,8 @@ my @_valid_shout_args
    = qw(host port password mount user name url genre description public);
 # a list of valid arguments to this script
 my @_valid_script_args = (
-   @_valid_shout_args, qw(verbose config logfile filelist daemon ogg),
+   @_valid_shout_args, qw(verbose config logfile filelist blacklist),
+   qw(daemon ogg),
    qw(throttle sequential)
 );
 
@@ -208,6 +217,7 @@ sub new {
       q(daemon|d),
       q(logfile|l=s),
       q(filelist|f=s),
+      q(blacklist|b=s),
       q(throttle|t=i),
       q(gen-config|j),
       q(check-config),
@@ -250,6 +260,8 @@ sub new {
       print <<EOC;
 # the path to the list of files to stream
 filelist = /path/to/filelist.txt
+# list of songs to never play; used as a filter to 'filelist'
+blacklist = /path/to/blacklist.txt
 # what is the format of the files we're streaming?
 # "ogg = 0" == mp3, "ogg = 1" == ogg/vorbis or ogg/flac
 ogg = 0
@@ -798,7 +810,7 @@ use constant {
    THROTTLE_CHECK_TIME => 3,
 };
 
-my (@_playlist, @_song_q);
+my (@_blacklist, @_playlist, @_song_q);
 my $_last_request_time = 0;
 my $_throttle_counter = 0;
 
@@ -911,6 +923,45 @@ sub load_playlist {
       }
       @_playlist = @checked_playlist;
    }
+
+   # verify the blacklist file can be opened and then read it
+   if ( defined $config->get(q(blacklist)) ) {
+      if ( -r $config->get(q(blacklist)) ) {
+         # open the filelist using an IO::File object
+         my $blfd = IO::File->new(q( < ) . $config->get(q(blacklist)));
+         die q( ERR: could not open ) . $config->get(q(blacklist))
+            unless ( defined $blfd );
+         # apply UTF-8-ness to the filehandle
+         #$blfd->binmode(qq|:encoding(utf8)|);
+         # same as @_playlist = <FH>;
+         @_blacklist = $blfd->getlines();
+         $blfd->close();
+         undef $blfd;
+      } else {
+         die q( ERR: Blacklist file ) . $config->get(q(blacklist))
+            . q( does not exist, or is not readable);
+      }
+   }
+
+   # remove trailing newlines from blacklist
+   chomp(@_blacklist);
+   $logger->timelog(qq(INFO: Read ) . scalar(@_blacklist)
+      . q( items from blacklist file));
+
+   # filter the playlist through the blacklist
+   my %playlist = map( { $_ => 1 } @_playlist);
+   my %blacklist = map( { $_ => 1 } @_blacklist);
+
+   foreach my $key ( keys(%blacklist) ) {
+      if ( exists ( $playlist{$key} ) ) {
+         delete $playlist{$key};
+      } else {
+         $logger->timelog(q(WARN: file in blacklist not in playlist));
+         $logger->timelog(qq(WARN: blacklist file: $key));
+      }
+   }
+   # reassign the playlist from the results of filtering files
+   @_playlist = keys(%playlist);
 
    # make a copy of the playlist before we start munging it
    $logger->timelog(qq(INFO: Playlist contains ) . scalar(@_playlist)
