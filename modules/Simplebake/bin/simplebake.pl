@@ -227,7 +227,7 @@ sub new {
       q(host=s),
       q(port|p=s),
       q(mount|m=s),
-      q(nonblocking|b),
+      q(nonblocking),
       q(password|a=s),
       q(user|u=s),
       q(name|n=s),
