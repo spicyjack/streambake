@@ -50,6 +50,20 @@
       - Album art
       - Skipping songs
       - Requesting songs
+- Song playing features
+  - "Chaining songs" - when a specific song is selected, play a 2nd (related)
+    song after it
+    - If the chained (2nd or subsequent) song comes up in a song queue, then
+      the songs that the track is chained to should be played first
+       - Chelovek and koshka + plus the accordion intro song
+       - Pink Floyd Dark Side of the Moon tracks
+       - ELO - Eldorado Overture + Can't Get It Out Of My Head
+  - A "dead space" flag for tracks
+    - A track marked as having "dead space" has silence as part of the song
+    - "Dead space" songs should have the option to skip over the dead space,
+      if desired
+      - The Black Keys - The Big Come Up - 240 Years Before Your Time
+      - Kyuss - And The Circus Left Town - Spaceship Landing
 
 ## Misc Notes ##
 - Preflight script/app
